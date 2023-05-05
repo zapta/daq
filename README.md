@@ -1,1 +1,3 @@
-# daq
+# Data Acquisition
+
+Work in progress.
