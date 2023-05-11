@@ -1,8 +1,10 @@
 Drivers
+Core
 .cproject
 .mxproject
 .settings
 Drivers
 STM32H750VBTX_FLASH.ld
 STM32H750VBTX_RAM.ld
+!Core/Inc/main.h
 
