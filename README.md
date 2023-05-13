@@ -1,3 +1,5 @@
 # Data Acquisition
 
-Work in progress.
+
+
+This repository is a work in progress and nothing is here is verified to work.

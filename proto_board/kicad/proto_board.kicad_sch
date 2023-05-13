@@ -5,6 +5,35 @@
   (paper "A3")
 
   (lib_symbols
+    (symbol "Mechanical:MountingHole" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+      (property "Reference" "H" (at 0 5.08 0)
+        (effects (font (size 1.27 1.27)))
+      )
+      (property "Value" "MountingHole" (at 0 3.175 0)
+        (effects (font (size 1.27 1.27)))
+      )
+      (property "Footprint" "" (at 0 0 0)
+        (effects (font (size 1.27 1.27)) hide)
+      )
+      (property "Datasheet" "~" (at 0 0 0)
+        (effects (font (size 1.27 1.27)) hide)
+      )
+      (property "ki_keywords" "mounting hole" (at 0 0 0)
+        (effects (font (size 1.27 1.27)) hide)
+      )
+      (property "ki_description" "Mounting Hole without connection" (at 0 0 0)
+        (effects (font (size 1.27 1.27)) hide)
+      )
+      (property "ki_fp_filters" "MountingHole*" (at 0 0 0)
+        (effects (font (size 1.27 1.27)) hide)
+      )
+      (symbol "MountingHole_0_1"
+        (circle (center 0 0) (radius 1.27)
+          (stroke (width 1.27) (type default))
+          (fill (type none))
+        )
+      )
+    )
     (symbol "power:+3.3V" (power) (pin_names (offset 0)) (in_bom yes) (on_board yes)
       (property "Reference" "#PWR" (at 0 -3.81 0)
         (effects (font (size 1.27 1.27)) hide)
@@ -1105,7 +1134,7 @@
   (symbol (lib_id "power:+5V") (at 320.04 64.77 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 4f8fae2b-68a6-4cfa-a50b-bc5a9102ab41)
-    (property "Reference" "#PWR02" (at 320.04 68.58 0)
+    (property "Reference" "#PWR03" (at 320.04 68.58 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5V" (at 320.04 61.2681 0)
@@ -1121,7 +1150,31 @@
     (instances
       (project "proto_board"
         (path "/0dcd9c8c-bd5a-437f-856e-101fb6cf8b66"
-          (reference "#PWR02") (unit 1)
+          (reference "#PWR03") (unit 1)
+        )
+      )
+    )
+  )
+
+  (symbol (lib_id "Mechanical:MountingHole") (at 264.16 30.48 0) (unit 1)
+    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (uuid 7091cc06-5331-4dc6-8eea-b0092a95661e)
+    (property "Reference" "H1" (at 266.7 29.8363 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Value" "Bracket Hole" (at 266.7 31.7573 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Footprint" "MountingHole:MountingHole_3.2mm_M3_Pad_Via" (at 264.16 30.48 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "~" (at 264.16 30.48 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (instances
+      (project "proto_board"
+        (path "/0dcd9c8c-bd5a-437f-856e-101fb6cf8b66"
+          (reference "H1") (unit 1)
         )
       )
     )
@@ -1130,7 +1183,7 @@
   (symbol (lib_id "power:+3.3V") (at 314.96 64.77 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 7d21e4e5-e376-4387-83a8-78c72d6cc4e4)
-    (property "Reference" "#PWR03" (at 314.96 68.58 0)
+    (property "Reference" "#PWR01" (at 314.96 68.58 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+3.3V" (at 314.96 61.2681 0)
@@ -1146,7 +1199,31 @@
     (instances
       (project "proto_board"
         (path "/0dcd9c8c-bd5a-437f-856e-101fb6cf8b66"
-          (reference "#PWR03") (unit 1)
+          (reference "#PWR01") (unit 1)
+        )
+      )
+    )
+  )
+
+  (symbol (lib_id "Mechanical:MountingHole") (at 264.16 35.56 0) (unit 1)
+    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (uuid e50cb4fc-7554-4f32-a650-64b1506362c4)
+    (property "Reference" "H2" (at 266.7 34.9163 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Value" "Bracket Hole" (at 266.7 36.8373 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Footprint" "MountingHole:MountingHole_3.2mm_M3_Pad_Via" (at 264.16 35.56 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "~" (at 264.16 35.56 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (instances
+      (project "proto_board"
+        (path "/0dcd9c8c-bd5a-437f-856e-101fb6cf8b66"
+          (reference "H2") (unit 1)
         )
       )
     )
@@ -1155,7 +1232,7 @@
   (symbol (lib_id "proto_board:GND") (at 314.96 68.58 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid f32ec9ec-59f8-41e1-b050-0ffe2907eb52)
-    (property "Reference" "#PWR01" (at 314.96 74.93 0)
+    (property "Reference" "#PWR02" (at 314.96 74.93 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 314.96 72.3345 0)
@@ -1171,7 +1248,7 @@
     (instances
       (project "proto_board"
         (path "/0dcd9c8c-bd5a-437f-856e-101fb6cf8b66"
-          (reference "#PWR01") (unit 1)
+          (reference "#PWR02") (unit 1)
         )
       )
     )

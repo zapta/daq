@@ -34,9 +34,9 @@
         "other_text_thickness": 0.15,
         "other_text_upright": false,
         "pads": {
-          "drill": 0.762,
-          "height": 1.524,
-          "width": 1.524
+          "drill": 3.2,
+          "height": 6.4,
+          "width": 6.4
         },
         "silk_line_width": 0.15,
         "silk_text_italic": false,
@@ -60,7 +60,7 @@
         "version": 2
       },
       "rule_severities": {
-        "annular_width": "error",
+        "annular_width": "ignore",
         "clearance": "error",
         "connection_width": "warning",
         "copper_edge_clearance": "error",
@@ -411,7 +411,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "main_board.kicad_pro",
+    "filename": "backplane.kicad_pro",
     "version": 1
   },
   "net_settings": {
@@ -447,7 +447,7 @@
       "idf": "",
       "netlist": "",
       "specctra_dsn": "",
-      "step": "",
+      "step": "backplane.step",
       "vrml": ""
     },
     "page_layout_descr_file": ""
