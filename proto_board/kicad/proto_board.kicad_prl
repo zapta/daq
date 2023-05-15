@@ -1,6 +1,6 @@
 {
   "board": {
-    "active_layer": 0,
+    "active_layer": 40,
     "active_layer_preset": "",
     "auto_track_width": true,
     "hidden_netclasses": [],
@@ -15,12 +15,12 @@
       "zones": 0.6
     },
     "selection_filter": {
-      "dimensions": false,
+      "dimensions": true,
       "footprints": true,
       "graphics": true,
       "keepouts": true,
-      "lockedItems": false,
-      "otherItems": false,
+      "lockedItems": true,
+      "otherItems": true,
       "pads": true,
       "text": true,
       "tracks": true,
@@ -60,10 +60,9 @@
       34,
       35,
       36,
-      39,
       40
     ],
-    "visible_layers": "fffffff_ffffffff",
+    "visible_layers": "ffffffd_7fffffff",
     "zone_display_mode": 0
   },
   "meta": {

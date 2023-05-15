@@ -11,9 +11,5 @@
       (effects (font (size 1 1) (thickness 0.15)))
     (tstamp 38fef59b-958b-45b7-8820-2d51d2463f7b)
   )
-  (fp_text user "${REFERENCE}" (at 0 -5.08 180) (layer "F.Fab") hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    (tstamp 37dcc22b-aaa5-40bf-8441-c3e442439a19)
-  )
   (pad "" thru_hole oval (at 0 0) (size 1.7 1.7) (drill 1) (layers "*.Cu" "*.Mask") (tstamp 09ceeb43-9fac-40b4-a3bb-4f36cdd20ed2))
 )

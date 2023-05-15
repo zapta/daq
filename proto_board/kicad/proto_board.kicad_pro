@@ -72,7 +72,7 @@
         "duplicate_footprints": "ignore",
         "extra_footprint": "ignore",
         "footprint": "error",
-        "footprint_type_mismatch": "ignore",
+        "footprint_type_mismatch": "error",
         "hole_clearance": "error",
         "hole_near_hole": "error",
         "invalid_outline": "error",
