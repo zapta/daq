@@ -204,7 +204,7 @@
         )
       )
     )
-    (symbol "main_board:GND" (power) (pin_names (offset 0)) (in_bom yes) (on_board yes)
+    (symbol "controller:GND" (power) (pin_names (offset 0)) (in_bom yes) (on_board yes)
       (property "Reference" "#PWR" (at 0 -6.35 0)
         (effects (font (size 1.27 1.27)) hide)
       )
@@ -244,7 +244,7 @@
         )
       )
     )
-    (symbol "main_board:pcie_98" (pin_names (offset 1.016) hide) (in_bom yes) (on_board yes)
+    (symbol "controller:pcie_98" (pin_names (offset 1.016) hide) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 1.27 40.64 0)
         (effects (font (size 1.27 1.27)))
       )
@@ -1179,7 +1179,7 @@
     (uuid 67751a20-b88a-4bf8-a4b5-ca6d5ad00f34)
   )
 
-  (symbol (lib_id "main_board:pcie_98") (at 173.99 125.73 0) (unit 1)
+  (symbol (lib_id "controller:pcie_98") (at 173.99 125.73 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 1e659626-83bb-45fe-b7bd-b0869fd45b7c)
     (property "Reference" "J2" (at 175.26 83.3501 0)
@@ -1188,7 +1188,7 @@
     (property "Value" "pcie_98" (at 175.26 85.2711 0)
       (effects (font (size 1.27 1.27)))
     )
-    (property "Footprint" "main_board:pcie_98_socket" (at 200.279 77.216 0)
+    (property "Footprint" "controller:pcie_98_socket" (at 200.279 77.216 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (at 176.53 129.667 0)
@@ -1293,7 +1293,7 @@
     (pin "b8" (uuid d4afff3e-7824-4b43-9202-3bc6ddaa184b))
     (pin "b9" (uuid 28acea8d-44e4-4852-ac17-2840eab866c4))
     (instances
-      (project "main_board"
+      (project "controller"
         (path "/0dcd9c8c-bd5a-437f-856e-101fb6cf8b66"
           (reference "J2") (unit 1)
         )
@@ -1301,7 +1301,7 @@
     )
   )
 
-  (symbol (lib_id "main_board:pcie_98") (at 247.65 125.73 0) (unit 1)
+  (symbol (lib_id "controller:pcie_98") (at 247.65 125.73 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 22766433-0cbf-4022-9f91-9180ddac6b0c)
     (property "Reference" "J4" (at 248.92 83.3501 0)
@@ -1310,7 +1310,7 @@
     (property "Value" "pcie_98" (at 248.92 85.2711 0)
       (effects (font (size 1.27 1.27)))
     )
-    (property "Footprint" "main_board:pcie_98_socket" (at 273.939 77.216 0)
+    (property "Footprint" "controller:pcie_98_socket" (at 273.939 77.216 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (at 250.19 129.667 0)
@@ -1415,7 +1415,7 @@
     (pin "b8" (uuid 3bfb9c68-6520-47f0-a0ba-1f79691ec0f2))
     (pin "b9" (uuid c276abb4-03e3-4b5d-9ec3-a2238f66945d))
     (instances
-      (project "main_board"
+      (project "controller"
         (path "/0dcd9c8c-bd5a-437f-856e-101fb6cf8b66"
           (reference "J4") (unit 1)
         )
@@ -1423,7 +1423,7 @@
     )
   )
 
-  (symbol (lib_id "main_board:pcie_98") (at 223.52 125.73 0) (unit 1)
+  (symbol (lib_id "controller:pcie_98") (at 223.52 125.73 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 4b541c9c-96b0-4cd3-a14a-8912e0243770)
     (property "Reference" "J3" (at 224.79 83.3501 0)
@@ -1432,7 +1432,7 @@
     (property "Value" "pcie_98" (at 224.79 85.2711 0)
       (effects (font (size 1.27 1.27)))
     )
-    (property "Footprint" "main_board:pcie_98_socket" (at 249.809 77.216 0)
+    (property "Footprint" "controller:pcie_98_socket" (at 249.809 77.216 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (at 226.06 129.667 0)
@@ -1537,7 +1537,7 @@
     (pin "b8" (uuid c8067b57-f0ac-4fbe-a66b-3a948a90e24c))
     (pin "b9" (uuid 4a15f5ad-d478-44d9-ba0f-bbeeb5aecbdd))
     (instances
-      (project "main_board"
+      (project "controller"
         (path "/0dcd9c8c-bd5a-437f-856e-101fb6cf8b66"
           (reference "J3") (unit 1)
         )
@@ -1562,7 +1562,7 @@
     )
     (pin "1" (uuid 91ba00a3-f56a-4d23-b5be-c68199bbf709))
     (instances
-      (project "main_board"
+      (project "controller"
         (path "/0dcd9c8c-bd5a-437f-856e-101fb6cf8b66"
           (reference "#PWR02") (unit 1)
         )
@@ -1579,7 +1579,7 @@
     (property "Value" "R_Pack06" (at 79.2481 119.3873 0)
       (effects (font (size 1.27 1.27)) (justify right))
     )
-    (property "Footprint" "main_board:weact_stm32fh750" (at 98.425 118.11 90)
+    (property "Footprint" "controller:weact_stm32fh750" (at 98.425 118.11 90)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (at 88.9 118.11 0)
@@ -1598,7 +1598,7 @@
     (pin "8" (uuid dc462d78-68df-495c-87b7-8300d872fde3))
     (pin "9" (uuid 372a5e0d-5ad0-4623-9ec0-8d1a20f61bc0))
     (instances
-      (project "main_board"
+      (project "controller"
         (path "/0dcd9c8c-bd5a-437f-856e-101fb6cf8b66"
           (reference "RN1") (unit 1)
         )
@@ -1623,7 +1623,7 @@
     )
     (pin "1" (uuid ac4ab83f-952a-48aa-b7c1-30692e7adbe0))
     (instances
-      (project "main_board"
+      (project "controller"
         (path "/0dcd9c8c-bd5a-437f-856e-101fb6cf8b66"
           (reference "#PWR03") (unit 1)
         )
@@ -1631,7 +1631,7 @@
     )
   )
 
-  (symbol (lib_id "main_board:pcie_98") (at 199.39 125.73 0) (unit 1)
+  (symbol (lib_id "controller:pcie_98") (at 199.39 125.73 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 8a1f5a6d-7a65-4847-a759-71eb9283d46f)
     (property "Reference" "J1" (at 200.66 83.3501 0)
@@ -1640,7 +1640,7 @@
     (property "Value" "pcie_98" (at 200.66 85.2711 0)
       (effects (font (size 1.27 1.27)))
     )
-    (property "Footprint" "main_board:pcie_98_socket" (at 225.679 77.216 0)
+    (property "Footprint" "controller:pcie_98_socket" (at 225.679 77.216 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (at 201.93 129.667 0)
@@ -1745,7 +1745,7 @@
     (pin "b8" (uuid 1ee5111a-63ed-41d2-8502-e8395f747bd0))
     (pin "b9" (uuid da4ab60f-f940-4ada-a74b-aa90a154a6cd))
     (instances
-      (project "main_board"
+      (project "controller"
         (path "/0dcd9c8c-bd5a-437f-856e-101fb6cf8b66"
           (reference "J1") (unit 1)
         )
@@ -1753,7 +1753,7 @@
     )
   )
 
-  (symbol (lib_id "main_board:pcie_98") (at 273.05 125.73 0) (unit 1)
+  (symbol (lib_id "controller:pcie_98") (at 273.05 125.73 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid cff043e6-6131-41d2-97e6-055b5cce2ec7)
     (property "Reference" "J5" (at 274.32 83.3501 0)
@@ -1762,7 +1762,7 @@
     (property "Value" "pcie_98" (at 274.32 85.2711 0)
       (effects (font (size 1.27 1.27)))
     )
-    (property "Footprint" "main_board:pcie_98_socket" (at 299.339 77.216 0)
+    (property "Footprint" "controller:pcie_98_socket" (at 299.339 77.216 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (at 275.59 129.667 0)
@@ -1867,7 +1867,7 @@
     (pin "b8" (uuid 7352fe77-0acc-4479-b9f0-6793cd8d893d))
     (pin "b9" (uuid 1a92c5bb-1f5d-47eb-9dd7-82bbb70b76d4))
     (instances
-      (project "main_board"
+      (project "controller"
         (path "/0dcd9c8c-bd5a-437f-856e-101fb6cf8b66"
           (reference "J5") (unit 1)
         )
@@ -1875,7 +1875,7 @@
     )
   )
 
-  (symbol (lib_id "main_board:GND") (at 30.48 149.86 0) (unit 1)
+  (symbol (lib_id "controller:GND") (at 30.48 149.86 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid f32ec9ec-59f8-41e1-b050-0ffe2907eb52)
     (property "Reference" "#PWR01" (at 30.48 156.21 0)
@@ -1892,7 +1892,7 @@
     )
     (pin "1" (uuid 9e4b7855-bb23-43de-a65f-5e21987a73d9))
     (instances
-      (project "main_board"
+      (project "controller"
         (path "/0dcd9c8c-bd5a-437f-856e-101fb6cf8b66"
           (reference "#PWR01") (unit 1)
         )
