@@ -1,0 +1,16 @@
+Drivers
+.cproject
+.mxproject
+.settings
+Drivers
+STM32H750VBTX_FLASH.ld
+STM32H750VBTX_RAM.ld
+
+# From Core we want to keep only Core/Inc/main.h which contains
+# our own changes, to fix a compilation error. These changes are
+# preserved by the Cube IDE code generator.
+Core/*
+!Core/Inc
+Core/Inc/*
+!Core/Inc/main.h
+
