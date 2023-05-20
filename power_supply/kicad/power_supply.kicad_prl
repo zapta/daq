@@ -19,9 +19,9 @@
       "footprints": true,
       "graphics": true,
       "keepouts": true,
-      "lockedItems": true,
+      "lockedItems": false,
       "otherItems": true,
-      "pads": false,
+      "pads": true,
       "text": true,
       "tracks": true,
       "vias": true,
@@ -65,7 +65,7 @@
     "zone_display_mode": 0
   },
   "meta": {
-    "filename": "controller.kicad_prl",
+    "filename": "power_supply.kicad_prl",
     "version": 3
   },
   "project": {

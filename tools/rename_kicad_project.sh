@@ -3,8 +3,8 @@
 # A crude script to rename a kicad project.
 # TODO: Supress error on empty directories.
 
-name1="main_board"
-name2="new_proj"
+name1="controller"
+name2="power_supply"
 
 #files=(main_board*)
 #echo $files
