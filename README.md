@@ -6,5 +6,6 @@
 
 * [Backplane](./backplane/README.md)
 * [Proto board](./proto_board/README.md)
+* [Controller board](./controller/README.md)
 
 

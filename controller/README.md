@@ -6,20 +6,22 @@
 
 ## Overview
 
-This plugin board contains the microcontroller that controls the system. 
+This plugin board contains the microcontroller that controls the system. In the current design, we
+use WeAct STM32H750 module. Future designs may have the STM32H750 MCU directly on the board.
 
-![Alt](./kicad/proto_board.png "Title")
+![Alt](./kicad/controller.png)
 
 ## Design decisions
 
-* Size is arbitrary, and independent of finalized form factor of the plugin boards.
-* Provide access to all bus signals on both side of the board.
-* Mounting holes for optional screw 'feet'.
-* Low cost 100x91mm 2 layer PCB.
-* No dedicated functionality such as 3.3V regulator, power/ground bus, etc.
+* All the MCU signals are routed to the bus, to provide flexibility for future designs.
+* All signals are protected against ESD using TVS diodes.
+* Controller can be powered from the bus or from the USB port, with power arbitration using OR diodes. However, the USB power does not power the bus to avoid overloading the host computer.
+* The WeAct module can be soldered to the board using pin header or can be removable using a set of male/female headers.
+
+> **_NOTE:_**  If powering the bus from the USB connector will be needed, short the diode Schottky by populating jumper R1 and make that sure any additional 5V power supply is connected to the bus via a Schottky diode. The WeAct module already contains a Schottky diode between the USB connector the +5V.
 
 ## BOM
 
 Key components:
 
-* 2x25, SMD 2.00 pitch pin headers. Can be soldered on both side of the board. If can't find 2x25, get a larger one such as 2x40 and trim. Example https://www.aliexpress.us/item/2255801038200250.html
+* WeAct Studio STM32H750 module.
