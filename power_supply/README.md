@@ -9,7 +9,7 @@
 This plugin board contains the microcontroller that controls the system. In the current design, we
 use WeAct STM32H750 module. Future designs may have the STM32H750 MCU directly on the board.
 
-![Alt](./kicad/controller.png)
+![Alt](./kicad/power_supply.png)
 
 ## Design decisions
 
