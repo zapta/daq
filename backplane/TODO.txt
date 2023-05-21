@@ -1,5 +1,2 @@
 
-Fix arduino adc warnings?
-
-Clearer solution for Error_Handler?
-
+Add onboard fuses on VIN-, VIN+
