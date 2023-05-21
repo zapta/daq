@@ -22,7 +22,6 @@
   (pad "1" thru_hole rect (at 2.54 -10.16) (size 3.048 3.048) (drill 1.524) (layers "*.Cu" "*.Mask") (tstamp 26db25c7-caa5-40e9-9530-c3fb60990fbd))
   (pad "2" thru_hole circle (at -2.54 -10.16) (size 3.048 3.048) (drill 1.524) (layers "*.Cu" "*.Mask") (tstamp 1ec3ea6e-da0e-4672-96ae-694ab839144b))
   (pad "3" thru_hole circle (at -10.16 10.16) (size 3.048 3.048) (drill 1.524) (layers "*.Cu" "*.Mask") (tstamp 26676390-85a1-409f-9b7e-92e8f4ca01c3))
-  (pad "4" thru_hole circle (at 0 10.16) (size 3.048 3.048) (drill 1.524) (layers "*.Cu" "*.Mask") (tstamp 978d598f-76f6-4521-9b53-e67d07ff314a))
   (pad "5" thru_hole circle (at 10.16 10.16) (size 3.048 3.048) (drill 1.524) (layers "*.Cu" "*.Mask") (tstamp d99fcbef-e46d-4204-a25a-b85474d5759f))
   (pad "6" thru_hole circle (at 10.16 -10.16) (size 3.048 3.048) (drill 1.524) (layers "*.Cu" "*.Mask") (tstamp 81b7605c-8409-4b1f-b1cd-9cab76416853))
   (model "${KIPRJMOD}/3d_models/DC_DC_MODEL.step"
