@@ -1,5 +1,5 @@
 (fp_lib_table
   (version 7)
   (lib (name "controller")(type "KiCad")(uri "${KIPRJMOD}/controller.pretty")(options "")(descr ""))
-  (lib (name "proto_board")(type "KiCad")(uri "${KIPRJMOD}/../../proto_board/kicad/proto_board.pretty")(options "")(descr ""))
+  (lib (name "common")(type "KiCad")(uri "${KIPRJMOD}/../../common/kicad/common.pretty")(options "")(descr ""))
 )
