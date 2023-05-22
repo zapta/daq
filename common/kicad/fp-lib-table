@@ -1,4 +1,6 @@
 (fp_lib_table
   (version 7)
   (lib (name "common")(type "KiCad")(uri "${KIPRJMOD}/common.pretty")(options "")(descr ""))
+  (lib (name "power_supply")(type "KiCad")(uri "${KIPRJMOD}/../../power_supply/kicad/power_supply.pretty")(options "")(descr ""))
+  (lib (name "controller")(type "KiCad")(uri "${KIPRJMOD}/../../controller/kicad/controller.pretty")(options "")(descr ""))
 )
