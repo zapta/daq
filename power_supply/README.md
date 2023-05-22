@@ -1,4 +1,4 @@
-# Data Acquisition - Controller board.
+# Data Acquisition - Power Supply board.
 
 | :warning: WARNING|
 |:---|
@@ -6,22 +6,23 @@
 
 ## Overview
 
-This plugin board contains the microcontroller that controls the system. In the current design, we
-use WeAct STM32H750 module. Future designs may have the STM32H750 MCU directly on the board.
+This plugin board contains an DC/DC module which generates the 5VCD feed of the bus from the 12-24V DC input.
+
 
 ![Alt](./kicad/power_supply.png)
 
 ## Design decisions
 
-* All the MCU signals are routed to the bus, to provide flexibility for future designs.
-* All signals are protected against ESD using TVS diodes.
-* Controller can be powered from the bus or from the USB port, with power arbitration using OR diodes. However, the USB power does not power the bus to avoid overloading the host computer.
-* The WeAct module can be soldered to the board using pin header or can be removable using a set of male/female headers.
-
-> **_NOTE:_**  If powering the bus from the USB connector will be needed, short the diode Schottky by populating jumper R1 and make that sure any additional 5V power supply is connected to the bus via a Schottky diode. The WeAct module already contains a Schottky diode between the USB connector the +5V.
+* The power supply is isolated such that VIN is not galvanically connected to the system.
+* Can provide 5V @ 2A from 9-36VDC input.
+* Contains fuses on input and output voltages and ESD protection on the 5V output voltage.
+* Contains indication LEDs for input and output voltages.
+* Contains test points for input and output voltages.
+* Inexpensive 2 layers PCB design with one layer dedicated for ground plane.
+* Not intended for hot swapping.
 
 ## BOM
 
-Key components:
+* URB2405YMD-10WR3 DC/DC module. Available from several vendors, with  
+Mornsun being the canonical one.
 
-* WeAct Studio STM32H750 module.
