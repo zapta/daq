@@ -21,6 +21,10 @@ This plugin board contains an DC/DC module which generates the 5VCD feed of the 
 * Inexpensive 2 layers PCB design with one layer dedicated for ground plane.
 * Not intended for hot swapping.
 
+## Board dimensions
+
+Identical to the controller board.
+
 ## BOM
 
 * URB2405YMD-10WR3 DC/DC module. Available from several vendors, with  

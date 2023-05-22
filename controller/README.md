@@ -17,6 +17,10 @@ This plugin board contains the microcontroller that controls the system and comm
 * Controller can be powered from the bus or from the USB port, with power arbitration using OR'ed diodes. The USB power does not power the bus to avoid overloading the host computer.
 * The WeAct module can be soldered to the board using pin header or can be removable using a set of male/female headers.
 
+## Board dimensions
+
+![Alt](./docs/../board_dimensions.jpg)
+
 ## BOM
 
 Key components:
