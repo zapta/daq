@@ -8,22 +8,25 @@
 
 The backplane is is a passive motherboard that accepts plugin boards with the functionality of the DAQ system.
 
-![Alt](./kicad/backplane.png "Title")
+![Alt](./kicad/backplane.png)
 
 ## Design decisions
 
-* Passive only, all components are on plugin boards.
-* Using common PCIE X8 98 pins connectors, but backplane and plugin boards are not PCIE compatible.
-* Symmetric. Slots are interchangeable and boards can be plugged in any socket. Conflict resolution is delegated to the plugin boards, e.g. using jumpers.
-* Scalable. Versions with more/less slots can be easily derived.
-* Includes a power in and an uncommitted auxiliary connector.
-* Using through hole connectors for mechanical rigidity but can be converted to a SMD version if desired.
-* Working voltages such as 5V or 3.3V are generated on the plugin boards from VIN, locally, or a single power supply board can provide the rails via the bus.
-* Sufficient signal integrity and bandwidth. The backplane is intended for relatively slow signals at the order of 1Mhz,that are driven directly by an MCU and peripherals,  and thus uses only 4 PCB layers for connectivity with no ground planes.
+* Passive design, all active components are on plugin boards.
+* Using common and inexpensive PCIE X8 connectors (98 pins). However, the power and signals are not compatible with PCIE.
+* Symmetric slots. Slots are interchangeable and boards can be plugged in any slot. When applicable, conflict resolution is delegated to the plugin boards, e.g. using configuration jumpers.
+* Scalable. Versions with higher/lower number of slots can be easily derived.
+* 12-24VDC Power is provided via an on board connector and is routed to all slots. Plugin boards should use **insulated** DC/DC converters to generate supply rail voltages.
+* Assigned pins for 5V supply, which is provided by an insulated power supply plugin board.
+* Using through hole connectors for mechanical rigidity. An SMD version can be derived if so desired.
+* 'Sufficient' signal integrity and bandwidth. The backplane is intended for relatively slow signals at the order of 1Mhz, that are driven directly by an MCU and peripherals, and thus, the backplane uses an inexpensive 4 layers PCB and minimal number of GND pins.
 
 ## Mechanical Dimensions
 
-TBD
+140mm X 67mm, 4 layers.
+
+![Alt](./docs/board_dimensions.jpg)
+
 
 ## Signals Assignment
 
@@ -43,4 +46,7 @@ As of May 2023, these are the assigned bus pins. All are reserved.
 
 ## BOM
 
-TBD
+The key components are:
+
+* PCIE X8 (98 pins) through hole connected. Preferably non slotted.
+* JST XH two pin connector, preferably with positioning pin.
