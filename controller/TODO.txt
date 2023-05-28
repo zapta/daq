@@ -1,4 +1,6 @@
 
 Consider to have damper resistors to the bus signals.
 
+Consider using the hardware CRC to compute packet CRC.
+
 
