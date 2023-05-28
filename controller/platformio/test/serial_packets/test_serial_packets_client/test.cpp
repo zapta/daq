@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 
-#include "../common/serial_packets_test_utils.h"
+#include "../serial_packets_test_utils.h"
 #include "serial_packets_client.h"
 
 // The serial port we use for debug messages.

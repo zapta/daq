@@ -7,7 +7,7 @@
 #include <memory>
 #include <vector>
 
-#include "../common/serial_packets_test_utils.h"
+#include "../serial_packets_test_utils.h"
 #include "serial_packets_decoder.h"
 
 // For STM32 'black pill'.

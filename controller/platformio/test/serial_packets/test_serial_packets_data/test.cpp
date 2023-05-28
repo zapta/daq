@@ -6,7 +6,7 @@
 
 #include <vector>
 
-#include "../common/serial_packets_test_utils.h"
+#include "../serial_packets_test_utils.h"
 #include "serial_packets_data.h"
 
 // These data buffer can be large so we avoid having them on the stack.
