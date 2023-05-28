@@ -1,5 +1,4 @@
 
-Fix arduino adc warnings?
+Consider to have damper resistors to the bus signals.
 
-Clearer solution for Error_Handler?
 
