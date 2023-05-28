@@ -64,10 +64,11 @@ void SerialPacketsClient::loop_cleanup() {
     }
     _logger.error("Command %08u timeout.", p->cmd_id);
     if (!p->response_handler) {
+      // Not expecting this to happen.
       _logger.error("No response handler command  %08u.", p->cmd_id);
     } else {
       _tmp_data.clear();
-      p->response_handler(p->cmd_id, TIMEOUT, _tmp_data);
+      p->response_handler(p->cmd_id, TIMEOUT, _tmp_data, 0);
     }
     p->clear();
   }
@@ -194,7 +195,7 @@ void SerialPacketsClient::process_decoded_response_packet(
     _logger.error("Pending command has a null response handler.");
     return;
   }
-  context->response_handler(metadata.cmd_id, metadata.status, data);
+  context->response_handler(metadata.cmd_id, metadata.status, data, context->user_data);
   // Setting the cmd_id to zero frees the context.
   context->clear();
   return;
@@ -212,8 +213,8 @@ void SerialPacketsClient::process_decoded_message_packet(
 }
 
 bool SerialPacketsClient::sendCommand(
-    byte endpoint, const SerialPacketsData& data,
-    SerialPacketsCommandResponseHandler response_handler, uint32_t& cmd_id,
+    byte endpoint, const SerialPacketsData& data,  uint32_t user_data,
+    SerialPacketsCommandResponseHandler response_handler,   uint32_t& cmd_id,
     uint16_t timeout_millis = DEFAULT_CMD_TIMEOUT_MILLIS) {
   // Prepare for failure.
   cmd_id = 0;
@@ -292,7 +293,9 @@ bool SerialPacketsClient::sendCommand(
   // Wrap around is ok.
   cmd_context->expiration_time_millis = millis() + timeout_millis;
   cmd_context->response_handler = response_handler;
+  cmd_context->user_data = user_data;
 
+  // All done
   cmd_id = new_cmd_id;
   _logger.verbose("Command packet written ok, cmd_id = %08x", cmd_id);
   return true;

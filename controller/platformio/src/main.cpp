@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
-#include "Serial_Packets.h"
 #include "io.h"
+#include "serial_packets_client.h"
 
 // A callback for all incoming commands. Configured once during initialization.
 void command_handler(byte endpoint, const SerialPacketsData& data,
@@ -30,9 +30,9 @@ void message_handler(byte endpoint, const SerialPacketsData& data) {
 // A callback to handle responses of outgoing commands. Configured per
 // command, when calling sendCommand().
 void response_handler(uint32_t cmd_id, byte response_status,
-                      const SerialPacketsData& response_data) {
-  Serial.printf("Response Handler called, cmd_id=%08x, status=%hu, size=%hu\n",
-                cmd_id, response_status, response_data.size());
+                      const SerialPacketsData& response_data, uint32_t user_data) {
+  Serial.printf("Response Handler called, cmd_id=%08x, status=%hu, size=%hu, user_data=%08x\n",
+                cmd_id, response_status, response_data.size(), user_data);
 }
 
 // The serial Packets client.
@@ -40,7 +40,7 @@ static SerialPacketsClient packets(command_handler, message_handler);
 
 void setup() {
   io::setup();
-  
+
   // A serial port for packet data communication.
   Serial2.begin(115200);
 
@@ -58,7 +58,6 @@ static uint32_t test_cmd_id = 0;
 // so we avoid allocating them on the stack.
 static SerialPacketsData test_packet_data;
 
-
 void loop() {
   // Service serial packets loop. Callbacks are called within
   // this call.
@@ -74,8 +73,8 @@ void loop() {
     test_packet_data.write_uint8(0x10);
     test_packet_data.write_uint32(millis());
 
-    if (!packets.sendCommand(0x20, test_packet_data, response_handler,
-                             test_cmd_id, 1000)) {
+    if (!packets.sendCommand(0x20, test_packet_data, 0xaabbccdd,
+                             response_handler, test_cmd_id, 1000)) {
       Serial.println("sendCommand() failed");
     }
 

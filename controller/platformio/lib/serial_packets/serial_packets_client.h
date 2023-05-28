@@ -43,7 +43,7 @@ typedef void (*SerialPacketsIncomingCommandHandler)(
 // A callback type for incoming command response.
 typedef void (*SerialPacketsCommandResponseHandler)(
     uint32_t cmd_id, byte response_status,
-    const SerialPacketsData& response_data);
+    const SerialPacketsData& response_data, uint32_t user_data);
 
 // A callback type for incoming messages.
 typedef void (*SerialPacketsIncomingMessageHandler)(
@@ -82,9 +82,9 @@ class SerialPacketsClient {
   // Send a command to given endpoint and with given data. Use the
   // provided response_handler to pass the command response or
   // timeout information. Returns true if the command was sent.
-  bool sendCommand(byte endpoint, const SerialPacketsData& data,
+  bool sendCommand(byte endpoint, const SerialPacketsData& data, uint32_t user_data, 
                    SerialPacketsCommandResponseHandler response_handler,
-                   uint32_t& cmd_id, uint16_t timeout);
+                    uint32_t& cmd_id,  uint16_t timeout);
 
   // Send a message to given endpoint and with given data. Returns
   // true if the message was sent. There is not positive verification
@@ -118,11 +118,13 @@ class SerialPacketsClient {
     uint32_t cmd_id;
     SerialPacketsCommandResponseHandler response_handler;
     uint32_t expiration_time_millis;
+    uint32_t user_data;
 
     void clear() {
       cmd_id = 0;
       response_handler = nullptr;
       expiration_time_millis = 0;
+      user_data = 0;
     }
   };
 

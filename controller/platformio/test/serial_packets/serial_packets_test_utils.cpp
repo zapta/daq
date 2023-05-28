@@ -26,7 +26,7 @@ void common_setup_init() {
   pinMode(LED_BUILTIN, OUTPUT);
 
   // Time for the USB/CDC serial to stabalize.
-  delay(3000);
+  delay(5000);
 }
 
 void common_loop_body() {

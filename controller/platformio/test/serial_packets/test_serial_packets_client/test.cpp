@@ -27,6 +27,7 @@ struct Response {
   uint32_t cmd_id;
   uint8_t status;
   std::vector<uint8_t> data;
+  uint32_t user_data;
 };
 
 struct Message {
@@ -69,12 +70,13 @@ void command_handler(byte endpoint, const SerialPacketsData& data,
 }
 
 void response_handler(uint32_t cmd_id, byte response_status,
-                      const SerialPacketsData& data) {
+                      const SerialPacketsData& data, uint32_t user_data) {
   Response item;
   item.time_millis = millis();
   item.cmd_id = cmd_id;
   item.status = response_status;
   item.data = copy_data(data);
+  item.user_data = user_data;
   response_list.push_back(item);
 }
 
@@ -153,7 +155,7 @@ void test_send_command_loop() {
   fake_response.data = {0xaa, 0xbb, 0xcc};
   uint32_t cmd_id = 0;
   TEST_ASSERT_TRUE(
-      client->sendCommand(0x20, packet_data, response_handler, cmd_id, 1000));
+      client->sendCommand(0x20, packet_data, 0x12345678, response_handler, cmd_id, 1000));
   TEST_ASSERT_NOT_EQUAL_HEX32(0, cmd_id);
   TEST_ASSERT_EQUAL(1, client->num_pending_commands());
   loop_client(*client, 200);
@@ -167,6 +169,7 @@ void test_send_command_loop() {
   const Response& response = response_list.at(0);
   TEST_ASSERT_EQUAL_HEX32(cmd_id, response.cmd_id);
   TEST_ASSERT_EQUAL_HEX8(0x99, response.status);
+  TEST_ASSERT_EQUAL_HEX32(0x12345678, response.user_data);
   assert_vectors_equal(response.data, {0xaa, 0xbb, 0xcc});
 }
 
@@ -181,7 +184,7 @@ void test_command_timeout() {
   const uint32_t start_time_millis = millis();
   uint32_t cmd_id = 0;
   TEST_ASSERT_TRUE(
-      client->sendCommand(0x20, packet_data, response_handler, cmd_id, 200));
+      client->sendCommand(0x20, packet_data, 0x12345678, response_handler, cmd_id, 200));
   TEST_ASSERT_NOT_EQUAL_HEX32(0, cmd_id);
   TEST_ASSERT_EQUAL(1, client->num_pending_commands());
   loop_client(*client, 500);
