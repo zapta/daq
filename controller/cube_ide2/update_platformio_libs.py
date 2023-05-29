@@ -31,7 +31,7 @@ def create_flatten_directory(src, dst, suppressed_list = []):
     if basename in suppressed_set:
       assert not basename in suppressed_found
       suppressed_found.add(basename)
-      dst_file += ".ignored"
+      dst_file += ".original"
     print(f"Copying {src_file} -> {dst_file}")
     assert not os.path.exists(dst_file)
     shutil.copyfile(src_file, dst_file)

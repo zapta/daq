@@ -59,6 +59,7 @@ void MX_FREERTOS_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+void SysTickHandler();
 /* USER CODE END 0 */
 
 /**
