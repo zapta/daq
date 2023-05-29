@@ -62,22 +62,21 @@ void SystemClock_Config(void) {
 
 // static osThreadId_t defaultTaskHandle;
 
-
 // extern void MX_USB_DEVICE_Init(void);
 
-
-
 void defaultTask(void *argument) {
+  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
   for (;;) {
     // osDelay(1);
-     vTaskDelay(100);
-
+    // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+    vTaskDelay(100);
+    // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+    vTaskDelay(100);
   }
 }
-
-
 
 int main(void) {
   HAL_Init();
@@ -85,36 +84,36 @@ int main(void) {
   MX_GPIO_Init();
   MX_USART1_UART_Init();
 
+  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 
-  osKernelInitialize(); 
+  osKernelInitialize();
 
   // MX_FREERTOS_Init();
   // osThreadAttr_t defaultTask_attributes;
   // defaultTask_attributes.name = "defaultTask";
   // defaultTask_attributes.stack_size = 512 * 4;
   // defaultTask_attributes.priority = (osPriority_t)osPriorityNormal;
-  
+
   // osThreadNew(defaultTask, NULL, &defaultTask_attributes);
 
-   TaskHandle_t xHandle = NULL;
+  TaskHandle_t xHandle = NULL;
   xTaskCreate(defaultTask, "ADC", 4000, nullptr, 10, &xHandle);
 
-	vTaskStartScheduler();
+  vTaskStartScheduler();
 
   // osKernelStart();
-  //We should never get here as control is now taken by the scheduler infinite loop.
+  // We should never get here as control is now taken by the scheduler infinite
+  // loop.
   while (1) {
     vTaskDelay(10);
+
+   HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+
   }
 }
-
-
-
 
 void Error_Handler(void) {
   __disable_irq();
   while (1) {
   }
 }
-
-
