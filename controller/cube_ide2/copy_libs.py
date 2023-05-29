@@ -2,10 +2,6 @@ import shutil
 import os
 import logging
 
-# logging.basicConfig(level=logging.INFO,
-                    # format='%(levelname)-7s: %(message)s')
-# logger = logging.getLogger(__name__)
-
 
 def force_empty_dir(path):
   if os.path.exists(path):
@@ -33,25 +29,14 @@ def create_flatten_directory(src, dst):
     assert not os.path.exists(dst_file)
     shutil.copyfile(src_file, dst_file)
     assert os.path.exists(dst_file)
-    
-LIB="../platformio/lib"
-assert os.path.exists(LIB)
 
+
+DST="../platformio2/lib"
+assert os.path.exists(DST)
 
 
 force_empty_dir("flat_lib")
-create_flatten_directory("Core", f"{LIB}/autogen_core")
-create_flatten_directory("USB_DEVICE", f"{LIB}/autogen_usb")
-create_flatten_directory("Middlewares", f"{LIB}/autogen_middlewares")
-
-
-
-
-# dirpath, dirnames, filenames = os.walk(SRC)
-# print(dirpath)
-# print(dirnames)
-# print(filenames)
-
-
-
+create_flatten_directory("Core", f"{DST}/autogen_core")
+create_flatten_directory("USB_DEVICE", f"{DST}/autogen_usb")
+create_flatten_directory("Middlewares", f"{DST}/autogen_middlewares")
 
