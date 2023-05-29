@@ -71,7 +71,9 @@ void defaultTask(void *argument) {
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
   for (;;) {
-    osDelay(1);
+    // osDelay(1);
+     vTaskDelay(100);
+
   }
 }
 
@@ -87,17 +89,22 @@ int main(void) {
   osKernelInitialize(); 
 
   // MX_FREERTOS_Init();
-  osThreadAttr_t defaultTask_attributes;
-  defaultTask_attributes.name = "defaultTask";
-  defaultTask_attributes.stack_size = 512 * 4;
-  defaultTask_attributes.priority = (osPriority_t)osPriorityNormal;
+  // osThreadAttr_t defaultTask_attributes;
+  // defaultTask_attributes.name = "defaultTask";
+  // defaultTask_attributes.stack_size = 512 * 4;
+  // defaultTask_attributes.priority = (osPriority_t)osPriorityNormal;
   
-  osThreadNew(defaultTask, NULL, &defaultTask_attributes);
+  // osThreadNew(defaultTask, NULL, &defaultTask_attributes);
 
-  osKernelStart();
+   TaskHandle_t xHandle = NULL;
+  xTaskCreate(defaultTask, "ADC", 4000, nullptr, 10, &xHandle);
+
+	vTaskStartScheduler();
+
+  // osKernelStart();
   //We should never get here as control is now taken by the scheduler infinite loop.
   while (1) {
-    osDelay(1);
+    vTaskDelay(10);
   }
 }
 
