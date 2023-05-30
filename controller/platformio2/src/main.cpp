@@ -71,9 +71,9 @@ void defaultTask(void *argument) {
   MX_USB_DEVICE_Init();
   for (;;) {
     // osDelay(1);
-    // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
     vTaskDelay(100);
-    // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
     vTaskDelay(100);
   }
 }
@@ -97,7 +97,7 @@ int main(void) {
   // osThreadNew(defaultTask, NULL, &defaultTask_attributes);
 
   TaskHandle_t xHandle = NULL;
-  xTaskCreate(defaultTask, "ADC", 4000, nullptr, 10, &xHandle);
+  xTaskCreate(defaultTask, "ADC", 1000/sizeof(StackType_t), nullptr, 10, &xHandle);
 
   vTaskStartScheduler();
 
