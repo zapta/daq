@@ -47,23 +47,18 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 
-// NOTE(zapta): We disable the declaration of Error_Handler because it
-// conflicts with Arduino's macro of the same name.
-#if 0
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-// NOTE(zapta): End of patch.
-#endif
 
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define PE3_Pin GPIO_PIN_3
-#define PE3_GPIO_Port GPIOE
+#define LED_Pin GPIO_PIN_3
+#define LED_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
 

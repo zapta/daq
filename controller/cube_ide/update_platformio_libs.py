@@ -42,7 +42,7 @@ def create_flatten_directory(src, dst, suppressed_list = []):
   assert suppressed_found == suppressed_set
 
 
-DST="../platformio2/lib"
+DST="../platformio-cube-ide/lib"
 assert os.path.exists(DST)
 
 
