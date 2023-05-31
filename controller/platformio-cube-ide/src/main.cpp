@@ -84,13 +84,14 @@ void defaultTask(void *argument) {
   }
 }
 
-// TODO: This file is main.cpp. Should this variable be declared 
-// C extern? 
-volatile int uxTopUsedPriority;
 
+extern "C" {
+  extern const int uxTopUsedPriority;
+ __attribute__((used)) const int uxTopUsedPriority = configMAX_PRIORITIES - 1;
+}
 
 int main(void) {
-  uxTopUsedPriority = configMAX_PRIORITIES - 1;
+  printf("%p\n", &uxTopUsedPriority);
 
   HAL_Init();
   SystemClock_Config();
