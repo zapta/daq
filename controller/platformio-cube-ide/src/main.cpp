@@ -7,6 +7,16 @@
 #include "task.h"
 #include "usart.h"
 #include "usb_device.h"
+#include "usbd_cdc_if.h"
+
+// extern "C" {
+//  extern int _write(int file, uint8_t* p, int len);
+
+// int _write(int file, uint8_t* p, int len) {
+//   while (CDC_Transmit_FS(p, len) == USBD_BUSY);
+//   return len;
+// }
+// }
 
 void SystemClock_Config(void) {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
@@ -74,29 +84,89 @@ void defaultTask(void *argument) {
   HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
   // const int f_cpu = F_CPU;
   /* init code for USB_DEVICE */
-  MX_USB_DEVICE_Init();
   for (;;) {
+    uint8_t aa[] = "aaa\n";
+    CDC_Transmit_FS(aa, sizeof(aa));
     // osDelay(1);
     HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
     vTaskDelay(600);
     HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
     vTaskDelay(100);
+    // printf("Hello world\n");
   }
 }
 
-
 extern "C" {
-  extern const int uxTopUsedPriority;
- __attribute__((used)) const int uxTopUsedPriority = configMAX_PRIORITIES - 1;
+extern const int uxTopUsedPriority;
+__attribute__((section(".rodata"))) const int uxTopUsedPriority =
+    configMAX_PRIORITIES - 1;
 }
 
+// __attribute__((used)) void keep() {
+//   printf("%p\n", &uxTopUsedPriority);
+// }
+
 int main(void) {
-  printf("%p\n", &uxTopUsedPriority);
+  // HAL_Init();
+  // SystemClock_Config();
+  // MX_GPIO_Init();
+  // MX_USART1_UART_Init();
+
+  // MX_USB_DEVICE_Init();
+
+  // vTaskStartScheduler();
+
+  //--------------
 
   HAL_Init();
+
+  // int a = 4;
+  /* USER CODE BEGIN Init */
+
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
   SystemClock_Config();
+
+  /* USER CODE BEGIN SysInit */
+
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART1_UART_Init();
+  /* USER CODE BEGIN 2 */
+
+  /* USER CODE END 2 */
+
+  MX_USB_DEVICE_Init();
+  // CDC_Init_FS();
+
+  //  for(;;) {
+  //	  vTaskDelay(10);
+  //  }
+
+  /* Call init function for freertos objects (in freertos.c) */
+  //  MX_FREERTOS_Init();
+
+  /* Start scheduler */
+  //  osKernelStart();
+
+  // vTaskStartScheduler();
+
+  // for(;;) {
+  //     //  printf("%p\n", &uxTopUsedPriority);
+  //     uint8_t aa[] = "aaa\n";
+  //      CDC_Transmit_FS(aa, sizeof(aa));
+
+  //   vTaskDelay(100);
+  // }
+
+  //------------
+
+  // for(;;) {
+  //   vTaskDelay(600);
+  // }
 
   HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 
