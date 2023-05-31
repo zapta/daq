@@ -118,14 +118,15 @@ int main(void) {
 
   vTaskStartScheduler();
 
+  Error_Handler()
+
   // osKernelStart();
   // We should never get here as control is now taken by the scheduler infinite
   // loop.
-  while (1) {
-    vTaskDelay(10);
-
-    HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
-  }
+  // while (1) {
+  //   vTaskDelay(10);
+  //   // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+  // }
 }
 
 void Error_Handler(void) {
