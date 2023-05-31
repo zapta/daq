@@ -62,6 +62,6 @@ def copy_and_flatten_directory(src, dst, suppressed_list=[]):
 
 copy_and_flatten_directory("Core", f"{DST}/autogen_core", {"main.c", "freertos.c"})
 copy_and_flatten_directory("USB_DEVICE", f"{DST}/autogen_usb")
-copy_and_flatten_directory("Middlewares", f"{DST}/autogen_middlewares")
+copy_and_flatten_directory("Middlewares", f"{DST}/autogen_middlewares" , {"cmsis_os.h", "cmsis_os.c"})
 
 

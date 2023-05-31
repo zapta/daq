@@ -1,9 +1,19 @@
+Make printf to work.
+
+Write script to fix openocd.
+
+Fix build warnings.
+
+----------
 
 Add connector or USB module for data serial port.
 
 Add jumper/switch/connector for serial loop for unit tests.
 
 Consider to have damper resistors to the bus signals.
+
+Consider using the hardware CRC to compute packet CRC.
+
 
 Consider using the hardware CRC to compute packet CRC.
 

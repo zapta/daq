@@ -2,7 +2,7 @@
 #include "main.h"
 
 #include "FreeRTOS.h"
-#include "cmsis_os.h"
+// #include "cmsis_os.h"
 #include "gpio.h"
 #include "task.h"
 #include "usart.h"
@@ -78,7 +78,7 @@ void defaultTask(void *argument) {
   for (;;) {
     // osDelay(1);
     HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
-    vTaskDelay(100);
+    vTaskDelay(600);
     HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
     vTaskDelay(100);
   }
@@ -100,33 +100,18 @@ int main(void) {
 
   HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 
-  osKernelInitialize();
-
-  // MX_FREERTOS_Init();
-  // osThreadAttr_t defaultTask_attributes;
-  // defaultTask_attributes.name = "defaultTask";
-  // defaultTask_attributes.stack_size = 512 * 4;
-  // defaultTask_attributes.priority = (osPriority_t)osPriorityNormal;
-
-  // osThreadNew(defaultTask, NULL, &defaultTask_attributes);
+  // osKernelInitialize();
 
   TaskHandle_t xHandle = NULL;
   xTaskCreate(defaultTask, "T1", 1000 / sizeof(StackType_t), nullptr, 10,
               &xHandle);
-  xTaskCreate(defaultTask, "T2", 1000 / sizeof(StackType_t), nullptr, 10,
-              &xHandle);
+  // xTaskCreate(defaultTask, "T2", 1000 / sizeof(StackType_t), nullptr, 10,
+  //             &xHandle);
 
   vTaskStartScheduler();
 
+  // This should be non reachable.
   Error_Handler();
-
-  // osKernelStart();
-  // We should never get here as control is now taken by the scheduler infinite
-  // loop.
-  // while (1) {
-  //   vTaskDelay(10);
-  //   // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
-  // }
 }
 
 void Error_Handler(void) {
