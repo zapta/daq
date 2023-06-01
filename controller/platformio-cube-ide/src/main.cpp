@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 #include "FreeRTOS.h"
-#include "cdc_logger.h"
+#include "cdc_serial.h"
 #include "gpio.h"
 #include "task.h"
 #include "usart.h"
@@ -71,7 +71,10 @@ void SystemClock_Config(void) {
 }
 
 void main_task(void *argument) {
-  cdc_logger::setup();
+  // Do not use printf() before calling cdc_serial::setup() here.
+  cdc_serial::setup();
+  printf("Serial USB initialized\n");
+
   MX_GPIO_Init();
   MX_USART1_UART_Init();
 
