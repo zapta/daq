@@ -1,4 +1,4 @@
-Make printf to work.
+Implement non blocking printf to serial.
 
 Write script to fix openocd.
 

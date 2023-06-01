@@ -1,23 +1,34 @@
 
 #include "main.h"
 
+#include <unistd.h>
+
 #include "FreeRTOS.h"
-// #include "cmsis_os.h"
 #include "gpio.h"
 #include "task.h"
 #include "usart.h"
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
 
-// extern "C" {
-//  extern int _write(int file, uint8_t* p, int len);
+extern "C" {
+extern int _write(int, uint8_t *, int);
+int _write(int file, uint8_t *ptr, int len) {
+  if ((file != STDOUT_FILENO) && (file != STDERR_FILENO)) {
+    return -1;
+  }
+  static uint8_t rc = USBD_FAIL;
+  do {
+    rc = CDC_Transmit_FS(ptr, (uint16_t)len);
+  } while (rc == USBD_BUSY);
 
-// int _write(int file, uint8_t* p, int len) {
-//   while (CDC_Transmit_FS(p, len) == USBD_BUSY);
-//   return len;
-// }
-// }
+  if (rc != USBD_OK) {
+    return -1;
+  }
+  return len;
+}
+}
 
+// Copied from lib/autogen_core/main.c.ignored.
 void SystemClock_Config(void) {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
@@ -76,111 +87,59 @@ void SystemClock_Config(void) {
   }
 }
 
-// static osThreadId_t defaultTaskHandle;
+// static void test_print() {
+//   uint8_t aa[] = "aaa\n";
+//   CDC_Transmit_FS(aa, sizeof(aa) - 1);
+// }
 
-// extern void MX_USB_DEVICE_Init(void);
+// static void test_print_loop() {
+//   for (;;) {
+//     HAL_Delay(100);
+//     printf("yyy\n");
+//     // uint8_t aa[] = "ccc\n";
+//     // CDC_Transmit_FS(aa, sizeof(aa) - 1);
+//   }
+// }
 
-void defaultTask(void *argument) {
-  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
-  // const int f_cpu = F_CPU;
-  /* init code for USB_DEVICE */
+void test_task_body(void *argument) {
+  int i = 0;
   for (;;) {
-    uint8_t aa[] = "aaa\n";
-    CDC_Transmit_FS(aa, sizeof(aa));
-    // osDelay(1);
+    printf("%04d\n", i++);
     HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
     vTaskDelay(600);
     HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
     vTaskDelay(100);
-    // printf("Hello world\n");
   }
 }
 
+// For OpenOCD thread awareness. Per
+// https://community.platformio.org/t/freertos-with-stm32cube-framework-on-nucleof767zi/9601
 extern "C" {
 extern const int uxTopUsedPriority;
 __attribute__((section(".rodata"))) const int uxTopUsedPriority =
     configMAX_PRIORITIES - 1;
 }
 
-// __attribute__((used)) void keep() {
-//   printf("%p\n", &uxTopUsedPriority);
-// }
-
+// Based on lib/autogen_core/main.c.ignore
 int main(void) {
-  // HAL_Init();
-  // SystemClock_Config();
-  // MX_GPIO_Init();
-  // MX_USART1_UART_Init();
-
-  // MX_USB_DEVICE_Init();
-
-  // vTaskStartScheduler();
-
-  //--------------
-
   HAL_Init();
-
-  // int a = 4;
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
   SystemClock_Config();
+  MX_USB_DEVICE_Init();
+  // Let the USB connection stabalize.
+  HAL_Delay(500);
+  printf("Started\n");
 
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
+  // Init the rest.
   MX_GPIO_Init();
   MX_USART1_UART_Init();
-  /* USER CODE BEGIN 2 */
 
-  /* USER CODE END 2 */
-
-  MX_USB_DEVICE_Init();
-  // CDC_Init_FS();
-
-  //  for(;;) {
-  //	  vTaskDelay(10);
-  //  }
-
-  /* Call init function for freertos objects (in freertos.c) */
-  //  MX_FREERTOS_Init();
-
-  /* Start scheduler */
-  //  osKernelStart();
-
-  // vTaskStartScheduler();
-
-  // for(;;) {
-  //     //  printf("%p\n", &uxTopUsedPriority);
-  //     uint8_t aa[] = "aaa\n";
-  //      CDC_Transmit_FS(aa, sizeof(aa));
-
-  //   vTaskDelay(100);
-  // }
-
-  //------------
-
-  // for(;;) {
-  //   vTaskDelay(600);
-  // }
-
-  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
-
-  // osKernelInitialize();
-
+  // Start tasks.
   TaskHandle_t xHandle = NULL;
-  xTaskCreate(defaultTask, "T1", 1000 / sizeof(StackType_t), nullptr, 10,
+  xTaskCreate(test_task_body, "T1", 1000 / sizeof(StackType_t), nullptr, 10,
               &xHandle);
-  // xTaskCreate(defaultTask, "T2", 1000 / sizeof(StackType_t), nullptr, 10,
-  //             &xHandle);
 
+  // Normally, this never returns.
   vTaskStartScheduler();
-
-  // This should be non reachable.
   Error_Handler();
 }
 
