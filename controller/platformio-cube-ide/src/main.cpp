@@ -4,29 +4,12 @@
 #include <unistd.h>
 
 #include "FreeRTOS.h"
+#include "cdc_logger.h"
 #include "gpio.h"
 #include "task.h"
 #include "usart.h"
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
-
-extern "C" {
-extern int _write(int, uint8_t *, int);
-int _write(int file, uint8_t *ptr, int len) {
-  if ((file != STDOUT_FILENO) && (file != STDERR_FILENO)) {
-    return -1;
-  }
-  static uint8_t rc = USBD_FAIL;
-  do {
-    rc = CDC_Transmit_FS(ptr, (uint16_t)len);
-  } while (rc == USBD_BUSY);
-
-  if (rc != USBD_OK) {
-    return -1;
-  }
-  return len;
-}
-}
 
 // Copied from lib/autogen_core/main.c.ignored.
 void SystemClock_Config(void) {
@@ -87,21 +70,11 @@ void SystemClock_Config(void) {
   }
 }
 
-// static void test_print() {
-//   uint8_t aa[] = "aaa\n";
-//   CDC_Transmit_FS(aa, sizeof(aa) - 1);
-// }
+void main_task(void *argument) {
+  cdc_logger::setup();
+  MX_GPIO_Init();
+  MX_USART1_UART_Init();
 
-// static void test_print_loop() {
-//   for (;;) {
-//     HAL_Delay(100);
-//     printf("yyy\n");
-//     // uint8_t aa[] = "ccc\n";
-//     // CDC_Transmit_FS(aa, sizeof(aa) - 1);
-//   }
-// }
-
-void test_task_body(void *argument) {
   int i = 0;
   for (;;) {
     printf("%04d\n", i++);
@@ -122,22 +95,14 @@ __attribute__((section(".rodata"))) const int uxTopUsedPriority =
 
 // Based on lib/autogen_core/main.c.ignore
 int main(void) {
+  // We perform the minimum initialization required to start
+  // FreeRTOS and the main task, and then do the rest
+  // in the main task..
   HAL_Init();
   SystemClock_Config();
-  MX_USB_DEVICE_Init();
-  // Let the USB connection stabalize.
-  HAL_Delay(500);
-  printf("Started\n");
-
-  // Init the rest.
-  MX_GPIO_Init();
-  MX_USART1_UART_Init();
-
-  // Start tasks.
   TaskHandle_t xHandle = NULL;
-  xTaskCreate(test_task_body, "T1", 1000 / sizeof(StackType_t), nullptr, 10,
+  xTaskCreate(main_task, "Main", 1000 / sizeof(StackType_t), nullptr, 10,
               &xHandle);
-
   // Normally, this never returns.
   vTaskStartScheduler();
   Error_Handler();
