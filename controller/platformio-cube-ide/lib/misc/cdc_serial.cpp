@@ -62,7 +62,8 @@ static void tx_task(void* argument) {
 
 void setup() {
   MX_USB_DEVICE_Init();
-  // Let the USB driver stablize, otherwise we loose initial data (which is not a big deal);
+  // Let the USB driver stablize, otherwise we loose initial
+  // data (which is not a big deal);
   HAL_Delay(1000);
 
   semaphore_handle = xSemaphoreCreateBinary();

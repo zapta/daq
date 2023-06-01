@@ -10,6 +10,7 @@
 #include "usart.h"
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
+#include "io.h"
 
 // Copied from lib/autogen_core/main.c.ignored.
 void SystemClock_Config(void) {
@@ -80,11 +81,12 @@ void main_task(void *argument) {
 
   int i = 0;
   for (;;) {
+    io::LED.toggle();
     printf("%04d\n", i++);
-    HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
-    vTaskDelay(600);
-    HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
-    vTaskDelay(100);
+    // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+    vTaskDelay(200);
+    // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+    // vTaskDelay(100);
   }
 }
 
