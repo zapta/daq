@@ -6,11 +6,14 @@
 #include "FreeRTOS.h"
 #include "cdc_serial.h"
 #include "gpio.h"
+#include "io.h"
 #include "task.h"
 #include "usart.h"
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
-#include "io.h"
+#include "logger.h"
+
+static Logger logger;
 
 // Copied from lib/autogen_core/main.c.ignored.
 void SystemClock_Config(void) {
@@ -74,7 +77,8 @@ void SystemClock_Config(void) {
 void main_task(void *argument) {
   // Do not use printf() before calling cdc_serial::setup() here.
   cdc_serial::setup();
-  printf("Serial USB initialized\n");
+  logger.info("Serial USB started");
+  // printf("Serial USB initialized\n");
 
   MX_GPIO_Init();
   MX_USART1_UART_Init();
@@ -82,11 +86,8 @@ void main_task(void *argument) {
   int i = 0;
   for (;;) {
     io::LED.toggle();
-    printf("%04d\n", i++);
-    // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+    logger.info("%04d", i++);
     vTaskDelay(200);
-    // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
-    // vTaskDelay(100);
   }
 }
 
