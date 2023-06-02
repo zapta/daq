@@ -8,7 +8,6 @@
 #include "main.h"
 #include "stdarg.h"
 
-
 enum LoggerLevel {
   LOG_VERBOSE = 1,
   LOG_INFO = 2,
@@ -23,21 +22,16 @@ class Logger {
 
   Logger() : _level(LOG_INFO) {}
 
-  Logger(LoggerLevel level)
-      : _level(constrain_level(level)) {}
+  Logger(LoggerLevel level) : _level(constrain_level(level)) {}
 
   // Setting to nullptr equivalent to no logging.
   // void set_stream(Stream* stream) { _optional_stream = stream; }
 
-  void set_level(LoggerLevel level) {
-    _level = constrain_level(level);
-  }
+  void set_level(LoggerLevel level) { _level = constrain_level(level); }
 
   LoggerLevel level() { return _level; }
 
-  inline bool is_level(LoggerLevel level) const {
-    return level >= _level;
-  }
+  inline bool is_level(LoggerLevel level) const { return level >= _level; }
 
   inline bool is_verbose() const { return is_level(LOG_VERBOSE); }
 
@@ -99,13 +93,6 @@ class Logger {
 
   LoggerLevel _level = LOG_VERBOSE;
 
-
-  void _vlog(const char* level_str, const char* format, va_list args) const {
-    // TODO: Consider to move from the stack to a static variable protected by 
-    // semaphores.
-   char bfr[100];
-    vsnprintf(bfr, sizeof(bfr), format, args);
-    printf("%s: %s\n", level_str, bfr);
-  }
+  // Primitive method to output the log message.
+  void _vlog(const char* level_str, const char* format, va_list args) const;
 };
-

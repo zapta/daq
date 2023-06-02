@@ -1,6 +1,6 @@
-Compare cube_id build flags to platformio.
 
-Implment buffered serial driver.
+
+Implement buffered serial driver.
 
 Write script to fix openocd.
 

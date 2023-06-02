@@ -83,10 +83,12 @@ void main_task(void *argument) {
   MX_GPIO_Init();
   MX_USART1_UART_Init();
 
+
   int i = 0;
   for (;;) {
     io::LED.toggle();
-    logger.info("%04d", i++);
+    const uint32_t watermark = sizeof(StackType_t) * uxTaskGetStackHighWaterMark(NULL);
+    logger.info("%04d: %lu bytes", i++, watermark);
     vTaskDelay(200);
   }
 }

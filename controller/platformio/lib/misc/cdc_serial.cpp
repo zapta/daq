@@ -86,4 +86,9 @@ void write(const uint8_t* bfr, uint16_t len) {
   xSemaphoreGive(semaphore_handle);
 }
 
+void write_str(const char* str) {
+  const uint16_t len = strlen(str);
+  write((uint8_t*)str, len);
+}
+
 }  // namespace cdc_serial
