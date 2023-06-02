@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-dst="../platformio-baremetal"
+dst="../platformio"
 
 rm -r $dst/lib/Core
 cp -r Core $dst/lib/Core
