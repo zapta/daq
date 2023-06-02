@@ -1,4 +1,6 @@
-Implement non blocking printf to serial.
+Compare cube_id build flags to platformio.
+
+Implment buffered serial driver.
 
 Write script to fix openocd.
 
