@@ -5,6 +5,7 @@
 #include "semphr.h"
 #include "cdc_serial.h"
 #include "string.h"
+#include "io.h"
 
 // We use a shared static buffer, protected by a semaphore.
 static char bfr[120];
@@ -18,7 +19,9 @@ void Logger::_vlog(const char* level_str, const char* format,
     xSemaphoreGive(semaphore_handle);
   }
 
+  io::TEST1.on();
   xSemaphoreTake(semaphore_handle, portMAX_DELAY);
+  io::TEST1.off();
   {
     strcpy(bfr, level_str);
     strcat(bfr, ": ");
