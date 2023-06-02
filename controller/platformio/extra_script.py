@@ -17,8 +17,16 @@ env.Append(
   ]
 )
 
+# Cube IDE link command
+# arm-none-eabi-g++ -o "cube_ide.elf" @"objects.list"   
 # -mcpu=cortex-m7 
 # -T"C:\Users\user\projects\daq\repo\controller\cube_ide\STM32H750VBTX_FLASH.ld" 
-# --specs=nosys.specs -Wl,-Map="cube_ide.map" -Wl,--gc-sections -static 
-# --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
-# Finished building target: cube_ide.elf
+# --specs=nosys.specs 
+# -Wl,-Map="cube_ide.map" 
+# -Wl,--gc-sections 
+# -static 
+# --specs=nano.specs 
+# -mfpu=fpv5-d16 
+# -mfloat-abi=hard 
+# -mthumb -Wl,
+# --start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
