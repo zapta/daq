@@ -1,6 +1,5 @@
-Try to disable in cube ide the generation of main().
 
-How much stack space does a call to logger.info() consumes?
+Why vsnprintf takes so much stack space? Is it because of the reentrant setting?
 
 group cube_ide libraries under lib/autogen
 
