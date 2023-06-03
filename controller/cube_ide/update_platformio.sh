@@ -23,5 +23,8 @@ cp -r USB_DEVICE $dst/lib/USB_DEVICE
 
 cp STM32H750VBTX_FLASH.ld  $dst/STM32H750VBTX_FLASH.ld
 
+cp cube_ide.pdf ../docs/cube_ide_report.pdf
+
+
 
 
