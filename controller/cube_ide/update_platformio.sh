@@ -1,25 +1,26 @@
 #!/bin/bash -x
 
 dst="../platformio"
+dstlib="../platformio/lib/cube_ide"
 
-rm -r $dst/lib/Core
-cp -r Core $dst/lib/Core
+rm -r $dstlib/Core
+cp -r Core $dstlib/Core
 
 # Patch Core related stuff
-mv  $dst/lib/Core/Src/freertos.c  $dst/lib/Core/Src/freertos.c.ignored
-mv  $dst/lib/Core/Src/main.c  $dst/lib/Core/Src/main.c.ignored
+mv  $dstlib/Core/Src/freertos.c  $dstlib/Core/Src/freertos.c.ignored
+mv  $dstlib/Core/Src/main.c  $dstlib/Core/Src/main.c.ignored
 
 rm -rf $dst/src/startup
-mv $dst/lib/Core/Startup $dst/src/startup
+mv $dstlib/Core/Startup $dst/src/startup
 
-rm -r $dst/lib/Drivers
-cp -r Drivers $dst/lib/Drivers
+rm -r $dstlib/Drivers
+cp -r Drivers $dstlib/Drivers
 
-rm -r $dst/lib/Middlewares
-cp -r Middlewares $dst/lib/Middlewares
+rm -r $dstlib/Middlewares
+cp -r Middlewares $dstlib/Middlewares
 
-rm -r $dst/lib/USB_DEVICE
-cp -r USB_DEVICE $dst/lib/USB_DEVICE
+rm -r $dstlib/USB_DEVICE
+cp -r USB_DEVICE $dstlib/USB_DEVICE
 
 cp STM32H750VBTX_FLASH.ld  $dst/STM32H750VBTX_FLASH.ld
 
