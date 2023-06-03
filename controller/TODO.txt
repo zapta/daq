@@ -5,6 +5,8 @@ Play with the ADC.
 ----------
 Firmware
 
+Verify the project build on Mac and Linux
+
 revisit the issue of heap allocation policy, consider static allocation and type 1.
 
 Write script to fix openocd.
@@ -12,6 +14,8 @@ Write script to fix openocd.
 Fix build warnings.
 
 Revisit the error handling in the serial and CDC logger drivers. Should we send to a trap?
+
+Consider to switch the serial driver to use DMA instead of interrupts.
 
 ----------
 Hardware
