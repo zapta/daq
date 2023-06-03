@@ -1,4 +1,5 @@
-group cubeide libraries under lib/autogen
+How much stack space does a call to logger.info() consumes?
+group cube_ide libraries under lib/autogen
 
 revisit the issue of heap allocation policy, consider static allocation and type 1.
 
@@ -7,6 +8,8 @@ Implement buffered serial driver.
 Write script to fix openocd.
 
 Fix build warnings.
+
+Revisit the error handling in the serial and CDC logger drivers. Should we send to a trap?
 
 ----------
 

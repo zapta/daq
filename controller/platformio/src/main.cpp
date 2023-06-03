@@ -12,6 +12,8 @@
 #include "usart.h"
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
+#include "serial.h"
+#include "util.h"
 
 static Logger logger;
 
@@ -106,6 +108,19 @@ void SystemClock_Config(void) {
   }
 }
 
+void rx_task(void *argument) {
+  for (;;) {
+    // const uint32_t t1 = util::task_stack_unused_bytes();
+    static uint8_t rx_buffer[30];
+    const uint16_t bytes_read = serial::serial1.read(rx_buffer, sizeof(rx_buffer) - 1);
+    // const uint32_t t2 = util::task_stack_unused_bytes();
+    rx_buffer[bytes_read] = 0;  // string terminator
+    logger.info("RX %hu: [%s]", util::task_stack_unused_bytes(), (char*)rx_buffer);
+    // const uint32_t t3 = util::task_stack_unused_bytes();
+    // logger.info("RX free stack: %lu, %lu, %lu", t1, t2, t3);
+  }
+}
+
 void main_task(void *argument) {
   // Do not use printf() before calling cdc_serial::setup() here.
   cdc_serial::setup();
@@ -114,16 +129,27 @@ void main_task(void *argument) {
 
   MX_GPIO_Init();
   MX_USART1_UART_Init();
+  serial::serial1.init();
 
-  // test_usart1();
+
+
+    // SystemClock_Config();
+  TaskHandle_t xHandle = NULL;
+ 
+  xTaskCreate(rx_task, "RX1", 1000 / sizeof(StackType_t), nullptr, 10,
+              &xHandle);
+
+
+
+  
+
 
   int i = 0;
   for (;;) {
+    // serial::serial1.write_str("12345\n");
     io::LED.toggle();
-    const uint32_t watermark =
-        sizeof(StackType_t) * uxTaskGetStackHighWaterMark(NULL);
-    logger.info("%04d: %lu bytes", i++, watermark);
-    vTaskDelay(200);
+        logger.info("%04d: %lu bytes", i++, util::task_stack_unused_bytes());
+    vTaskDelay(1000);
   }
 }
 
