@@ -4,7 +4,7 @@
 #include <cstring>
 
 #include "FreeRTOS.h"
-#include "circular_queue.h"
+#include "circular_buffer.h"
 #include "main.h"
 #include "semphr.h"
 #include "task.h"
@@ -23,10 +23,10 @@ int _write(int file, uint8_t* ptr, int len) {
 
 namespace cdc_serial {
 
-// A circual queue of pending bytes.
-static constexpr uint16_t kBufferSize = 1000;
-static uint8_t buffer[kBufferSize];
-static CircularQueue<uint8_t> queue(buffer, kBufferSize);
+// A circual buffer of pending bytes.
+// static constexpr uint16_t kBufferSize = 1000;
+// static uint8_t buffer[kBufferSize];
+static CircularBuffer<uint8_t, 1000> circular_buffer;
 
 // Semaphore to protect access to the buffer.
 static SemaphoreHandle_t semaphore_handle = nullptr;
@@ -39,7 +39,7 @@ static void tx_task(void* argument) {
     // Transfer a chunk of data to tx_buffer, if avaiable.
     uint16_t bytes_to_send = 0;
     xSemaphoreTake(semaphore_handle, portMAX_DELAY);
-    { bytes_to_send = queue.dequeue(tx_buffer, sizeof(tx_buffer)); }
+    { bytes_to_send = circular_buffer.read(tx_buffer, sizeof(tx_buffer)); }
     xSemaphoreGive(semaphore_handle);
 
     if (bytes_to_send) {
@@ -80,15 +80,17 @@ void setup() {
   }
 }
 
-void write(const uint8_t* bfr, uint16_t len) {
-  xSemaphoreTake(semaphore_handle, portMAX_DELAY);
-  { queue.enqueue(bfr, len); }
-  xSemaphoreGive(semaphore_handle);
-}
-
 void write_str(const char* str) {
   const uint16_t len = strlen(str);
   write((uint8_t*)str, len);
 }
+
+void write(const uint8_t* bfr, uint16_t len) {
+  xSemaphoreTake(semaphore_handle, portMAX_DELAY);
+  { circular_buffer.write(bfr, len, true); }
+  xSemaphoreGive(semaphore_handle);
+}
+
+
 
 }  // namespace cdc_serial

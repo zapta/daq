@@ -5,7 +5,7 @@
 namespace cdc_serial {
 
 void setup();
-void write(const uint8_t* bfr, uint16_t len);
 void write_str(const char* str);
+void write(const uint8_t* bfr, uint16_t len);
 
 }  // namespace cdc_serial

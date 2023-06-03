@@ -1,4 +1,6 @@
+group cubeide libraries under lib/autogen
 
+revisit the issue of heap allocation policy, consider static allocation and type 1.
 
 Implement buffered serial driver.
 

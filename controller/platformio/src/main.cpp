@@ -15,6 +15,38 @@
 
 static Logger logger;
 
+// void RxISR(UART_HandleTypeDef *huart) { 
+//   asm("nop"); 
+//   }
+
+// void TxISR(UART_HandleTypeDef *huart) { 
+//   asm("nop"); 
+// }
+
+//  void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+//    asm("nop"); 
+
+//  }
+
+//   void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
+//      asm("nop"); 
+
+//  }
+
+
+
+// void test_usart1() {
+//   // huart1.RxISR = RxISR;
+//   // huart1.TxISR = TxISR;
+
+//   for (;;) {
+//     static const char str[] = "abc\n";
+//     HAL_UART_Transmit_IT(&huart1, (uint8_t *)str, strlen(str));
+//     io::LED.toggle();
+//     vTaskDelay(200);
+//   }
+// }
+
 // Copied from lib/autogen_core/main.c.ignored.
 void SystemClock_Config(void) {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
@@ -82,6 +114,8 @@ void main_task(void *argument) {
 
   MX_GPIO_Init();
   MX_USART1_UART_Init();
+
+  // test_usart1();
 
   int i = 0;
   for (;;) {
