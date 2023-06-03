@@ -1,7 +1,13 @@
 #!python3
 
 import shutil
-# import re
+import os
+
+
+def copy_and_overwrite(from_path, to_path):
+    if os.path.exists(to_path):
+        shutil.rmtree(to_path)
+    shutil.copytree(from_path, to_path)
 
 
 def patch_lines(lines, expected_count, line_text, repl_lines):
@@ -34,7 +40,6 @@ def patch_file(file, expected_count, line_text, repl_lines):
         outfile.write("\n")
 
 
-
 def patch_main_c(file):
     patch_file(file, 1, "int main(void)", [
         "// ### Auto patched.",
@@ -50,6 +55,16 @@ def patch_main_c(file):
         "void _ignored_Error_Handler(void)"
     ])
 
-FILE = "../controller/platformio/lib/cube_ide/Core/Src/main.c.ignored"
-patch_main_c(FILE);
+
+# FILE = "../controller/platformio/lib/cube_ide/Core/Src/main.c.ignored"
+# patch_main_c(FILE)
+
+LIB="../controller/platformio/lib/cube_ide"
+
+copy_and_overwrite("./Core", f"{LIB}/Core")
+copy_and_overwrite("./Drivers", f"{LIB}/Drivers")
+copy_and_overwrite("./Middlewares", f"{LIB}/Middlewares")
+copy_and_overwrite("./USB_DEVICE", f"{LIB}/USEB_DEVICE")
+
+patch_main_c(f"{LIB}/Core/Src/main.c")
 
