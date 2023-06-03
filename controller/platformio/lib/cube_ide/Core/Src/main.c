@@ -65,7 +65,10 @@ void MX_FREERTOS_Init(void);
   * @brief  The application entry point.
   * @retval int
   */
-int main(void)
+// ### Auto patched.
+// ### main() moved to application code.
+// ### Was: int main(void)
+int _ignored_main(void)
 {
   /* USER CODE BEGIN 1 */
 
@@ -182,7 +185,10 @@ void SystemClock_Config(void)
   * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
-void Error_Handler(void)
+// ### Auto patched.
+// ### Error_Handler() moved to application code.
+// ### Was: void Error_Handler(void)
+void _ignored_Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
