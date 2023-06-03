@@ -96,3 +96,5 @@ class Logger {
   // Primitive method to output the log message.
   void _vlog(const char* level_str, const char* format, va_list args) const;
 };
+
+extern Logger logger;

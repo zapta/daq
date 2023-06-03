@@ -8,46 +8,16 @@
 #include "gpio.h"
 #include "io.h"
 #include "logger.h"
+#include "serial.h"
 #include "task.h"
 #include "usart.h"
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
-#include "serial.h"
 #include "util.h"
 
-static Logger logger;
-
-// void RxISR(UART_HandleTypeDef *huart) { 
-//   asm("nop"); 
-//   }
-
-// void TxISR(UART_HandleTypeDef *huart) { 
-//   asm("nop"); 
-// }
-
-//  void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-//    asm("nop"); 
-
-//  }
-
-//   void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
-//      asm("nop"); 
-
-//  }
 
 
 
-// void test_usart1() {
-//   // huart1.RxISR = RxISR;
-//   // huart1.TxISR = TxISR;
-
-//   for (;;) {
-//     static const char str[] = "abc\n";
-//     HAL_UART_Transmit_IT(&huart1, (uint8_t *)str, strlen(str));
-//     io::LED.toggle();
-//     vTaskDelay(200);
-//   }
-// }
 
 // Copied from lib/autogen_core/main.c.ignored.
 void SystemClock_Config(void) {
@@ -112,43 +82,34 @@ void rx_task(void *argument) {
   for (;;) {
     // const uint32_t t1 = util::task_stack_unused_bytes();
     static uint8_t rx_buffer[30];
-    const uint16_t bytes_read = serial::serial1.read(rx_buffer, sizeof(rx_buffer) - 1);
-    // const uint32_t t2 = util::task_stack_unused_bytes();
+    const uint16_t bytes_read =
+        serial::serial1.read(rx_buffer, sizeof(rx_buffer) - 1);
     rx_buffer[bytes_read] = 0;  // string terminator
-    logger.info("RX %hu: [%s]", util::task_stack_unused_bytes(), (char*)rx_buffer);
-    // const uint32_t t3 = util::task_stack_unused_bytes();
-    // logger.info("RX free stack: %lu, %lu, %lu", t1, t2, t3);
+    logger.info("RX %hu: [%s]", util::task_stack_unused_bytes(),
+                (char *)rx_buffer);
   }
 }
 
 void main_task(void *argument) {
-  // Do not use printf() before calling cdc_serial::setup() here.
+  // Do not use printf() or logger before calling cdc_serial::setup() here.
   cdc_serial::setup();
   logger.info("Serial USB started");
-  // printf("Serial USB initialized\n");
+  util::dump_heap_stats();
 
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   serial::serial1.init();
 
-
-
-    // SystemClock_Config();
   TaskHandle_t xHandle = NULL;
- 
   xTaskCreate(rx_task, "RX1", 1000 / sizeof(StackType_t), nullptr, 10,
               &xHandle);
-
-
-
-  
-
 
   int i = 0;
   for (;;) {
     // serial::serial1.write_str("12345\n");
     io::LED.toggle();
-        logger.info("%04d: %lu bytes", i++, util::task_stack_unused_bytes());
+    logger.info("%04d: %lu bytes", i++, util::task_stack_unused_bytes());
+    // util::dump_heap_stats();
     vTaskDelay(1000);
   }
 }

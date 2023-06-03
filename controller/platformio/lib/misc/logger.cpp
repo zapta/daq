@@ -7,6 +7,9 @@
 #include "string.h"
 #include "io.h"
 
+// The main logger.
+Logger logger;
+
 // We use a shared static buffer, protected by a semaphore.
 static char bfr[120];
 static SemaphoreHandle_t semaphore_handle = nullptr;
