@@ -1,4 +1,7 @@
+Try to disable in cube ide the generation of main().
+
 How much stack space does a call to logger.info() consumes?
+
 group cube_ide libraries under lib/autogen
 
 revisit the issue of heap allocation policy, consider static allocation and type 1.
