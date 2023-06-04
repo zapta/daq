@@ -14,25 +14,30 @@
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
 #include "util.h"
+#include "serial_packets_client.h"
 
 
 extern "C"
 void SystemClock_Config(void);
 
+static SerialPacketsClient serial_packets_client;
 
+static SerialPacketsData message_data;
 
 
 void rx_task(void *argument) {
   for (;;) {
+    vTaskDelay(100);
     // const uint32_t t1 = util::task_stack_unused_bytes();
-    static uint8_t rx_buffer[30];
-    const uint16_t bytes_read =
-        serial::serial1.read(rx_buffer, sizeof(rx_buffer) - 1);
-    rx_buffer[bytes_read] = 0;  // string terminator
-    logger.info("RX %hu: [%s]", util::task_stack_unused_bytes(),
-                (char *)rx_buffer);
+    // static uint8_t rx_buffer[30];
+    // const uint16_t bytes_read =
+    //     serial::serial1.read(rx_buffer, sizeof(rx_buffer) - 1);
+    // rx_buffer[bytes_read] = 0;  // string terminator
+    // logger.info("RX %hu: [%s]", util::task_stack_unused_bytes(),
+    //             (char *)rx_buffer);
   }
 }
+
 
 void main_task(void *argument) {
   // Do not use printf() or logger before calling cdc_serial::setup() here.
@@ -43,6 +48,7 @@ void main_task(void *argument) {
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   serial::serial1.init();
+  serial_packets_client.begin(serial::serial1);
 
   TaskHandle_t xHandle = NULL;
   xTaskCreate(rx_task, "RX1", 1000 / sizeof(StackType_t), nullptr, 10,
@@ -50,9 +56,15 @@ void main_task(void *argument) {
 
   int i = 0;
   for (;;) {
+    
     // serial::serial1.write_str("12345\n");
     io::LED.toggle();
-    logger.info("%04d: %lu bytes", i++, util::task_stack_unused_bytes());
+    message_data.clear();
+    message_data.write_uint32(0x12345678);
+    const bool ok = serial_packets_client.sendMessage(0x20, message_data);
+    logger.info("%04d: Sent message to port 0x20, %hu data bytes, ok=%d", i++, message_data.size(), ok);
+
+    // logger.info("%04d: %lu bytes", i++, util::task_stack_unused_bytes());
     // util::dump_heap_stats();
     vTaskDelay(1000);
   }

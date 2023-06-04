@@ -1,4 +1,6 @@
+port the serial packet library to RTOS.
 
+Port the arduino tests and delete the arduino directory.
 
 Play with the ADC.
 
