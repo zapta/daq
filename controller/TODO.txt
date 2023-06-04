@@ -1,3 +1,7 @@
+Changed all tasks semaphors and mutexes to be statically allocated.
+
+Add unit test for data.copy_from(data).
+
 port the serial packet library to RTOS.
 
 Port the arduino tests and delete the arduino directory.

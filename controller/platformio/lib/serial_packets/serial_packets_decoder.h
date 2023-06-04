@@ -18,7 +18,7 @@ struct DecodedCommandMetadata {
 
 struct DecodedResponseMetadata {
   uint32_t cmd_id;
-  uint8_t status;
+   PacketStatus status;
 };
 
 struct DecodedMessageMetadata {

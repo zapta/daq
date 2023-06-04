@@ -23,6 +23,23 @@ static constexpr uint16_t MAX_PENDING_COMMANDS = 20;
 static constexpr uint16_t MAX_PENDING_COMMANDS = (CONFIG_MAX_PENDING_COMMANDS);
 #endif
 
+
+enum PacketStatus {
+  OK = 0,
+  GENERAL_ERROR = 1,
+  TIMEOUT = 2,
+  UNHANDLED = 3,
+  INVALID_ARGUMENT = 4,
+  LENGTH_ERROR = 5,
+  OUT_OF_RANGE = 6,
+  NOT_CONNECTED = 7,
+  INVALID_STATE = 8,
+  TOO_MANY_COMMANDS = 9,
+
+  // Reserved for application codes from here to 255.
+  USER_ERRORS_BASE = 100,
+};
+
 // Internal consts that users don't need to access.
 namespace serial_packets_consts {
 
@@ -50,5 +67,7 @@ enum PacketType {
   TYPE_RESPONSE = 2,
   TYPE_MESSAGE = 3,
 };
+
+
 
 }  // namespace serial_packets_consts

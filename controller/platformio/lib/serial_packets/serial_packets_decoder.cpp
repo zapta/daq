@@ -124,7 +124,7 @@ bool SerialPacketsDecoder::process_packet() {
     }
     _decoded_metadata.packet_type = TYPE_RESPONSE;
     _decoded_metadata.response.cmd_id = decode_uint32_at_index(1);
-    _decoded_metadata.response.status = _packet_buffer[5];
+    _decoded_metadata.response.status = static_cast<PacketStatus>(_packet_buffer[5]);
     _decoded_data.clear();
     _decoded_data.write_bytes(&_packet_buffer[6], _packet_len - 8);
     return true;

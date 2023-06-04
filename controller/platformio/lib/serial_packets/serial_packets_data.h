@@ -169,6 +169,13 @@ class SerialPacketsBuffer {
     _bytes_read += bytes_to_skip;
   }
 
+  // Copy from a same size buffer.
+  void copy_from(const SerialPacketsBuffer<N>& other ) {
+    clear();
+    memcpy(_buffer, other._buffer, other._size);
+    _size = other._size;
+  }
+
  private:
   // The encoder and decoder access internal functionality for perofrmance.
   friend class SerialPacketsEncoder;
