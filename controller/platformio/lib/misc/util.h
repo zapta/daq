@@ -9,6 +9,6 @@ namespace util {
 // where never used.
 uint32_t task_stack_unused_bytes();
 
-void dump_heap_stats();
+// void dump_heap_stats();
 
 }  // namespace util

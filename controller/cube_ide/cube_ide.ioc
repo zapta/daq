@@ -2,11 +2,12 @@
 CAD.formats=
 CAD.pinconfig=
 CAD.provider=
+FREERTOS.Events01=
 FREERTOS.FootprintOK=true
 FREERTOS.INCLUDE_uxTaskGetStackHighWaterMark=1
-FREERTOS.IPParameters=Tasks01,configMINIMAL_STACK_SIZE,configUSE_NEWLIB_REENTRANT,MEMORY_ALLOCATION,FootprintOK,configTOTAL_HEAP_SIZE,INCLUDE_uxTaskGetStackHighWaterMark
-FREERTOS.MEMORY_ALLOCATION=2
-FREERTOS.Tasks01=defaultTask,0,512,StartDefaultTask,Default,NULL,Dynamic,NULL,NULL
+FREERTOS.IPParameters=Tasks01,configMINIMAL_STACK_SIZE,configUSE_NEWLIB_REENTRANT,MEMORY_ALLOCATION,FootprintOK,configTOTAL_HEAP_SIZE,INCLUDE_uxTaskGetStackHighWaterMark,Events01
+FREERTOS.MEMORY_ALLOCATION=1
+FREERTOS.Tasks01=defaultTask,0,512,StartDefaultTask,Default,NULL,Static,defaultTaskBuffer,defaultTaskControlBlock
 FREERTOS.configMINIMAL_STACK_SIZE=256
 FREERTOS.configTOTAL_HEAP_SIZE=30000
 FREERTOS.configUSE_NEWLIB_REENTRANT=1

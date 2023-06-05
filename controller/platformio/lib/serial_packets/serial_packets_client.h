@@ -14,7 +14,7 @@
 #include "serial_packets_encoder.h"
 #include "serial_packets_logger.h"
 #include "serial_packets_timer.h"
-#include "rtos_util.h"
+#include "static_mutex.h"
 
 // We limit the command timeout duration to avoid accomulation of
 // pending commands.

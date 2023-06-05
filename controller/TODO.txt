@@ -1,16 +1,11 @@
 
-
-
-Write static wrappers for rtos objects.
-
-
-Changed all tasks semaphors and mutexes to be statically allocated.
-
-Add unit test for data.copy_from(data).
+Verify in the default task in freertos.c takes memory. If so, patch it.
 
 port the serial packet library to RTOS.
 
 Port the arduino tests and delete the arduino directory.
+
+Add unit test for data.copy_from(data).
 
 Play with the ADC.
 

@@ -2,7 +2,7 @@
 
 #include "FreeRTOS.h"
 #include "circular_buffer.h"
-#include "rtos_util.h"
+#include "static_mutex.h"
 #include "semphr.h"
 #include "usart.h"
 

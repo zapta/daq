@@ -15,7 +15,7 @@
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
 #include "util.h"
-#include "rtos_util.h"
+#include "static_task.h"
 
 extern "C" void SystemClock_Config(void);
 
@@ -72,7 +72,7 @@ void main_task_body(void* argument) {
   cdc_serial::setup();
   logger.set_level(LOG_INFO);
   logger.info("Serial USB started");
-  util::dump_heap_stats();
+  // util::dump_heap_stats();
 
   MX_GPIO_Init();
   MX_USART1_UART_Init();
