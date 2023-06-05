@@ -11,6 +11,7 @@ Import("env")
 # pass -mfloat-abi=hard here in addition to platformio.ini 
 env.Append(
   LINKFLAGS=[
+    "--specs=nano.specs",
     "-mfpu=fpv5-d16",
     "-mfloat-abi=hard",
     "-mthumb"
