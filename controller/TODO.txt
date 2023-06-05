@@ -1,6 +1,10 @@
+Complete the porting of the serial packet library to RTOS.
 
 
-Complete porting the serial packet library to RTOS.
+---
+
+Match the board configuration to weact example.
+
 
 Port the arduino tests and delete the arduino directory.
 
