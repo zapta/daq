@@ -3,10 +3,13 @@
 #include <FreeRTOS.h>
 #include <task.h>
 #include "static_mutex.h"
+#include "time_util.h"
+// #include "elapsed.h"
 
 using serial_packets_consts::TYPE_COMMAND;
 using serial_packets_consts::TYPE_MESSAGE;
 using serial_packets_consts::TYPE_RESPONSE;
+
 
 // void SerialPacketsClient::begin(Stream& data_stream, Stream& log_stream) {
 //   if (begun()) {
@@ -18,15 +21,16 @@ using serial_packets_consts::TYPE_RESPONSE;
 //   force_next_pre_flag();
 // }
 
-void SerialPacketsClient::begin(Serial& ser, SerialPacketsIncomingCommandHandler command_handler,
+PacketStatus SerialPacketsClient::begin(Serial& ser, SerialPacketsIncomingCommandHandler command_handler,
       SerialPacketsIncomingMessageHandler message_handler) {
   if (begun()) {
     logger.error("ERROR: Serial packets begin() already called, ignoring.\n");
-    return;
+    return PacketStatus::INVALID_STATE;
   }
+
   if (!command_handler || !message_handler) {
      logger.error("ERROR: command and message handlers must be non null.\n");
-    return;  
+    return PacketStatus::INVALID_ARGUMENT;
   }
 
   _serial = &ser;
@@ -35,6 +39,7 @@ void SerialPacketsClient::begin(Serial& ser, SerialPacketsIncomingCommandHandler
 
   // logger.set_stream(nullptr);
   force_next_pre_flag();
+  return PacketStatus::OK;
 }
 
 // void SerialPacketsClient::loop() {
@@ -262,6 +267,7 @@ PacketStatus SerialPacketsClient::sendCommand(
     return PacketStatus::INVALID_STATE;
   }
 
+
   // if (!response_handler) {
   //   logger.error("Trying to send a command without a response handler.");
   //   return false;
@@ -275,6 +281,7 @@ PacketStatus SerialPacketsClient::sendCommand(
     return PacketStatus::OUT_OF_RANGE;
   }
 
+  Elappsed command_timer;
   CommandContext* context = nullptr;
   uint32_t cmd_id = 0;
   {
@@ -378,6 +385,13 @@ PacketStatus SerialPacketsClient::sendCommand(
         return response_status;
       }
 
+      if (command_timer.elapsed_millis() > timeout_millis) {
+        logger.warning("Command timeout.");
+        data.clear();
+        context->clear();
+        return  PacketStatus::TIMEOUT;
+      }
+
       // TODO: Check for timeout.
     }
 
@@ -386,11 +400,14 @@ PacketStatus SerialPacketsClient::sendCommand(
   }
 }
 
-bool SerialPacketsClient::sendMessage(uint8_t endpoint,
+PacketStatus SerialPacketsClient::sendMessage(uint8_t endpoint,
                                       const SerialPacketsData& data) {
-  if (!begun()) {
-    return false;
+  if (begun() != PacketStatus::OK) {
+    logger.error("Client's begin() was not called");
+    return PacketStatus::INVALID_STATE;
   }
+
+ 
 
   {
     // Wait to grab the mutex.
@@ -404,7 +421,7 @@ bool SerialPacketsClient::sendMessage(uint8_t endpoint,
             endpoint, data, insert_pre_flag, &_prot.tmp_stuffed_packet)) {
       logger.error("Failed to encode message packet, data_size=%hu",
                    data.size());
-      return false;
+      return PacketStatus::GENERAL_ERROR;
     }
 
     // Push to TX buffer. It's all or nothing, no partial push.
@@ -427,6 +444,7 @@ bool SerialPacketsClient::sendMessage(uint8_t endpoint,
     _serial->write(_prot.tmp_stuffed_packet._buffer, size);
 
     logger.verbose("Written a message packet with %hu bytes", size);
+    return PacketStatus::OK;
   }
 
   // if (written < size) {
@@ -436,5 +454,5 @@ bool SerialPacketsClient::sendMessage(uint8_t endpoint,
   // }
 
   // cmd_id = new_cmd_id;
-  return true;
+  // return true;
 }

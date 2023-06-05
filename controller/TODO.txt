@@ -1,5 +1,4 @@
 
-Implement command timeout.
 
 Port the arduino tests and delete the arduino directory.
 

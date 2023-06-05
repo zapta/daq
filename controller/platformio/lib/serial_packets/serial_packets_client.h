@@ -23,7 +23,6 @@ constexpr uint16_t DEFAULT_CMD_TIMEOUT_MILLIS = 1000;
 
 // Define status codes of command responses.
 
-
 // A callback type for all incoming commands. Handler should
 // set response_status and response_data with the response
 // info.
@@ -46,7 +45,7 @@ class SerialPacketsClient {
   SerialPacketsClient() {}
   //     SerialPacketsIncomingCommandHandler command_handler,
   //     SerialPacketsIncomingMessageHandler message_handler )
-  //     :  
+  //     :
   //       _optional_command_handler(command_handler),
   //       _optional_message_handler(message_handler)
 
@@ -58,8 +57,9 @@ class SerialPacketsClient {
   // communication and an optional serial stream for debug
   // log.
   // void begin(Stream& data_stream, Stream& log_stream);
-  void begin(Serial& ser, SerialPacketsIncomingCommandHandler command_handler,
-      SerialPacketsIncomingMessageHandler message_handler);
+  PacketStatus begin(Serial& ser,
+                     SerialPacketsIncomingCommandHandler command_handler,
+                     SerialPacketsIncomingMessageHandler message_handler);
 
   // This method should be called frequently from the main
   // loop() of the program. Program should be non blocking
@@ -78,7 +78,7 @@ class SerialPacketsClient {
   // provided response_handler to pass the command response or
   // timeout information. Returns true if the command was sent.
   PacketStatus sendCommand(
-      uint8_t endpoint,  SerialPacketsData& data,
+      uint8_t endpoint, SerialPacketsData& data,
       //  uint32_t user_data,
       //  SerialPacketsCommandResponseHandler response_handler,
       //  uint32_t& cmd_id,
@@ -88,7 +88,8 @@ class SerialPacketsClient {
   // true if the message was sent. There is not positive verification
   // that the message was actually recieved at the other side. For
   // this, use a command instead.
-  bool sendMessage(uint8_t endpoint, const SerialPacketsData& data);
+  PacketStatus sendMessage(
+      uint8_t endpoint, const SerialPacketsData& data);
 
   // Returns the number of in progress commands that wait for a
   // response or to timeout. The max number of allowed pending
@@ -144,9 +145,9 @@ class SerialPacketsClient {
   // SerialPacketsLogger _logger;
 
   // User provided command handler. Non null if begun();
-  SerialPacketsIncomingCommandHandler  _command_handler = nullptr;
+  SerialPacketsIncomingCommandHandler _command_handler = nullptr;
   // user provided message handler. Non null.
-  SerialPacketsIncomingMessageHandler  _message_handler = nullptr;
+  SerialPacketsIncomingMessageHandler _message_handler = nullptr;
 
   Serial* _serial = nullptr;
 
@@ -162,7 +163,6 @@ class SerialPacketsClient {
     SerialPacketsTimer cleanup_timer;
     // A table that contains information about pending commands.
     CommandContext command_contexts[MAX_PENDING_COMMANDS];
-
   };
 
   // All accesses are protected by _prot_mutex.
@@ -170,9 +170,9 @@ class SerialPacketsClient {
 
   StaticMutex _prot_mutex;
 
-  // Data that is accessed only by the RX task and thus doesn't 
+  // Data that is accessed only by the RX task and thus doesn't
   // need protection.
-  struct RxTaskData { 
+  struct RxTaskData {
     uint8_t in_buffer[50];
     // uint16_t in_buffer_size = 0;
     SerialPacketsDecoder packet_decoder;
@@ -196,12 +196,12 @@ class SerialPacketsClient {
 
   // Methos that used to process incoming packets that were
   // decoder by the packet decoder.
-  void rx_process_decoded_response_packet(const DecodedResponseMetadata& metadata,
-                                       const SerialPacketsData& data);
+  void rx_process_decoded_response_packet(
+      const DecodedResponseMetadata& metadata, const SerialPacketsData& data);
   void rx_process_decoded_command_packet(const DecodedCommandMetadata& metadata,
-                                      const SerialPacketsData& data);
+                                         const SerialPacketsData& data);
   void rx_process_decoded_message_packet(const DecodedMessageMetadata& metadata,
-                                      const SerialPacketsData& data);
+                                         const SerialPacketsData& data);
 
   // Manipulate the pre flag timer to force a pre packet flag byte
   // before next packet. Invoked when when we detect errors on the line.
@@ -225,7 +225,7 @@ class SerialPacketsClient {
     return nullptr;
   }
 
-    CommandContext* find_free_context() {
+  CommandContext* find_free_context() {
     for (int i = 0; i < MAX_PENDING_COMMANDS; i++) {
       CommandContext* p = &_prot.command_contexts[i];
       if (p->state == CommandContext::IDLE) {
