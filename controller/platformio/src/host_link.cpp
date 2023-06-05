@@ -9,6 +9,8 @@ void command_handler(uint8_t endpoint, const SerialPacketsData& command_data,
                      uint8_t& response_status,
                      SerialPacketsData& response_data) {
   logger.info("Recieved a command at endpoint %02hhx", endpoint);
+  response_data.write_uint16(0x2233);
+  response_status = 3;
 }
 
 // A callback type for incoming messages.

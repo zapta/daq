@@ -2,7 +2,9 @@
 #pragma once
 
 #include <stdio.h>
+
 #include <algorithm>
+
 #include "main.h"
 #include "stdarg.h"
 
@@ -18,7 +20,7 @@ class Logger {
  public:
   // enum Level { VERBOSE = 1, INFO = 2, WARNING = 3, ERROR = 4, NONE = 5 };
 
-  Logger()  {}
+  Logger() {}
 
   Logger(LoggerLevel level) : _level(constrain_level(level)) {}
 
@@ -46,7 +48,8 @@ class Logger {
   }
 
   // Log at verbose level.
-  void verbose(const char* format, ...) const {
+  __attribute__((format(printf, 2, 3))) void verbose(const char* format,
+                                                     ...) const {
     if (is_verbose()) {
       va_list ap;
       va_start(ap, format);
@@ -56,7 +59,8 @@ class Logger {
   }
 
   // Log at info level.
-  void info(const char* format, ...) const {
+  __attribute__((format(printf, 2, 3))) void info(const char* format,
+                                                  ...) const {
     if (is_info()) {
       va_list ap;
       va_start(ap, format);
@@ -66,7 +70,8 @@ class Logger {
   }
 
   // Log at warning level.
-  void warning(const char* format, ...) const {
+  __attribute__((format(printf, 2, 3))) void warning(const char* format,
+                                                     ...) const {
     if (is_warning()) {
       va_list ap;
       va_start(ap, format);
@@ -76,7 +81,8 @@ class Logger {
   }
 
   // Log at error level.
-  void error(const char* format, ...) const {
+  __attribute__((format(printf, 2, 3))) void error(const char* format,
+                                                   ...) const {
     if (is_error()) {
       va_list ap;
       va_start(ap, format);

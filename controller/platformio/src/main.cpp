@@ -24,7 +24,7 @@ __attribute__((section(".rodata"))) const int uxTopUsedPriority =
     configMAX_PRIORITIES - 1;
 }
 
-static SerialPacketsData message_data;
+static SerialPacketsData data;
 
 void main_task_body(void* argument) {
   MX_GPIO_Init();
@@ -45,17 +45,21 @@ void main_task_body(void* argument) {
     Error_Handler();
   }
 
-  int i = 0;
-  for (;;) {
+  for (int i=1;;i++) {
     // util::dump_heap_stats();
 
     io::LED.toggle();
 
-    message_data.clear();
-    message_data.write_uint32(0x12345678);
-    const bool ok = host_link::client.sendMessage(0x20, message_data);
-    logger.info("%04d: Sent message to port 0x20, %hu data bytes, ok=%d", i++,
-                message_data.size(), ok);
+    data.clear();
+    data.write_uint32(0x12345678);
+
+    // const bool ok = host_link::client.sendMessage(0x20, message_data);
+    // logger.info("%04d: Sent message to port 0x20, %hu data bytes, ok=%d", i,
+    //             message_data.size(), ok);
+
+  const PacketStatus status = host_link::client.sendCommand(0x20, data);
+  logger.info("%04d: Recieced respond, status = %d, size=%hu", i, status, data.size());
+
     // logger.info("Free stacks: %hu, %hu, %hu",
     //             tasks::main_task.unused_stack_bytes(),
     //             tasks::cdc_logger_task.unused_stack_bytes(),

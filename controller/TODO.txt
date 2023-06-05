@@ -1,14 +1,14 @@
-Complete the porting of the serial packet library to RTOS.
 
-
----
-
-Match the board configuration to weact example.
-
+Implement command timeout.
 
 Port the arduino tests and delete the arduino directory.
 
 Add unit test for data.copy_from(data).
+
+
+---
+
+Match the board configuration to weact example, especially the quadspi.
 
 Play with the ADC.
 

@@ -220,7 +220,7 @@ void SerialPacketsClient::rx_process_decoded_response_packet(
   if (!context) {
     // NOTE: Potentially blocking.
     logger.error(
-        "Incoming response packet has no pending command %08x. May timeout.",
+        "Incoming response packet has no pending command %08lx. May timeout.",
         metadata.cmd_id);
     return;
   }
@@ -354,7 +354,7 @@ PacketStatus SerialPacketsClient::sendCommand(
   // cmd_id = new_cmd_id;
 
   // NOTE: This is blocking.
-  logger.verbose("Command packet written ok, cmd_id = %08x", cmd_id);
+  logger.verbose("Command packet written ok, cmd_id = %08lx", cmd_id);
 
   for (;;) {
     {
@@ -362,7 +362,7 @@ PacketStatus SerialPacketsClient::sendCommand(
 
       // No need to find the context by cmd id since it can't
       // be moved.
-      if (context->state != CommandContext::IDLE || context->cmd_id != cmd_id) {
+      if (context->state == CommandContext::IDLE || context->cmd_id != cmd_id) {
         // Should not happen. The context should not be reallocated while we
         // wait for response.
         data.clear();
