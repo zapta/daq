@@ -15,12 +15,22 @@
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
 #include "util.h"
+#include "rtos_util.h"
 
 extern "C" void SystemClock_Config(void);
 
 static SerialPacketsClient serial_packets_client;
 
 static SerialPacketsData message_data;
+
+// For OpenOCD thread awareness. Per
+// https://community.platformio.org/t/freertos-with-stm32cube-framework-on-nucleof767zi/9601
+extern "C" {
+extern const int uxTopUsedPriority;
+__attribute__((section(".rodata"))) const int uxTopUsedPriority =
+    configMAX_PRIORITIES - 1;
+}
+
 
 void command_handler(uint8_t endpoint, const SerialPacketsData& command_data,
                      uint8_t& response_status,
@@ -33,7 +43,14 @@ void message_handler(uint8_t endpoint, const SerialPacketsData& message_data) {
   logger.info("Recieved a message at endpoint %02hhx", endpoint);
 }
 
-void rx_task(void* argument) {
+void main_task_body(void* argument);
+static StaticTask<1000> main_task(main_task_body, "Main", 10);
+
+void rx_task_body(void* argument);
+static StaticTask<1000> rx_task(rx_task_body, "RX", 10);
+
+
+void rx_task_body(void* argument) {
   // for (;;) {
   // This method doesn't return.
   serial_packets_client.rx_task_body();
@@ -49,9 +66,11 @@ void rx_task(void* argument) {
   // }
 }
 
-void main_task(void* argument) {
+
+void main_task_body(void* argument) {
   // Do not use printf() or logger before calling cdc_serial::setup() here.
   cdc_serial::setup();
+  logger.set_level(LOG_INFO);
   logger.info("Serial USB started");
   util::dump_heap_stats();
 
@@ -60,9 +79,14 @@ void main_task(void* argument) {
   serial::serial1.init();
   serial_packets_client.begin(serial::serial1, command_handler,
                               message_handler);
-  TaskHandle_t xHandle = NULL;
-  xTaskCreate(rx_task, "RX1", 1000 / sizeof(StackType_t), nullptr, 10,
-              &xHandle);
+  // TaskHandle_t xHandle = NULL;
+  // xTaskCreate(rx_task, "RX1", 1000 / sizeof(StackType_t), nullptr, 10,
+  //             &xHandle);
+
+  
+  if (!rx_task.start()) {
+    Error_Handler();
+  }
 
   int i = 0;
   for (;;) {
@@ -80,13 +104,8 @@ void main_task(void* argument) {
   }
 }
 
-// For OpenOCD thread awareness. Per
-// https://community.platformio.org/t/freertos-with-stm32cube-framework-on-nucleof767zi/9601
-extern "C" {
-extern const int uxTopUsedPriority;
-__attribute__((section(".rodata"))) const int uxTopUsedPriority =
-    configMAX_PRIORITIES - 1;
-}
+
+
 
 // Based on lib/autogen_core/main.c.ignore
 int main(void) {
@@ -95,9 +114,14 @@ int main(void) {
   // in the main task..
   HAL_Init();
   SystemClock_Config();
-  TaskHandle_t xHandle = NULL;
-  xTaskCreate(main_task, "Main", 1000 / sizeof(StackType_t), nullptr, 10,
-              &xHandle);
+
+  // TaskHandle_t xHandle = NULL;
+  // xTaskCreate(main_task, "Main", 1000 / sizeof(StackType_t), nullptr, 10,
+  //             &xHandle);
+  if (!main_task.start()) {
+    Error_Handler();
+  }
+
   // Normally, this never returns.
   vTaskStartScheduler();
   Error_Handler();
