@@ -2,6 +2,7 @@
 
 #include "FreeRTOS.h"
 #include "circular_buffer.h"
+#include "rtos_util.h"
 #include "semphr.h"
 #include "usart.h"
 
@@ -16,15 +17,20 @@ class Serial {
     for (;;) {
       bool written = false;
       bool tx_in_progress = false;
-      xSemaphoreTake(_tx_mutex, portMAX_DELAY);
-      __disable_irq();
-      written = _tx_buffer.write(bfr, len);
-      tx_in_progress = _huart->gState & 0x01;
-      __enable_irq();
-      if (!tx_in_progress) {
-        tx_next_chunk();
+      {
+        MutexScope mutex_scope(_tx_mutex);
+        // xSemaphoreTake(_tx_mutex.handle(), portMAX_DELAY);
+        __disable_irq();
+        {
+          written = _tx_buffer.write(bfr, len);
+          tx_in_progress = _huart->gState & 0x01;
+        }
+        __enable_irq();
+        if (!tx_in_progress) {
+          tx_next_chunk();
+        }
+        // xSemaphoreGive(_tx_mutex);
       }
-      xSemaphoreGive(_tx_mutex);
       if (written) {
         return;
       }
@@ -38,15 +44,18 @@ class Serial {
     for (;;) {
       int bytes_read = 0;
       // bool tx_in_progress = false;
-      xSemaphoreTake(_rx_mutex, portMAX_DELAY);
-      __disable_irq();
-      bytes_read = _rx_buffer.read(bfr, len);
-      // tx_in_progress = _huart->gState & 0x01;
-      __enable_irq();
-      // if (!tx_in_progress) {
-      //   tx_next_chunk();
-      // }
-      xSemaphoreGive(_rx_mutex);
+      // xSemaphoreTake(_rx_mutex, portMAX_DELAY);
+      {
+        MutexScope mutex_scope(_rx_mutext);
+        __disable_irq();
+        { bytes_read = _rx_buffer.read(bfr, len); }
+        // tx_in_progress = _huart->gState & 0x01;
+        __enable_irq();
+        // if (!tx_in_progress) {
+        //   tx_next_chunk();
+        // }
+        // xSemaphoreGive(_rx_mutex);
+      }
       if (bytes_read) {
         return bytes_read;
       }
@@ -66,11 +75,11 @@ class Serial {
   UART_HandleTypeDef* _huart;
   // TX
   CircularBuffer<uint8_t, 1000> _tx_buffer;
-  SemaphoreHandle_t _tx_mutex = xSemaphoreCreateMutex();
+  StaticMutex _tx_mutex;
   uint8_t _tx_transfer_buffer[20];
   // RX
   CircularBuffer<uint8_t, 1000> _rx_buffer;
-  SemaphoreHandle_t _rx_mutex = xSemaphoreCreateMutex();
+  StaticMutex _rx_mutext;
   uint8_t _rx_transfer_buffer[20];
 
   // Called in mutex and in interrupt. No need to protect access.

@@ -2,8 +2,7 @@
 
 #include <FreeRTOS.h>
 #include <task.h>
-
-#include "mutex_scope.h"
+#include "rtos_util.h"
 
 using serial_packets_consts::TYPE_COMMAND;
 using serial_packets_consts::TYPE_MESSAGE;

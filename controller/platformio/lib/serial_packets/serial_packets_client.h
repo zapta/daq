@@ -14,6 +14,7 @@
 #include "serial_packets_encoder.h"
 #include "serial_packets_logger.h"
 #include "serial_packets_timer.h"
+#include "rtos_util.h"
 
 // We limit the command timeout duration to avoid accomulation of
 // pending commands.
@@ -167,7 +168,7 @@ class SerialPacketsClient {
   // All accesses are protected by _prot_mutex.
   ProtectedState _prot;
 
-  SemaphoreHandle_t _prot_mutex = xSemaphoreCreateMutex();
+  StaticMutex _prot_mutex;
 
   // Data that is accessed only by the RX task and thus doesn't 
   // need protection.
