@@ -34,15 +34,15 @@ static CircularBuffer<uint8_t, 1000> circular_buffer;
 // static SemaphoreHandle_t semaphore_handle = nullptr;
 static StaticMutex mutex;
 
-void tx_task_body(void* argument);
-static StaticTask<1000> task(tx_task_body, "Logger", 10);
+// void tx_task_body(void* argument);
+// static StaticTask<1000> task(tx_task_body, "Logger", 10);
 
 // static StaticTask<1000
 
 // Temp buffer for sending data.
 static uint8_t tx_buffer[100];
 
-void tx_task_body(void* argument) {
+void logger_task_body(void* argument) {
   for (;;) {
     // Transfer a chunk of data to tx_buffer, if avaiable.
     uint16_t bytes_to_send = 0;
@@ -77,9 +77,9 @@ void setup() {
   // data (which is not a big deal);
   HAL_Delay(1000);
 
-  if (!task.start()) {
-    Error_Handler();
-  }
+  // if (!task.start()) {
+  //   Error_Handler();
+  // }
 
   // semaphore_handle = xSemaphoreCreateBinary();
   // if (!semaphore_handle) {

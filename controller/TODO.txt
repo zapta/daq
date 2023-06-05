@@ -1,7 +1,6 @@
 
-Verify in the default task in freertos.c takes memory. If so, patch it.
 
-port the serial packet library to RTOS.
+Complete porting the serial packet library to RTOS.
 
 Port the arduino tests and delete the arduino directory.
 

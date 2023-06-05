@@ -1,9 +1,20 @@
 #pragma once
 
 #include <FreeRTOS.h>
+
+#include "task.h"
 // #include <semphr.h>
 
 #include "logger.h"
+
+// class StaticTaskIfc {
+
+// public:
+//   // Empty virtual destructor for proper cleanup
+//   virtual ~StaticTaskIfc() {}
+
+//   virtual bool  start() = 0;
+// };
 
 // TODO: add a scoped disable interrupts.
 // TODO: add a static task wrapper.
@@ -92,6 +103,12 @@ class StaticTask {
   }
 
   inline TaskHandle_t handle() { return _handle; }
+
+  uint32_t unused_stack_bytes() {
+    return (_handle == nullptr)
+               ? 0
+               : sizeof(StackType_t) * uxTaskGetStackHighWaterMark(_handle);
+  }
 
   // This is non tested and vSemaphoreDelete may not work if tasks are waiting.
   // Generally speaking we don't intend to free static mutexes.
