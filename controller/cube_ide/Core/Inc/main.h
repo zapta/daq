@@ -61,6 +61,12 @@ void Error_Handler(void);
 #define LED_GPIO_Port GPIOE
 #define SWITCH_Pin GPIO_PIN_13
 #define SWITCH_GPIO_Port GPIOC
+#define ADC_SCK_Pin GPIO_PIN_5
+#define ADC_SCK_GPIO_Port GPIOA
+#define ADC_MISO_Pin GPIO_PIN_6
+#define ADC_MISO_GPIO_Port GPIOA
+#define ADC_MOSI_Pin GPIO_PIN_7
+#define ADC_MOSI_GPIO_Port GPIOA
 #define TEST1_Pin GPIO_PIN_1
 #define TEST1_GPIO_Port GPIOD
 #define TEST2_Pin GPIO_PIN_2

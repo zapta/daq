@@ -49,7 +49,7 @@ class InputPin {
     // gpio_set_pull_mode(pin_num_, pull_mode);
   }
   inline bool read() { 
-       HAL_GPIO_ReadPin(_gpio_port, _gpio_pin);
+       return HAL_GPIO_ReadPin(_gpio_port, _gpio_pin);
         // _gpio_port, _gpio_pin,
         // (is_on == _inverted) ? GPIO_PIN_RESET :  GPIO_PIN_SET );
    }

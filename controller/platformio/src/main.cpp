@@ -10,6 +10,7 @@
 #include "io.h"
 #include "logger.h"
 #include "serial.h"
+#include "spi.h"
 #include "tasks.h"
 #include "usart.h"
 #include "usbd_cdc_if.h"
@@ -45,6 +46,9 @@ void main_task_body(void* argument) {
     Error_Handler();
   }
 
+  // Init ADC SPI.
+  MX_SPI1_Init();
+
   for (int i = 1;; i++) {
     // util::dump_heap_stats();
 
@@ -60,7 +64,7 @@ void main_task_body(void* argument) {
     const PacketStatus status = host_link::client.sendCommand(0x20, data);
     logger.info("%04d: Recieced respond, status = %d, size=%hu", i, status,
                 data.size());
-                logger.info("Switch = %d", io::SWITCH.read());
+    logger.info("Switch = %d", io::SWITCH.read());
 
     // logger.info("Free stacks: %hu, %hu, %hu",
     //             tasks::main_task.unused_stack_bytes(),
