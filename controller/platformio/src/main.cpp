@@ -45,7 +45,7 @@ void main_task_body(void* argument) {
     Error_Handler();
   }
 
-  for (int i=1;;i++) {
+  for (int i = 1;; i++) {
     // util::dump_heap_stats();
 
     io::LED.toggle();
@@ -57,8 +57,10 @@ void main_task_body(void* argument) {
     // logger.info("%04d: Sent message to port 0x20, %hu data bytes, ok=%d", i,
     //             message_data.size(), ok);
 
-  const PacketStatus status = host_link::client.sendCommand(0x20, data);
-  logger.info("%04d: Recieced respond, status = %d, size=%hu", i, status, data.size());
+    const PacketStatus status = host_link::client.sendCommand(0x20, data);
+    logger.info("%04d: Recieced respond, status = %d, size=%hu", i, status,
+                data.size());
+                logger.info("Switch = %d", io::SWITCH.read());
 
     // logger.info("Free stacks: %hu, %hu, %hu",
     //             tasks::main_task.unused_stack_bytes(),
