@@ -11,6 +11,7 @@
 #include "logger.h"
 #include "serial.h"
 #include "spi.h"
+#include "dma.h"
 #include "tasks.h"
 #include "usart.h"
 #include "usbd_cdc_if.h"
@@ -38,6 +39,10 @@ void main_task_body(void* argument) {
   logger.set_level(LOG_INFO);
   logger.info("Serial USB started");
 
+    // Init ADC SPI.
+  MX_DMA_Init();
+  MX_SPI1_Init();
+
   // Init host link via serial 1.
   MX_USART1_UART_Init();
   serial::serial1.init();
@@ -46,8 +51,7 @@ void main_task_body(void* argument) {
     Error_Handler();
   }
 
-  // Init ADC SPI.
-  MX_SPI1_Init();
+
 
   for (int i = 1;; i++) {
     // util::dump_heap_stats();

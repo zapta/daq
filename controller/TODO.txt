@@ -2,6 +2,7 @@
 
 Write ADC SPI driver.
 
+Move pin TEST2 to a free pin. Currently conflicts with SD card.
 
 ---
 
