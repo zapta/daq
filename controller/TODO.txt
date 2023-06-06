@@ -1,18 +1,18 @@
 
 
-Port the arduino tests and delete the arduino directory.
-
-Add unit test for data.copy_from(data).
+Write ADC SPI driver.
 
 
 ---
 
 Match the board configuration to weact example, especially the quadspi.
 
-Play with the ADC.
 
 Write script to fix openocd.
 
+Port the arduino tests and delete the arduino directory.
+
+Add unit test for data.copy_from(data).
 
 ----------
 Firmware
