@@ -2,13 +2,15 @@
 
 #include "FreeRTOS.h"
 #include "circular_buffer.h"
-#include "static_mutex.h"
 #include "semphr.h"
+#include "static_mutex.h"
 #include "usart.h"
 
 class Serial {
  public:
   Serial(UART_HandleTypeDef* huart) : _huart(huart) {}
+  //    HAL_UART_RegisterCallback()
+  //  }
 
   void write_str(const char* str) { write((uint8_t*)str, strlen(str)); }
 
@@ -64,13 +66,32 @@ class Serial {
     }
   }
 
-  void init() { rx_next_chunk(0); }
+  void init() {
+    // Register callback handlers.
+    if (HAL_OK != HAL_UART_RegisterCallback(_huart, HAL_UART_TX_COMPLETE_CB_ID,
+                                   uart_TxCpltCallback)) {
+      Error_Handler();
+    }
+    if (HAL_OK != HAL_UART_RegisterCallback(_huart, HAL_UART_RX_COMPLETE_CB_ID,
+                                   uart_RxCpltCallback)) {
+      Error_Handler();
+    }
+    if (HAL_OK != HAL_UART_RegisterRxEventCallback(_huart, uart_RxEventCallback)) {
+      Error_Handler();
+    }
+    // Start the reception.
+    rx_next_chunk(0);
+  }
 
  private:
-  friend void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart);
-  friend void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart);
-  friend void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
-                                         uint16_t Size);
+  // friend void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart);
+  // friend void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart);
+  // friend void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
+  //                                        uint16_t Size);
+
+  static void uart_TxCpltCallback(UART_HandleTypeDef* huart);
+  static void uart_RxCpltCallback(UART_HandleTypeDef* huart);
+  static void uart_RxEventCallback(UART_HandleTypeDef* huart, uint16_t Size);
 
   UART_HandleTypeDef* _huart;
   // TX
