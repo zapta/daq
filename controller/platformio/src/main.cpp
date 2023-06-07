@@ -15,6 +15,7 @@
 #include "tasks.h"
 #include "usart.h"
 #include "usbd_cdc_if.h"
+#include "adc.h"
 
 extern "C" void SystemClock_Config(void);
 
@@ -51,7 +52,7 @@ void main_task_body(void* argument) {
     Error_Handler();
   }
 
-
+  //adc::test();
 
   for (int i = 1;; i++) {
     // util::dump_heap_stats();
