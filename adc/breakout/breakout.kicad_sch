@@ -5,7 +5,7 @@
   (paper "C")
 
   (lib_symbols
-    (symbol "adc:ADS1261IRHBR" (pin_names (offset 0.254)) (in_bom yes) (on_board yes)
+    (symbol "breakout:ADS1261IRHBR" (pin_names (offset 0.254)) (in_bom yes) (on_board yes)
       (property "Reference" "U" (at 0 2.54 0)
         (effects (font (size 1.524 1.524)))
       )
@@ -242,7 +242,7 @@
 
   (wire (pts (xy 147.32 177.8) (xy 142.24 177.8))
     (stroke (width 0) (type default))
-    (uuid 6aadcee3-9915-488a-a55f-8428f3e171ec)
+    (uuid 6abreakoutee3-9915-488a-a55f-8428f3e171ec)
   )
   (wire (pts (xy 142.24 180.34) (xy 142.24 186.69))
     (stroke (width 0) (type default))
@@ -282,7 +282,7 @@
     )
     (pin "1" (uuid 8d9299c7-a0f9-4ba4-951d-d1756d5cce98))
     (instances
-      (project "adc"
+      (project "breakout"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
           (reference "#PWR01") (unit 1)
         )
@@ -290,7 +290,7 @@
     )
   )
 
-  (symbol (lib_id "adc:ADS1261IRHBR") (at 170.18 119.38 0) (unit 1)
+  (symbol (lib_id "breakout:ADS1261IRHBR") (at 170.18 119.38 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 5cc9949a-b29a-48ee-b8c9-3dca9cd4c56d)
     (property "Reference" "U1" (at 170.18 52.5223 0)
@@ -339,7 +339,7 @@
     (pin "8" (uuid 16b16a95-7589-47dc-b2bd-9dc6963562bd))
     (pin "9" (uuid a7e98646-2359-48f6-89cf-d921eea951ff))
     (instances
-      (project "adc"
+      (project "breakout"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
           (reference "U1") (unit 1)
         )

@@ -1,4 +1,4 @@
 (sym_lib_table
   (version 7)
-  (lib (name "adc")(type "KiCad")(uri "${KIPRJMOD}/adc.kicad_sym")(options "")(descr ""))
+  (lib (name "breakout")(type "KiCad")(uri "${KIPRJMOD}/breakout.kicad_sym")(options "")(descr ""))
 )
