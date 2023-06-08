@@ -6,7 +6,7 @@
     (property "Value" "esd_x4" (at 0 7.62 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Footprint" "power_supply:Diodes_UDFN-10_1.0x2.5mm_P0.5mm" (at -1.016 10.16 0)
+    (property "Footprint" "common:Diodes_UDFN-10_1.0x2.5mm_P0.5mm" (at -1.016 10.16 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "" (at -6.35 17.78 0)
@@ -28,48 +28,6 @@
       )
     )
     (symbol "ESD5344D_1_1"
-      (polyline
-        (pts
-          (xy -1.27 2.54)
-          (xy 1.27 2.54)
-        )
-        (stroke (width 0.254) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 0 0)
-          (xy 0 -1.27)
-        )
-        (stroke (width 0.254) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 0 2.54)
-          (xy 0 3.81)
-        )
-        (stroke (width 0.254) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 1.27 2.54)
-          (xy 1.27 2.032)
-        )
-        (stroke (width 0.254) (type default))
-        (fill (type none))
-      )
-      (polyline
-        (pts
-          (xy 1.27 0)
-          (xy 0 2.54)
-          (xy -1.27 0)
-          (xy 1.27 0)
-        )
-        (stroke (width 0.254) (type default))
-        (fill (type none))
-      )
       (pin passive line (at -5.08 5.08 0) (length 1.905)
         (name "D1" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
