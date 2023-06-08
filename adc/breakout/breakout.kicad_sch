@@ -3113,7 +3113,7 @@
     (property "Value" "ADS1261IRHBR" (at 69.85 109.22 0)
       (effects (font (size 1.524 1.524)))
     )
-    (property "Footprint" "RHB0032E" (at 91.44 106.68 0)
+    (property "Footprint" "breakout:RHB0032E" (at 91.44 106.68 0)
       (effects (font (size 1.27 1.27) italic) hide)
     )
     (property "Datasheet" "ADS1261IRHBR" (at 91.44 106.68 0)
