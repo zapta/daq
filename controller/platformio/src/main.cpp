@@ -52,10 +52,12 @@ void main_task_body(void* argument) {
     Error_Handler();
   }
 
-  //adc::test();
+  adc::test_setup();
 
   for (int i = 1;; i++) {
     // util::dump_heap_stats();
+
+    adc::test_loop();
 
     io::LED.toggle();
 
