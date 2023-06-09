@@ -2733,7 +2733,7 @@
     (property "ki_keywords" "adjustable linear regulator")
     (path "/29ceb12c-3a57-4b29-b719-5dcbae86aefc")
     (attr smd)
-    (fp_text reference "U5" (at 0.381 -2.4 -90) (layer "F.SilkS")
+    (fp_text reference "U5" (at 0.381 -2.4 -90) (layer "F.SilkS") hide
         (effects (font (size 1 1) (thickness 0.15)))
       (tstamp ade58c3b-8c45-45ca-8c59-b9db836f193a)
     )
