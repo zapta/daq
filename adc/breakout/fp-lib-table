@@ -2,4 +2,5 @@
   (version 7)
   (lib (name "breakout")(type "KiCad")(uri "${KIPRJMOD}/breakout.pretty")(options "")(descr ""))
   (lib (name "common")(type "KiCad")(uri "C:/Users/user/projects/daq/repo/common/kicad/common.pretty")(options "")(descr ""))
+  (lib (name "adc")(type "KiCad")(uri "C:/Users/user/projects/daq/repo/adc/kicad/adc.pretty")(options "")(descr ""))
 )
