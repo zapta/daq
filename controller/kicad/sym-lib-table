@@ -2,4 +2,5 @@
   (version 7)
   (lib (name "controller")(type "KiCad")(uri "${KIPRJMOD}/controller.kicad_sym")(options "")(descr ""))
   (lib (name "common")(type "KiCad")(uri "${KIPRJMOD}/../../common/kicad/common.kicad_sym")(options "")(descr ""))
+  (lib (name "ble")(type "KiCad")(uri "C:/Users/user/projects/ble_stepper_motor_analyzer/repo/kicad/stepper_monitor.kicad_sym")(options "")(descr ""))
 )
