@@ -3817,7 +3817,7 @@
     (property "Reference" "U3" (at 154.305 107.95 0)
       (effects (font (size 1.524 1.524)))
     )
-    (property "Value" "ADS1261IRHBR" (at 155.575 104.14 0)
+    (property "Value" "ADS1261B" (at 155.575 104.14 0)
       (effects (font (size 1.524 1.524)))
     )
     (property "Footprint" "breakout:RHB0032E" (at 177.165 101.6 0)

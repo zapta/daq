@@ -3974,7 +3974,7 @@
         (effects (font (size 1 1) (thickness 0.15)))
       (tstamp 57644253-475b-4058-b83a-b1fc8511ae41)
     )
-    (fp_text value "ADS1261IRHBR" (at -0.7 3.65 90 unlocked) (layer "F.Fab")
+    (fp_text value "ADS1261B" (at -0.7 3.65 90 unlocked) (layer "F.Fab")
         (effects (font (size 1 1) (thickness 0.15)))
       (tstamp e0818e14-7d69-4a65-9941-0be6eb84b502)
     )
