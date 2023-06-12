@@ -45,11 +45,12 @@ static const uint16_t CRC_CCITT_TABLE[256] = {
     0xDF7C, 0xAF9B, 0xBFBA, 0x8FD9, 0x9FF8, 0x6E17, 0x7E36, 0x4E55, 0x5E74,
     0x2E93, 0x3EB2, 0x0ED1, 0x1EF0};
 
-uint16_t serial_packets_gen_crc16(const uint8_t* buffer, int size) {
+uint16_t serial_packets_gen_crc16(const uint8_t* buffer, int size,
+                                  uint16_t initial_crc) {
   io::TEST1.on();
 
   uint16_t tmp;
-  uint16_t crc = 0xffff;
+  uint16_t crc = initial_crc;
 
   for (int i = 0; i < size; i++) {
     tmp = (crc >> 8) ^ buffer[i];
