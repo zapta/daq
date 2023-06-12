@@ -4,18 +4,18 @@
 #include <unistd.h>
 
 #include "FreeRTOS.h"
+#include "adc.h"
 #include "cdc_serial.h"
+#include "dma.h"
 #include "gpio.h"
 #include "host_link.h"
 #include "io.h"
 #include "logger.h"
 #include "serial.h"
 #include "spi.h"
-#include "dma.h"
 #include "tasks.h"
 #include "usart.h"
 #include "usbd_cdc_if.h"
-#include "adc.h"
 
 extern "C" void SystemClock_Config(void);
 
@@ -40,7 +40,7 @@ void main_task_body(void* argument) {
   logger.set_level(LOG_INFO);
   logger.info("Serial USB started");
 
-    // Init ADC SPI.
+  // Init ADC SPI.
   MX_DMA_Init();
   MX_SPI1_Init();
 
