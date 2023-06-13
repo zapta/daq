@@ -61,12 +61,7 @@ class SerialPacketsClient {
                      SerialPacketsIncomingCommandHandler command_handler,
                      SerialPacketsIncomingMessageHandler message_handler);
 
-  // This method should be called frequently from the main
-  // loop() of the program. Program should be non blocking
-  // (avoid delay()) such that this method is called frequently.
-  // It process incoming data, invokes the callback handlers
-  // and cleans up timeout commands.
-  // void loop();
+  // Does not return.
   void rx_task_body();
 
   // Adjust log level. If
@@ -211,8 +206,8 @@ class SerialPacketsClient {
   }
 
   // Subfunctionalties of loop().
-  void loop_rx();
-  void loop_cleanup();
+  // void loop_rx();
+  // void loop_cleanup();
 
   // Lookup a non idle context entry with given command id.
   CommandContext* find_context_by_cmd_id(uint32_t cmd_id) {

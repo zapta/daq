@@ -1,6 +1,5 @@
 #pragma once
 
-
 // A simple timer for measuring elapsed time in milliseconds.
 
 #include "FreeRTOS.h"
@@ -23,3 +22,7 @@ class Elappsed {
  private:
   uint32_t start_millis_;
 };
+
+namespace time_util {
+inline uint32_t millis() { return xTaskGetTickCount(); }
+}  // namespace time_util
