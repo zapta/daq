@@ -13,97 +13,36 @@
 #include "logger.h"
 #include "serial.h"
 #include "spi.h"
-#include "tasks.h"
+#include "static_task.h"
 #include "usart.h"
 #include "usbd_cdc_if.h"
 
-extern "C" void SystemClock_Config(void);
-
-// For OpenOCD thread awareness. Per
-// https://community.platformio.org/t/freertos-with-stm32cube-framework-on-nucleof767zi/9601
-extern "C" {
-extern const int uxTopUsedPriority;
-__attribute__((section(".rodata"))) const int uxTopUsedPriority =
-    configMAX_PRIORITIES - 1;
-}
-
 static SerialPacketsData data;
 
-void main_task_body(void* argument) {
-  MX_GPIO_Init();
+StaticTask<2000> host_link_rx_task(host_link::rx_task_body, "Host RX", 10);
 
-  // Initialize the logger. This enables the logger.
-  cdc_serial::setup();
-  if (!tasks::cdc_logger_task.start()) {
-    Error_Handler();
-  }
-  logger.set_level(LOG_INFO);
-  logger.info("Serial USB started");
-
-  // Init ADC SPI.
-  MX_DMA_Init();
-  MX_SPI1_Init();
-
-  // Init host link via serial 1.
-  MX_USART1_UART_Init();
+// Called from from the main FreeRTOS task.
+void app_main() {
   serial::serial1.init();
+
   host_link::setup(serial::serial1);
-  if (!tasks::host_link_rx_task.start()) {
+  if (!host_link_rx_task.start()) {
     Error_Handler();
   }
 
   adc::test_setup();
 
   for (int i = 1;; i++) {
-    // util::dump_heap_stats();
-
     adc::test_loop();
-
     io::LED.toggle();
-
     data.clear();
     data.write_uint32(0x12345678);
-
-    // const bool ok = host_link::client.sendMessage(0x20, message_data);
-    // logger.info("%04d: Sent message to port 0x20, %hu data bytes, ok=%d", i,
-    //             message_data.size(), ok);
 
     const PacketStatus status = host_link::client.sendCommand(0x20, data);
     logger.info("%04d: Recieced respond, status = %d, size=%hu", i, status,
                 data.size());
     logger.info("Switch = %d", io::SWITCH.read());
 
-    // logger.info("Free stacks: %hu, %hu, %hu",
-    //             tasks::main_task.unused_stack_bytes(),
-    //             tasks::cdc_logger_task.unused_stack_bytes(),
-    //             tasks::host_link_rx_task.unused_stack_bytes());
-
     vTaskDelay(500);
-  }
-}
-
-// Based on lib/autogen_core/main.c.ignore
-int main(void) {
-  // We perform the minimum initialization required to start
-  // FreeRTOS and the main task, and then do the rest
-  // in the main task..
-  HAL_Init();
-  SystemClock_Config();
-
-  // TaskHandle_t xHandle = NULL;
-  // xTaskCreate(main_task, "Main", 1000 / sizeof(StackType_t), nullptr, 10,
-  //             &xHandle);
-  if (!tasks::main_task.start()) {
-    Error_Handler();
-  }
-
-  // Normally, this never returns.
-  vTaskStartScheduler();
-  Error_Handler();
-}
-
-void Error_Handler(void) {
-  __disable_irq();
-  while (1) {
   }
 }

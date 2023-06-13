@@ -71,29 +71,29 @@ void logger_task_body(void* argument) {
 
 // static uint8_t empty_buffer[] = {"."};
 
-void setup() {
-  MX_USB_DEVICE_Init();
-  // Let the USB driver stablize, otherwise we loose initial
-  // data (which is not a big deal);
-  HAL_Delay(1000);
+// void setup() {
+//   MX_USB_DEVICE_Init();
+//   // Let the USB driver stablize, otherwise we loose initial
+//   // data (which is not a big deal);
+//   HAL_Delay(1000);
 
-  // if (!task.start()) {
-  //   Error_Handler();
-  // }
+//   // if (!task.start()) {
+//   //   Error_Handler();
+//   // }
 
-  // semaphore_handle = xSemaphoreCreateBinary();
-  // if (!semaphore_handle) {
-  //   Error_Handler();
-  // }
-  // xSemaphoreGive(semaphore_handle);
+//   // semaphore_handle = xSemaphoreCreateBinary();
+//   // if (!semaphore_handle) {
+//   //   Error_Handler();
+//   // }
+//   // xSemaphoreGive(semaphore_handle);
 
-  // TaskHandle_t task_handle = NULL;
-  // xTaskCreate(tx_task, "Logger", 500 / sizeof(StackType_t), nullptr, 10,
-  //             &task_handle);
-  // if (!task_handle) {
-  //   Error_Handler();
-  // }
-}
+//   // TaskHandle_t task_handle = NULL;
+//   // xTaskCreate(tx_task, "Logger", 500 / sizeof(StackType_t), nullptr, 10,
+//   //             &task_handle);
+//   // if (!task_handle) {
+//   //   Error_Handler();
+//   // }
+// }
 
 void write_str(const char* str) {
   const uint16_t len = strlen(str);

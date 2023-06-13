@@ -84,10 +84,6 @@ class Serial {
   }
 
  private:
-  // friend void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart);
-  // friend void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart);
-  // friend void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef* huart,
-  //                                        uint16_t Size);
 
   static void uart_TxCpltCallback(UART_HandleTypeDef* huart);
   static void uart_RxCpltCallback(UART_HandleTypeDef* huart);
