@@ -36,12 +36,6 @@ class CircularBuffer {
     }
   }
 
-  // Writes all items, deleting oldest one if buffer is full.
-  // void enqueue(const T* bfr, uint16_t len);
-
-  // // Returns min(size, len) items in bfr.
-  // uint16_t dequeue(T* bfr, uint16_t len);
-
   bool write(const T* bfr, uint16_t len, bool overwrite = false) {
     if (overwrite) {
       // If len > N, consider only the last N items.

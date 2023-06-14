@@ -81,21 +81,4 @@ class PacketDecoderInspector {
   const SerialPacketsDecoder& _decoder;
 };
 
-// class SerialPacketsClientInspector {
-//  public:
-//   SerialPacketsClientInspector(SerialPacketsClient& client) : _client(client){};
 
-//   void ignore_rx_for_testing(bool value) {
-//     _client._ignore_rx_for_testing = value;
-//   }
-
-//  private:
-//   SerialPacketsClient& _client;
-// };
-
-// void loop_client(SerialPacketsClient& client, uint32_t time_millis);
-
-// Should be invoked at the begining of setup();
-// void common_setup_init();
-
-// void common_loop_body();

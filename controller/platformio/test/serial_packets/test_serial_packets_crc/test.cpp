@@ -46,4 +46,3 @@ void app_main() {
   unity_util::common_end();
 }
 
-// void loop() { common_loop_body(); }

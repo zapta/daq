@@ -1,17 +1,11 @@
 #include "serial_packets_encoder.h"
-
-// #include "io.h"
 #include "serial_packets_consts.h"
-// #include "serial_packets.h"
 
 using serial_packets_consts::PACKET_FLAG;
-// using serial_packets_consts::MIN_PACKET_LEN;
-// using serial_packets_consts::MAX_PACKET_LEN;
 using serial_packets_consts::PACKET_ESC;
 using serial_packets_consts::TYPE_COMMAND;
 using serial_packets_consts::TYPE_RESPONSE;
 using serial_packets_consts::TYPE_MESSAGE;
-// namespace serial_packets {
 
 bool SerialPacketsEncoder::byte_stuffing(const EncodedPacketBuffer& in,
                                   bool insert_pre_flag, StuffedPacketBuffer* out) {
@@ -126,4 +120,3 @@ bool SerialPacketsEncoder::encode_message_packet(uint8_t endpoint,
   return byte_stuffing(_tmp_data, insert_pre_flag, out);
 }
 
-// }  // namespace serial_packets

@@ -10,8 +10,7 @@
 #include "../../unity_util.h"
 #include "serial_packets_decoder.h"
 
-// For STM32 'black pill'.
-// #define BUILTIN_LED PC13
+
 
 // static std::unique_ptr<SerialPacketsLogger> logger;
 static std::unique_ptr<SerialPacketsDecoder> decoder;
@@ -20,9 +19,6 @@ static std::unique_ptr<PacketDecoderInspector> inspector;
 void setUp() {
   inspector.reset();
   decoder.reset();
-  // NOTE: Run platformio verbose test to see any logger output.
-  // logger = std::make_unique<SerialPacketsLogger>(SERIAL_PACKETS_LOG_VERBOSE);
-  // logger->set_stream(&Serial);
   decoder = std::make_unique<SerialPacketsDecoder>();
   inspector = std::make_unique<PacketDecoderInspector>(*decoder);
 }
@@ -123,14 +119,7 @@ void test_message_decoding() {
   assert_data_equal(decoder->packet_data(), {0x11, 0x7e, 0x22, 0x7d});
 }
 
-//  def test_first_packet_no_pre_flag(self):
-//         """Tests that the decoder requires an initial packet flag."""
-//         d = SerialPacketsDecoder(self.packet_callback)
-//         d.receive(bytes([0x03, 0x20, 0x11, 0x7d, 0x5e, 0x22, 0x7d, 0x5d,
-//         0xa9, 0xe0, 0x7e])) self.assertEqual(len(self.packets), 0)
-//         self.assertEqual(len(d._PacketDecoder__packet_bfr), 0)
-//         self.assertTrue(d._PacketDecoder__in_packet)
-//         self.assertFalse(d._PacketDecoder__pending_escape)
+
 
 void app_main() {
   unity_util::common_start();
@@ -150,4 +139,3 @@ void app_main() {
   unity_util::common_end();
 }
 
-// void loop() { common_loop_body(); }

@@ -1,7 +1,6 @@
 
 #include "serial_packets_decoder.h"
 
-// #include <Arduino.h>
 
 #include "serial_packets_crc.h"
 #include "serial_packets_consts.h"
@@ -15,7 +14,6 @@ using serial_packets_consts::TYPE_COMMAND;
 using serial_packets_consts::TYPE_RESPONSE;
 using serial_packets_consts::TYPE_MESSAGE;
 
-// namespace serial_packets {
 
 bool SerialPacketsDecoder::decode_next_byte(uint8_t b) {
   // When not in packet, wait for next  flag byte.
@@ -148,4 +146,3 @@ bool SerialPacketsDecoder::process_packet() {
   return false;
 }
 
-// } // namepspace serial_packets

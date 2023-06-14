@@ -2,11 +2,9 @@
 
 #pragma once
 
-// #include <Arduino.h>
 
 #include "serial_packets_consts.h"
 #include "serial_packets_data.h"
-#include "serial_packets_logger.h"
 
 class SerialPacketsEncoder {
  public:
@@ -30,7 +28,6 @@ class SerialPacketsEncoder {
   // For testing.
   friend class PacketEncoderInspector;
 
-  // SerialPacketsLogger& _logger;
 
   // Used to encode the packet.
   EncodedPacketBuffer _tmp_data;

@@ -3,26 +3,33 @@
 // A simple timer for measuring elapsed time in milliseconds.
 
 #include "FreeRTOS.h"
+#include "main.h"
 #include "task.h"
 
-// Assuming that FreeRTOS tick time is 1ms.
+namespace time_util {
+inline uint32_t millis() {
+  // This should be optimized out by the compiler.
+  if (configTICK_RATE_HZ != 1000) {
+    Error_Handler();
+  }
+  return xTaskGetTickCount();
+}
+}  // namespace time_util
+
 
 class Elappsed {
  public:
   Elappsed() { reset(); }
 
-  void reset() { start_millis_ = xTaskGetTickCount(); }
+  void reset() { start_millis_ = time_util::millis(); }
 
-  uint32_t elapsed_millis() { return xTaskGetTickCount() - start_millis_; }
+  uint32_t elapsed_millis() { return time_util::millis() - start_millis_; }
 
   void set(uint32_t elapsed_millis) {
-    start_millis_ = xTaskGetTickCount() - elapsed_millis;
+    start_millis_ = time_util::millis() - elapsed_millis;
   }
 
  private:
   uint32_t start_millis_;
 };
 
-namespace time_util {
-inline uint32_t millis() { return xTaskGetTickCount(); }
-}  // namespace time_util

@@ -4,7 +4,6 @@
 
 #include <inttypes.h>
 
-// #include <Arduino.h>
 
 // Max size of a packet data. User can override. Impacts memory
 // usage, so use discretion.

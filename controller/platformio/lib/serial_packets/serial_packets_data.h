@@ -4,7 +4,6 @@
 
 #pragma once
 
-// #include <Arduino.h>
 
 #include "logger.h"
 #include "serial_packets_consts.h"
@@ -56,25 +55,7 @@ class SerialPacketsBuffer {
         "  had_read_errros: %hu\n"
         "  capacity: %hu",
         title, _size, _bytes_read, _had_read_errors, capacity());
-    // TODO: dump _data bytes in hex
-
-    // s.println(title);
-    // s.print("  size: ");
-    // s.println(_size);
-    // s.print("  bytes read: ");
-    // s.print(_bytes_read);
-    // if (_had_read_errors) {
-    //   s.print(" (error)");
-    // }
-    // s.println();
-    // s.print("  capacity: ");
-    // s.println(capacity());
-    // s.print("  data:");
-    // for (uint16_t i = 0; i < _size; i++) {
-    //   s.print(' ');
-    //   s.print(_buffer[i], HEX);
-    // }
-    // s.println();
+    // TODO: dump _data bytes in hex  
   }
 
   // Compute the data's CRC.

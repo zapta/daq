@@ -2,11 +2,9 @@
 
 #pragma once
 
-// #include <Arduino.h>
 
 #include "serial_packets_consts.h"
 #include "serial_packets_data.h"
-// #include "serial_packets_logger.h"
 
 using serial_packets_consts::MAX_PACKET_LEN;
 using serial_packets_consts::PacketType;
@@ -46,8 +44,7 @@ class SerialPacketsDecoder {
   const DecodedPacketMetadata& packet_metadata() { return _decoded_metadata; }
   const SerialPacketsData& packet_data() { return _decoded_data; }
 
-  // For debugging. Return the current number of bytes in the packet buffer.
-  // uint16_t len() { return _packet_len; }
+
 
  private:
   // For testing.
