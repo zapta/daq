@@ -14,7 +14,7 @@ void populate_data(SerialPacketsBuffer<N>& data,
                    const std::vector<uint8_t> bytes) {
   data.clear();
   TEST_ASSERT_GREATER_OR_EQUAL(bytes.size(), data.capacity());
-  for (int i = 0; i < bytes.size(); i++) {
+  for (uint32_t i = 0; i < bytes.size(); i++) {
     data.write_uint8(bytes.at(i));
     TEST_ASSERT_FALSE(data.had_write_errors());
   }
@@ -47,7 +47,7 @@ void assert_vectors_equal(const std::vector<uint8_t> expected,
                           const std::vector<uint8_t> actual);
                           
 template <uint16_t N>
-void assert_data_equals(const SerialPacketsBuffer<N>& data,
+void assert_data_equal(const SerialPacketsBuffer<N>& data,
                         const std::vector<uint8_t> expected) {
   const std::vector<uint8_t> data_vect = copy_data(data);
   assert_vectors_equal(expected, data_vect);
@@ -81,17 +81,17 @@ class PacketDecoderInspector {
   const SerialPacketsDecoder& _decoder;
 };
 
-class SerialPacketsClientInspector {
- public:
-  SerialPacketsClientInspector(SerialPacketsClient& client) : _client(client){};
+// class SerialPacketsClientInspector {
+//  public:
+//   SerialPacketsClientInspector(SerialPacketsClient& client) : _client(client){};
 
-  void ignore_rx_for_testing(bool value) {
-    _client._ignore_rx_for_testing = value;
-  }
+//   void ignore_rx_for_testing(bool value) {
+//     _client._ignore_rx_for_testing = value;
+//   }
 
- private:
-  SerialPacketsClient& _client;
-};
+//  private:
+//   SerialPacketsClient& _client;
+// };
 
 // void loop_client(SerialPacketsClient& client, uint32_t time_millis);
 

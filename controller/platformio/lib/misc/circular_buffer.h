@@ -78,7 +78,7 @@ class CircularBuffer {
     return true;
   }
 
-  // Returns min(size, len) items in bfr.
+  // Returns min(size, len) items in bfr. Non blocking.
   uint16_t read(T* bfr, uint16_t len) {
     const uint16_t items_to_transfer = std::min(len, _size);
     uint16_t items_transfered = 0;

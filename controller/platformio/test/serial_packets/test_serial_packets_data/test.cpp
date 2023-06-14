@@ -1,7 +1,6 @@
 // Unit test of the packet data class.
 
 
-#include "main.h"
 #include <unity.h>
 
 #include <vector>
@@ -39,7 +38,7 @@ void test_write_uint8() {
   TEST_ASSERT_EQUAL(1, d1.size());
   TEST_ASSERT_EQUAL(0, d1.bytes_read());
   TEST_ASSERT_EQUAL(1, d1.bytes_to_read());
-  assert_data_equals(d1, {0x02});
+  assert_data_equal(d1, {0x02});
 }
 
 void test_write_uint8_new_error() {
@@ -50,7 +49,7 @@ void test_write_uint8_new_error() {
   d1.write_uint8(0x02);
   TEST_ASSERT_TRUE(d1.had_write_errors());
   TEST_ASSERT_EQUAL(d1.capacity(), d1.size());
-  // assert_data_equals(d1, {0x11, 0x22, 0x33, 0x44});
+  // assert_data_equal(d1, {0x11, 0x22, 0x33, 0x44});
 }
 
 void test_write_uint16() {
@@ -60,7 +59,7 @@ void test_write_uint16() {
   TEST_ASSERT_EQUAL(4, d1.size());
   TEST_ASSERT_EQUAL(0, d1.bytes_read());
   TEST_ASSERT_EQUAL(4, d1.bytes_to_read());
-  assert_data_equals(d1, {0x11, 0x22, 0x33, 0x44});
+  assert_data_equal(d1, {0x11, 0x22, 0x33, 0x44});
 }
 
 void test_write_uint16_new_error() {
@@ -72,7 +71,7 @@ void test_write_uint16_new_error() {
   d1.write_uint16(0x8899);
   TEST_ASSERT_TRUE(d1.had_write_errors());
   TEST_ASSERT_EQUAL(1, d1.free_bytes());
-  // assert_data_equals(d1, {0x11, 0x22, 0x33});
+  // assert_data_equal(d1, {0x11, 0x22, 0x33});
 }
 
 void test_write_uint32() {
@@ -82,7 +81,7 @@ void test_write_uint32() {
   TEST_ASSERT_EQUAL(6, d1.size());
   TEST_ASSERT_EQUAL(0, d1.bytes_read());
   TEST_ASSERT_EQUAL(6, d1.bytes_to_read());
-  assert_data_equals(d1, {0x11, 0x22, 0x33, 0x44, 0x55, 0x66});
+  assert_data_equal(d1, {0x11, 0x22, 0x33, 0x44, 0x55, 0x66});
 }
 
 void test_write_uint32_new_error() {
@@ -94,7 +93,7 @@ void test_write_uint32_new_error() {
   d1.write_uint32(0x8899aabb);
   TEST_ASSERT_TRUE(d1.had_write_errors());
   TEST_ASSERT_EQUAL(3, d1.free_bytes());
-  // assert_data_equals(d1, {0x11, 0x22, 0x33});
+  // assert_data_equal(d1, {0x11, 0x22, 0x33});
 }
 
 void test_write_bytes() {
@@ -105,7 +104,7 @@ void test_write_bytes() {
   TEST_ASSERT_EQUAL(5, d1.size());
   TEST_ASSERT_EQUAL(0, d1.bytes_read());
   TEST_ASSERT_EQUAL(5, d1.bytes_to_read());
-  assert_data_equals(d1, {0x11, 0x22, 0x33, 0x44, 0x55});
+  assert_data_equal(d1, {0x11, 0x22, 0x33, 0x44, 0x55});
 }
 
 void test_write_bytes_new_error() {
@@ -118,7 +117,7 @@ void test_write_bytes_new_error() {
   d1.write_bytes(bytes, sizeof(bytes));
   TEST_ASSERT_TRUE(d1.had_write_errors());
   TEST_ASSERT_EQUAL(2, d1.free_bytes());
-  // assert_data_equals(d1, {0x11, 0x22, 0x33});
+  // assert_data_equal(d1, {0x11, 0x22, 0x33});
 }
 
 // void test_write_data() {
@@ -130,7 +129,7 @@ void test_write_bytes_new_error() {
 //   TEST_ASSERT_EQUAL(5, d1.size());
 //   TEST_ASSERT_EQUAL_UINT8(0, d1.bytes_read());
 //   TEST_ASSERT_EQUAL(5, d1.bytes_to_read());
-//   assert_data_equals(d1, {0x11, 0x22, 0x33, 0x44, 0x55});
+//   assert_data_equal(d1, {0x11, 0x22, 0x33, 0x44, 0x55});
 // }
 
 // void test_write_data_new_error() {
@@ -144,7 +143,7 @@ void test_write_bytes_new_error() {
 //   d1.write_data(d2);
 //   TEST_ASSERT_TRUE(d1.had_write_errors());
 //   TEST_ASSERT_EQUAL(2, d1.free_bytes());
-//   // assert_data_equals(d1, {0x11, 0x22, 0x33});
+//   // assert_data_equal(d1, {0x11, 0x22, 0x33});
 // }
 
 void test_read_uint8() {
@@ -245,7 +244,7 @@ void test_read_bytes_new_error() {
 //   populate_data(d2, {0x88, 0x99});
 //   d1.read_data(d2, 2);
 //   TEST_ASSERT_FALSE(d1.had_read_errors());
-//   assert_data_equals(d2, {0x88, 0x99, 0x11, 0x22});
+//   assert_data_equal(d2, {0x88, 0x99, 0x11, 0x22});
 //   TEST_ASSERT_EQUAL(2, d1.bytes_read());
 //   TEST_ASSERT_EQUAL(3, d1.bytes_to_read());
 // }
@@ -263,8 +262,8 @@ void test_read_bytes_new_error() {
 //   TEST_ASSERT_FALSE(d2.had_read_errors());
 //   TEST_ASSERT_FALSE(d2.had_write_errors());
 
-//   assert_data_equals(d1, {0x11, 0x22, 0x33, 0x44});
-//   assert_data_equals(d2, {0xaa, 0xbb});
+//   assert_data_equal(d1, {0x11, 0x22, 0x33, 0x44});
+//   assert_data_equal(d2, {0xaa, 0xbb});
 // }
 
 // Trying to read more bytes than available in the destination data.
@@ -281,7 +280,7 @@ void test_read_bytes_new_error() {
 //   TEST_ASSERT_EQUAL(4, d1.bytes_to_read());
 //   TEST_ASSERT_FALSE(d2.had_read_errors());
 //   TEST_ASSERT_FALSE(d2.had_write_errors());
-//   assert_data_equals(d1, {0x11, 0x22, 0x33, 0x44});
+//   assert_data_equal(d1, {0x11, 0x22, 0x33, 0x44});
 //   TEST_ASSERT_EQUAL(3, d2.free_bytes());
 // }
 

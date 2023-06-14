@@ -1,13 +1,16 @@
 // Unit test of the packet crc function.
 
-#include <Arduino.h>
 #include <unity.h>
 
+#include "../../unity_util.h"
 #include "../serial_packets_test_utils.h"
 #include "serial_packets_crc.h"
 
 // For STM32 'black pill'.
 // #define BUILTIN_LED PC13
+
+void setUp() {}
+void tearDown() {}
 
 void test_empty_data() {
   const uint8_t data[] = {};
@@ -31,14 +34,16 @@ void test_data2() {
   TEST_ASSERT_EQUAL_HEX32(0x1f49, crc);
 }
 
-void setup() {
-  common_setup_init();
+void app_main() {
+  unity_util::common_start();
 
   UNITY_BEGIN();
   RUN_TEST(test_empty_data);
   RUN_TEST(test_data1);
   RUN_TEST(test_data2);
   UNITY_END();
+
+  unity_util::common_end();
 }
 
-void loop() { common_loop_body(); }
+// void loop() { common_loop_body(); }

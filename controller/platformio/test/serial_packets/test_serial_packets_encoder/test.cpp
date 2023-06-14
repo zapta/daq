@@ -1,18 +1,19 @@
 // Unit test of the packet encoder function.
 
-#include <Arduino.h>
+// #include <Arduino.h>
 #include <unity.h>
 
 #include <memory>
 #include <vector>
 
 #include "../serial_packets_test_utils.h"
+#include "../../unity_util.h"
 #include "serial_packets_encoder.h"
 
 // For STM32 'black pill'.
 // #define BUILTIN_LED PC13
 
-static std::unique_ptr<SerialPacketsLogger> logger;
+// static std::unique_ptr<SerialPacketsLogger> logger;
 static std::unique_ptr<SerialPacketsEncoder> encoder;
 static std::unique_ptr<PacketEncoderInspector> inspector;
 
@@ -27,11 +28,13 @@ void setUp(void) {
   inspector.reset();
   encoder.reset();
   // NOTE: Run platformio verbose test to see any logger output.
-  logger = std::make_unique<SerialPacketsLogger>(SERIAL_PACKETS_LOG_VERBOSE);
-  logger->set_stream(&Serial);
-  encoder = std::make_unique<SerialPacketsEncoder>(*logger);
+  // logger = std::make_unique<SerialPacketsLogger>(SERIAL_PACKETS_LOG_VERBOSE);
+  // logger->set_stream(&Serial);
+  encoder = std::make_unique<SerialPacketsEncoder>();
   inspector = std::make_unique<PacketEncoderInspector>(*encoder);
 }
+
+void tearDown() {}
 
 void test_byte_sutffing_with_pre_flag() {
   // const uint8_t bytes[] = {0xff, 0x00, 0x7e, 0x22, 0x7d, 0x99};
@@ -44,7 +47,7 @@ void test_byte_sutffing_with_pre_flag() {
   // uint8_t actual[10] = {};
   // out.read_bytes(actual, sizeof(actual));
   // TEST_ASSERT_TRUE(out.all_read_ok());
-  assert_data_equals(
+  assert_data_equal(
       out, {0x7e, 0xff, 0x00, 0x7d, 0x5e, 0x22, 0x7d, 0x5d, 0x99, 0x7e});
   // const uint8_t expected[10] = {0x7e, 0xff, 0x00, 0x7d, 0x5e,
   //                               0x22, 0x7d, 0x5d, 0x99, 0x7e};
@@ -66,7 +69,7 @@ void test_byte_sutffing_without_pre_flag() {
   //                              0x7d, 0x5d, 0x99, 0x7e};
   // TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, actual, sizeof(expected));
 
-  assert_data_equals(out,
+  assert_data_equal(out,
                      {0xff, 0x00, 0x7d, 0x5e, 0x22, 0x7d, 0x5d, 0x99, 0x7e});
 }
 
@@ -86,7 +89,7 @@ void test_encode_command_packet_with_pre_flag() {
   //                               0x20, 0xff, 0x00, 0x7d, 0x5e, 0x22,
   //                               0x7d, 0x5d, 0x99, 0xD4, 0x80, 0x7e};
   // TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, actual, sizeof(expected));
-  assert_data_equals(
+  assert_data_equal(
       out, {0x7e, 0x01, 0x12, 0x34, 0x56, 0x78, 0x20, 0xff, 0x00, 0x7d, 0x5e,
             0x22, 0x7d, 0x5d, 0x99, 0xD4, 0x80, 0x7e});
 }
@@ -107,7 +110,7 @@ void test_encode_command_packet_without_pre_flag() {
   //                               0xff, 0x00, 0x7d, 0x5e, 0x22, 0x7d,
   //                               0x5d, 0x99, 0xD4, 0x80, 0x7e};
   // TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, actual, sizeof(expected));
-  assert_data_equals(out, {0x01, 0x12, 0x34, 0x56, 0x78, 0x20, 0xff, 0x00, 0x7d,
+  assert_data_equal(out, {0x01, 0x12, 0x34, 0x56, 0x78, 0x20, 0xff, 0x00, 0x7d,
                            0x5e, 0x22, 0x7d, 0x5d, 0x99, 0xD4, 0x80, 0x7e});
 }
 
@@ -127,7 +130,7 @@ void test_encode_response_packet_with_pre_flag() {
   //                               0x20, 0xff, 0x00, 0x7d, 0x5e, 0x22,
   //                               0x7d, 0x5d, 0x99, 0xd1, 0x1f, 0x7e};
   // TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, actual, sizeof(expected));
-  assert_data_equals(
+  assert_data_equal(
       out, {0x7e, 0x02, 0x12, 0x34, 0x56, 0x78, 0x20, 0xff, 0x00, 0x7d, 0x5e,
             0x22, 0x7d, 0x5d, 0x99, 0xd1, 0x1f, 0x7e});
 }
@@ -148,7 +151,7 @@ void test_encode_response_packet_without_pre_flag() {
   //                               0xff, 0x00, 0x7d, 0x5e, 0x22, 0x7d,
   //                               0x5d, 0x99, 0xd1, 0x1f, 0x7e};
   // TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, actual, sizeof(expected));
-  assert_data_equals(out, {0x02, 0x12, 0x34, 0x56, 0x78, 0x20, 0xff, 0x00, 0x7d,
+  assert_data_equal(out, {0x02, 0x12, 0x34, 0x56, 0x78, 0x20, 0xff, 0x00, 0x7d,
                            0x5e, 0x22, 0x7d, 0x5d, 0x99, 0xd1, 0x1f, 0x7e});
 }
 
@@ -166,7 +169,7 @@ void test_encode_message_packet_with_pre_flag() {
   // const uint8_t expected[14] = {0x7e, 0x03, 0x20, 0xff, 0x00, 0x7d, 0x5e,
   //                               0x22, 0x7d, 0x5d, 0x99, 0xa7, 0x1e, 0x7e};
   // TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, actual, sizeof(expected));
-  assert_data_equals(out, {0x7e, 0x03, 0x20, 0xff, 0x00, 0x7d, 0x5e, 0x22, 0x7d,
+  assert_data_equal(out, {0x7e, 0x03, 0x20, 0xff, 0x00, 0x7d, 0x5e, 0x22, 0x7d,
                            0x5d, 0x99, 0xa7, 0x1e, 0x7e});
 }
 
@@ -184,12 +187,12 @@ void test_encode_message_packet_without_pre_flag() {
   // const uint8_t expected[13] = {0x03, 0x20, 0xff, 0x00, 0x7d, 0x5e, 0x22,
   //                               0x7d, 0x5d, 0x99, 0xa7, 0x1e, 0x7e};
   // TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, actual, sizeof(expected));
-  assert_data_equals(out, {0x03, 0x20, 0xff, 0x00, 0x7d, 0x5e, 0x22, 0x7d, 0x5d,
+  assert_data_equal(out, {0x03, 0x20, 0xff, 0x00, 0x7d, 0x5e, 0x22, 0x7d, 0x5d,
                            0x99, 0xa7, 0x1e, 0x7e});
 }
 
-void setup() {
-  common_setup_init();
+void app_main() {
+  unity_util::common_start();
   // pinMode(BUILTIN_LED, OUTPUT);
 
   // Time for the USB/CDC serial to stabalize.
@@ -207,12 +210,15 @@ void setup() {
   RUN_TEST(test_encode_message_packet_without_pre_flag);
 
   UNITY_END();
+
+    unity_util::common_end();
+
 }
 
-void loop() {
-  common_loop_body();
-  // digitalWrite(BUILTIN_LED, HIGH);
-  // delay(500);
-  // digitalWrite(BUILTIN_LED, LOW);
-  // delay(500);
-}
+// void loop() {
+//   common_loop_body();
+//   // digitalWrite(BUILTIN_LED, HIGH);
+//   // delay(500);
+//   // digitalWrite(BUILTIN_LED, LOW);
+//   // delay(500);
+// }

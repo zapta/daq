@@ -6,7 +6,7 @@
 
 #include "serial_packets_consts.h"
 #include "serial_packets_data.h"
-#include "serial_packets_logger.h"
+// #include "serial_packets_logger.h"
 
 using serial_packets_consts::MAX_PACKET_LEN;
 using serial_packets_consts::PacketType;

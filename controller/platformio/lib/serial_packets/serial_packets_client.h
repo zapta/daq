@@ -101,8 +101,8 @@ class SerialPacketsClient {
 
  private:
   // For testing.
-  friend class SerialPacketsClientInspector;
-  bool _ignore_rx_for_testing = false;
+  // friend class SerialPacketsClientInspector;
+  // bool _ignore_rx_for_testing = false;
 
   // Contains the information of a single pending command.
   struct CommandContext {

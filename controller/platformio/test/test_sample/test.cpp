@@ -1,12 +1,12 @@
-#include "FreeRTOS.h"
+// #include "FreeRTOS.h"
 #include "Unity.h"
-#include "io.h"
-#include "task.h"
+// #include "io.h"
+// #include "task.h"
 #include "../unity_util.h"
 
-void setUp(void) {}
+void setUp() {}
 
-void tearDown(void) {}
+void tearDown() {}
 
 void test_sample() { TEST_ASSERT_TRUE(2 > 1); }
 

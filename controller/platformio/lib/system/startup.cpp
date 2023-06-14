@@ -29,7 +29,7 @@ __attribute__((section(".rodata"))) const int uxTopUsedPriority =
 }
 
 void main_task_body(void* argument);
-StaticTask<2000> main_task(main_task_body, "Main", 10);
+StaticTask<2000> main_task(main_task_body, "Main", 3);
 
 StaticTask<2000> cdc_logger_task(cdc_serial::logger_task_body, "Logger", 10);
 

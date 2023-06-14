@@ -264,6 +264,7 @@ PacketStatus SerialPacketsClient::sendCommand(
   // cmd_id = 0;
 
   if (!begun()) {
+    logger.error("Client's begin() was not called");
     return PacketStatus::INVALID_STATE;
   }
 
@@ -402,7 +403,7 @@ PacketStatus SerialPacketsClient::sendCommand(
 
 PacketStatus SerialPacketsClient::sendMessage(uint8_t endpoint,
                                       const SerialPacketsData& data) {
-  if (begun() != PacketStatus::OK) {
+  if (!begun()) {
     logger.error("Client's begin() was not called");
     return PacketStatus::INVALID_STATE;
   }

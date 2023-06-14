@@ -118,6 +118,16 @@ class StaticTask {
   StaticTask(const StaticTask& other) = delete;
   StaticTask& operator=(const StaticTask& other) = delete;
 
+  // Ok to start/stop multiple times.
+  void stop() {
+    if (_handle == nullptr) {
+      // Already stopped.
+      return;
+    }
+    vTaskDelete(_handle);
+    _handle = nullptr;
+  }
+
   // inline SemaphoreHandle_t handle() { return _handle; }
 
   // inline void take(TickType_t xTicksToWait) {

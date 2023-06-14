@@ -15,8 +15,8 @@ class StaticMutex {
   StaticMutex() : _handle(xSemaphoreCreateMutexStatic(&_mutex_buffer)) {}
 
   ~StaticMutex() {
-    // Static mutexes should not be finalized.
-    Error_Handler();
+    // This will typically be used in testing only.
+    vSemaphoreDelete(_handle);
   }
 
   // Prevent copy and assignment.

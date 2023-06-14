@@ -41,8 +41,24 @@ class Serial {
     }
   }
 
-  // Blocking. Return non zero count.
-  uint16_t read(uint8_t* bfr, uint16_t len) {
+  // How many rx bytes are available for consumption.
+  uint16_t available() {
+    // for (;;) {
+      uint16_t result = 0;
+      // bool tx_in_progress = false;
+      // xSemaphoreTake(_rx_mutex, portMAX_DELAY);
+      {
+        MutexScope mutex_scope(_rx_mutext);
+        __disable_irq();
+        { result = _rx_buffer.size(); }
+        __enable_irq();
+      }
+      return result;
+      
+  }
+
+  // If blocking = true, blocks and return non zero count.
+  uint16_t read(uint8_t* bfr, uint16_t len, bool blocking = true) {
     for (;;) {
       int bytes_read = 0;
       // bool tx_in_progress = false;
@@ -51,14 +67,9 @@ class Serial {
         MutexScope mutex_scope(_rx_mutext);
         __disable_irq();
         { bytes_read = _rx_buffer.read(bfr, len); }
-        // tx_in_progress = _huart->gState & 0x01;
         __enable_irq();
-        // if (!tx_in_progress) {
-        //   tx_next_chunk();
-        // }
-        // xSemaphoreGive(_rx_mutex);
       }
-      if (bytes_read) {
+      if (bytes_read || !blocking) {
         return bytes_read;
       }
       // Wait and try again.
@@ -69,14 +80,15 @@ class Serial {
   void init() {
     // Register callback handlers.
     if (HAL_OK != HAL_UART_RegisterCallback(_huart, HAL_UART_TX_COMPLETE_CB_ID,
-                                   uart_TxCpltCallback)) {
+                                            uart_TxCpltCallback)) {
       Error_Handler();
     }
     if (HAL_OK != HAL_UART_RegisterCallback(_huart, HAL_UART_RX_COMPLETE_CB_ID,
-                                   uart_RxCpltCallback)) {
+                                            uart_RxCpltCallback)) {
       Error_Handler();
     }
-    if (HAL_OK != HAL_UART_RegisterRxEventCallback(_huart, uart_RxEventCallback)) {
+    if (HAL_OK !=
+        HAL_UART_RegisterRxEventCallback(_huart, uart_RxEventCallback)) {
       Error_Handler();
     }
     // Start the reception.
@@ -84,7 +96,6 @@ class Serial {
   }
 
  private:
-
   static void uart_TxCpltCallback(UART_HandleTypeDef* huart);
   static void uart_RxCpltCallback(UART_HandleTypeDef* huart);
   static void uart_RxEventCallback(UART_HandleTypeDef* huart, uint16_t Size);
