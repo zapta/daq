@@ -43,6 +43,6 @@ void app_main() {
                 data.size());
     logger.info("Switch = %d", io::SWITCH.read());
 
-    vTaskDelay(500);
+    time_util::delay_millis(500);
   }
 }

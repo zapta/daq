@@ -7,6 +7,7 @@
 #include "task.h"
 
 namespace time_util {
+
 inline uint32_t millis() {
   // This should be optimized out by the compiler.
   if (configTICK_RATE_HZ != 1000) {
@@ -14,8 +15,16 @@ inline uint32_t millis() {
   }
   return xTaskGetTickCount();
 }
-}  // namespace time_util
 
+inline void delay_millis(uint32_t millis) {
+  // This should be optimized out by the compiler.
+  if (configTICK_RATE_HZ != 1000) {
+    Error_Handler();
+  }
+  vTaskDelay(millis);
+}
+
+}  // namespace time_util
 
 class Elappsed {
  public:
@@ -32,4 +41,3 @@ class Elappsed {
  private:
   uint32_t start_millis_;
 };
-

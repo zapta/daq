@@ -12,6 +12,7 @@
 #include "task.h"
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
+#include "time_util.h"
 
 // An helper for printf(). Do not printf() before calling setup() here.
 // TODO: Check the status returned from the semaphore functions.
@@ -55,11 +56,11 @@ void logger_task_body(void* argument) {
         if (rc != USBD_BUSY) {
           break;
         }
-        vTaskDelay(1);
+        time_util::delay_millis(1);
       }
     } else {
-      // Nothign to transmit. Wait a little.
-      vTaskDelay(50);
+      // Nothing to transmit. Wait and try again.
+      time_util::delay_millis(50);
     }
   }
 }

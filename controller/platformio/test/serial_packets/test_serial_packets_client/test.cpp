@@ -65,7 +65,7 @@ void command_handler(uint8_t endpoint, const SerialPacketsData& data,
   response_status = fake_response.status;
   populate_data(response_data, fake_response.data);
   if (fake_response.delay) {
-    vTaskDelay(fake_response.delay);
+    time_util::delay_millis(fake_response.delay);
   }
 }
 
@@ -99,7 +99,7 @@ void setUp() {
   client = std::make_unique<SerialPacketsClient>();
 
   // Clear serial input
-  vTaskDelay(100);
+  time_util::delay_millis(100);
   uint8_t byte_buffer[1];
   while (DATA_SERIAL.read(byte_buffer, 1, false)) {
   }
@@ -122,7 +122,7 @@ void test_simple_serial_loop() {
   DATA_SERIAL.write_str(str);
 
   // Verify it was looped back.
-  vTaskDelay(100);
+  time_util::delay_millis(100);
   TEST_ASSERT_GREATER_OR_EQUAL(3, DATA_SERIAL.available());
   for (int i = 0; i < 3; i++) {
     uint8_t b;
@@ -139,7 +139,7 @@ void test_send_message_loop() {
   populate_data(packet_data, data);
   TEST_ASSERT_EQUAL(PacketStatus::OK, client->sendMessage(0x20, packet_data));
 
-  vTaskDelay(200);
+  time_util::delay_millis(200);
   TEST_ASSERT_EQUAL(0, command_list.size());
   TEST_ASSERT_EQUAL(1, message_list.size());
   const Message& message = message_list.at(0);
@@ -158,7 +158,7 @@ void test_send_command_loop() {
   // We get back the fake response status we requested above.
   TEST_ASSERT_EQUAL(0x99, status);
 
-  vTaskDelay(200);
+  time_util::delay_millis(200);
   TEST_ASSERT_EQUAL(1, command_list.size());
   TEST_ASSERT_EQUAL(0, message_list.size());
   TEST_ASSERT_EQUAL(0, client->num_pending_commands());

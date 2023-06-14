@@ -6,6 +6,7 @@
 #include "semphr.h"
 #include "static_mutex.h"
 #include "usart.h"
+#include "time_util.h"
 
 class Serial {
  public:
@@ -33,7 +34,7 @@ class Serial {
         return;
       }
       // Wait and try again.
-      vTaskDelay(5);
+      time_util::delay_millis(5);
     }
   }
 
@@ -63,7 +64,7 @@ class Serial {
         return bytes_read;
       }
       // Wait and try again.
-      vTaskDelay(5);
+      time_util::delay_millis(5);
     }
   }
 

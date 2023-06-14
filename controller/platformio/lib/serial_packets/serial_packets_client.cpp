@@ -2,10 +2,8 @@
 
 #include <FreeRTOS.h>
 #include <task.h>
-
 #include "static_mutex.h"
 #include "time_util.h"
-// #include "elapsed.h"
 
 using serial_packets_consts::TYPE_COMMAND;
 using serial_packets_consts::TYPE_MESSAGE;
@@ -36,7 +34,7 @@ PacketStatus SerialPacketsClient::begin(
 void SerialPacketsClient::rx_task_body() {
   for (;;) {
     if (!begun()) {
-      vTaskDelay(10);
+      time_util::delay_millis(10);
       continue;
     }
 
@@ -228,7 +226,7 @@ PacketStatus SerialPacketsClient::sendCommand(uint8_t endpoint,
     }
 
     // TODO: Use an event driven waiting instead.
-    vTaskDelay(2);
+    time_util::delay_millis(2);
   }
 }
 

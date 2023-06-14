@@ -6,9 +6,6 @@
 #include "../serial_packets_test_utils.h"
 #include "serial_packets_crc.h"
 
-// For STM32 'black pill'.
-// #define BUILTIN_LED PC13
-
 void setUp() {}
 void tearDown() {}
 
@@ -45,4 +42,3 @@ void app_main() {
 
   unity_util::common_end();
 }
-

@@ -4,17 +4,18 @@
 #include <task.h>
 
 #include "io.h"
+#include "time_util.h"
 
 namespace unity_util {
 
 void common_start() {
   // LEt the USB/Serial time to settle down.
-  vTaskDelay(3000);
+  time_util::delay_millis(3000);
 }
 
 void common_end() {
   for (;;) {
-    vTaskDelay(100);
+    time_util::delay_millis(100);
     io::LED.toggle();
   }
 }
