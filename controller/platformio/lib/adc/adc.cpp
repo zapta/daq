@@ -68,6 +68,11 @@ void cmd_reset() {
   time_util::delay_millis(1);
 }
 
+void cmd_start() {
+  static const uint8_t cmd[] = {0x08};
+  send_command(cmd, sizeof(cmd));
+}
+
 struct Regs {
   uint8_t r0;
   uint8_t r1;
@@ -126,16 +131,25 @@ void test_setup() {
 
   cmd_reset();
 
-  static const Regs regs = {0x0a, 0xc4, 0x00, 0x02};
-  cmd_write_registers(regs);
+  // static const Regs wr_regs = {0x0a, 0xc4, 0x00, 0x02};
+  static const Regs wr_regs = {0x0c, 0xc4, 0x00, 0x02};
+  cmd_write_registers(wr_regs);
 
-  static const uint8_t cmd[] = {0x08};
-  send_command(cmd, sizeof(cmd));
+  Regs rd_regs;
+  memset(&rd_regs, 0, sizeof(rd_regs));
+  cmd_read_registers(&rd_regs);
+  logger.info("Regs: %02hx, %02hx, %02hx, %02hx", rd_regs.r0, rd_regs.r1,
+              rd_regs.r2, rd_regs.r3);
+
+  cmd_start();
 }
 
 void test_loop() {
   const int32_t value = cmd_read_data();
   logger.info("ADC: %ld", value);
+  int v1 = value - 25000;
+  int v2 = v1 * (5000.0 / 600000.0);
+  logger.info("Grams: %d", v2);
 }
 
 }  // namespace adc
