@@ -34,6 +34,7 @@ void app_main() {
 
   for (int i = 1;; i++) {
     adc::test_loop();
+
     io::LED.toggle();
     data.clear();
     data.write_uint32(0x12345678);
@@ -41,7 +42,7 @@ void app_main() {
     const PacketStatus status = host_link::client.sendCommand(0x20, data);
     logger.info("%04d: Recieced respond, status = %d, size=%hu", i, status,
                 data.size());
-    logger.info("Switch = %d", io::SWITCH.read());
+    // logger.info("Switch = %d", io::SWITCH.read());
 
     time_util::delay_millis(500);
   }
