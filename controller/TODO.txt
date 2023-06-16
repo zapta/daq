@@ -1,8 +1,8 @@
+Move pin TEST2 to a free pin. Currently conflicts with SD card.
 
+Verify the accuracy of the 1Khz timer2 timebase (compare to millis() over a long period)
 
 Write ADC SPI driver.
-
-Move pin TEST2 to a free pin. Currently conflicts with SD card.
 
 ---
 
