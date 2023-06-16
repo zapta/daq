@@ -16,6 +16,7 @@
 #include "static_task.h"
 #include "usart.h"
 #include "usbd_cdc_if.h"
+#include "tim.h"
 
 static SerialPacketsData data;
 
@@ -24,6 +25,10 @@ StaticTask<2000> host_link_rx_task(host_link::rx_task_body, "Host RX", 10);
 // Called from from the main FreeRTOS task.
 void app_main() {
   serial::serial1.init();
+
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 100);
+
 
   host_link::setup(serial::serial1);
   if (!host_link_rx_task.start()) {

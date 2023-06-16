@@ -10,6 +10,7 @@
 #include "main.h"
 #include "serial.h"
 #include "spi.h"
+#include "tim.h"
 #include "static_task.h"
 #include "usart.h"
 #include "usb_device.h"
@@ -63,6 +64,7 @@ int main(void) {
   MX_DMA_Init();
   MX_SPI1_Init();
   MX_USART1_UART_Init();
+  MX_TIM2_Init();
 
   if (!main_task.start()) {
     Error_Handler();
