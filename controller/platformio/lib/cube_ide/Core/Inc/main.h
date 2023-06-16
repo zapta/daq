@@ -73,10 +73,8 @@ void Error_Handler(void);
 #define ADC_SYNC_GPIO_Port GPIOB
 #define TEST1_Pin GPIO_PIN_1
 #define TEST1_GPIO_Port GPIOD
-#define TEST2_Pin GPIO_PIN_2
+#define TEST2_Pin GPIO_PIN_4
 #define TEST2_GPIO_Port GPIOD
-#define TEST3_Pin GPIO_PIN_4
-#define TEST3_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
 
