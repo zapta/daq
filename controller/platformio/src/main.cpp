@@ -26,8 +26,11 @@ StaticTask<2000> host_link_rx_task(host_link::rx_task_body, "Host RX", 10);
 void app_main() {
   serial::serial1.init();
 
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 100);
+  // HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+  // __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 100);
+
+    HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_1);
+  __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_1, 100);
 
 
   host_link::setup(serial::serial1);

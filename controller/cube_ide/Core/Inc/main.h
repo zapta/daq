@@ -69,6 +69,8 @@ void Error_Handler(void);
 #define ADC_MISO_GPIO_Port GPIOA
 #define ADC_MOSI_Pin GPIO_PIN_7
 #define ADC_MOSI_GPIO_Port GPIOA
+#define ADC_SYNC_Pin GPIO_PIN_14
+#define ADC_SYNC_GPIO_Port GPIOB
 #define TEST1_Pin GPIO_PIN_1
 #define TEST1_GPIO_Port GPIOD
 #define TEST2_Pin GPIO_PIN_2

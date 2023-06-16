@@ -64,7 +64,9 @@ int main(void) {
   MX_DMA_Init();
   MX_SPI1_Init();
   MX_USART1_UART_Init();
-  MX_TIM2_Init();
+  // MX_TIM2_Init();
+  MX_TIM12_Init();
+
 
   if (!main_task.start()) {
     Error_Handler();
