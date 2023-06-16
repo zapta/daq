@@ -11,42 +11,43 @@
 
 namespace adc {
 
-static uint8_t rx_buffer[10];
+static const uint8_t tx_buffer[30] = {};
+static uint8_t rx_buffer[30];
 
 static void trap() {
   // Breakpoint here.
   asm("nop");
 }
 
-// static bool dma_active = false;
+static bool dma_active = false;
 
 void spi_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
-  // dma_active = false;
-  // io::ADC_CS.high();
+  dma_active = false;
+  io::ADC_CS.high();
   trap();
 }
 
 void spi_RxCpltCallback(SPI_HandleTypeDef *hspi) {
-  // dma_active = false;
-  // io::ADC_CS.high();
+  dma_active = false;
+  io::ADC_CS.high();
   trap();
 }
 
 void spi_ErrorCallback(SPI_HandleTypeDef *hspi) {
-  // dma_active = false;
-  // io::ADC_CS.high();
+  dma_active = false;
+  io::ADC_CS.high();
   trap();
 }
 
-// static void wait_for_completion() {
-//   for (;;) {
-//     if (!dma_active) {
-//       // io::ADC_CS.high();
-//       return;
-//     }
-//     time_util::delay_millis(1);
-//   }
-// }
+static void wait_for_completion() {
+  for (;;) {
+    if (!dma_active) {
+      // io::ADC_CS.high();
+      return;
+    }
+    time_util::delay_millis(1);
+  }
+}
 
 // Blocks until completion. Recieved bytes are returned in rx_buffer.
 // static void x_send_only_command(const uint8_t *cmd, uint16_t cmd_len) {
@@ -118,7 +119,7 @@ static void send_command(const uint8_t *cmd, uint16_t cmd_len) {
 //   time_util::delay_millis(1);
 // }
 
-void x_cmd_reset() {
+void cmd_reset() {
   static const uint8_t cmd[] = {0x06};
   send_command(cmd, sizeof(cmd));
   // Datasheet says to wait ~50us.
@@ -130,7 +131,7 @@ void x_cmd_reset() {
 //   send_command(cmd, sizeof(cmd));
 // }
 
-void x_cmd_start() {
+void cmd_start() {
   static const uint8_t cmd[] = {0x08};
   send_command(cmd, sizeof(cmd));
 }
@@ -154,7 +155,7 @@ struct Regs {
 //   regs->r3 = rx_buffer[4];
 // }
 
-void x_cmd_read_registers(Regs *regs) {
+void cmd_read_registers(Regs *regs) {
   // Command code for reading 4 registers starting from register 0.
   const uint8_t cmd_code = 0x20 | (0 << 2) | 0x03;
   static const uint8_t cmd[] = {cmd_code, 0, 0, 0, 0};
@@ -177,7 +178,7 @@ void x_cmd_read_registers(Regs *regs) {
 //   send_command(cmd, sizeof(cmd));
 // }
 
-static void x_cmd_write_registers(const Regs &regs) {
+static void cmd_write_registers(const Regs &regs) {
   // Command code for writing 4 registers starting from register 0.
   const uint8_t cmd_code = 0x40 | (0 << 2) | 0x03;
   static uint8_t cmd[] = {cmd_code, 0, 0, 0, 0};
@@ -188,29 +189,29 @@ static void x_cmd_write_registers(const Regs &regs) {
   send_command(cmd, sizeof(cmd));
 }
 
-// int32_t read_data_DMA() {
-//   // static const uint8_t cmd[] = {0, 0, 0};
-//   // send_command(cmd, sizeof(cmd));
+int32_t read_data_DMA() {
+  // static const uint8_t cmd[] = {0, 0, 0};
+  // send_command(cmd, sizeof(cmd));
 
-//   memset(rx_buffer, 0, sizeof(rx_buffer));
-//   dma_active = true;
-//   io::ADC_CS.low();
-//   // Should read 3 bytes but we read for to simulate DMA burst of
-//   // 4.
-//   if (HAL_OK != HAL_SPI_Receive_DMA(&hspi1, rx_buffer, 12)) {
-//     dma_active = false;
-//     io::ADC_CS.high();
+  memset(rx_buffer, 0, sizeof(rx_buffer));
+  dma_active = true;
+  io::ADC_CS.low();
+  // Should read 3 bytes but we read for to simulate DMA burst of
+  // 4.
+  if (HAL_OK != HAL_SPI_TransmitReceive_DMA(&hspi1, tx_buffer, rx_buffer, 6)) {
+    dma_active = false;
+    io::ADC_CS.high();
 
-//     Error_Handler();
-//   }
+    Error_Handler();
+  }
 
-//   wait_for_completion();
-//   io::ADC_CS.high();
+  wait_for_completion();
+  io::ADC_CS.high();
 
-//   uint8_t sign_extension = (rx_buffer[0] & 80) ? 0xff : 0x00;
-//   return ((int32_t)(sign_extension << 24)) | (((int32_t)rx_buffer[0]) << 16) |
-//          (((int32_t)rx_buffer[1]) << 8) | ((int32_t)rx_buffer[2]);
-// }
+  uint8_t sign_extension = (rx_buffer[0] & 80) ? 0xff : 0x00;
+  return ((int32_t)(sign_extension << 24)) | (((int32_t)rx_buffer[0]) << 16) |
+         (((int32_t)rx_buffer[1]) << 8) | ((int32_t)rx_buffer[2]);
+}
 
 int32_t read_data_blocking() {
   // static const uint8_t cmd[] = {0, 0, 0};
@@ -221,7 +222,7 @@ int32_t read_data_blocking() {
   io::ADC_CS.low();
   // Should read 3 bytes but we read for to simulate DMA burst of
   // 4.
-  auto status = HAL_SPI_Receive(&hspi1, rx_buffer, 4, 500);
+  auto status = HAL_SPI_Receive(&hspi1, rx_buffer, 9, 500);
   io::ADC_CS.high();
 
   if (HAL_OK != status) {
@@ -265,24 +266,24 @@ void test_setup() {
   }
 
   // cmd_reset();
-  x_cmd_reset();
+  cmd_reset();
 
   // static const Regs wr_regs = {0x0a, 0xc4, 0x00, 0x02};
   static const Regs wr_regs = {0x0c, 0xc4, 0x00, 0x02};
-  x_cmd_write_registers(wr_regs);
+  cmd_write_registers(wr_regs);
 
   Regs rd_regs;
   memset(&rd_regs, 0, sizeof(rd_regs));
-  x_cmd_read_registers(&rd_regs);
+  cmd_read_registers(&rd_regs);
   logger.info("Regs: %02hx, %02hx, %02hx, %02hx", rd_regs.r0, rd_regs.r1,
               rd_regs.r2, rd_regs.r3);
 
-  x_cmd_start();
+  cmd_start();
 }
 
 void test_loop() {
-  // const int32_t value = read_data_DMA();
-  const int32_t value = read_data_blocking();
+  const int32_t value = read_data_DMA();
+  // const int32_t value = read_data_blocking();
   logger.info("ADC: %ld", value);
   int v1 = value - 25000;
   int v2 = v1 * (5000.0 / 600000.0);
