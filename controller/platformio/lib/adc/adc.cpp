@@ -142,7 +142,7 @@ int32_t grams(int32_t adc_reading) {
 }
 
 // Assuming cs is pulsing.
-int32_t read_data_DMA() {
+void read_data_DMA() {
   io::TEST1.low();
 
   memset(rx_buffer, 0, sizeof(rx_buffer));
@@ -183,7 +183,7 @@ int32_t read_data_DMA() {
   wait_for_dma_completion();
  
 
-  logger.info("Readings: %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx",
+  logger.info("ADC: %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx",
               decode_int24(&rx_buffer[0]), decode_int24(&rx_buffer[3]),
               decode_int24(&rx_buffer[6]), decode_int24(&rx_buffer[9]),
               decode_int24(&rx_buffer[12]), decode_int24(&rx_buffer[15]),
@@ -191,7 +191,7 @@ int32_t read_data_DMA() {
               decode_int24(&rx_buffer[24]), decode_int24(&rx_buffer[27]));
 
   logger.info(
-      "Readings: %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld",
+      "Grams: %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld",
       grams(decode_int24(&rx_buffer[0])), grams(decode_int24(&rx_buffer[3])),
       grams(decode_int24(&rx_buffer[6])), grams(decode_int24(&rx_buffer[9])),
       grams(decode_int24(&rx_buffer[12])), grams(decode_int24(&rx_buffer[15])),
@@ -199,7 +199,7 @@ int32_t read_data_DMA() {
       grams(decode_int24(&rx_buffer[24])), grams(decode_int24(&rx_buffer[27])));
 
   
-  return decode_int24(rx_buffer);
+  // return decode_int24(rx_buffer);
 
  
 }
@@ -249,9 +249,10 @@ void test_setup() {
 }
 
 void test_loop() {
-  const int32_t value = read_data_DMA();
-  logger.info("ADC: %ld", value);
-  logger.info("Grams: %ld", grams(value));
+  // const int32_t value = 
+  read_data_DMA();
+  // logger.info("ADC: %ld", value);
+  // logger.info("Grams: %ld", grams(value));
 }
 
 }  // namespace adc
