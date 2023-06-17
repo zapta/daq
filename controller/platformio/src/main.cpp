@@ -31,6 +31,8 @@ void app_main() {
 
     HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_1);
   __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_1, 100);
+  // HAL_TIM_IRQHandler(&htim12);
+  HAL_TIM_Base_Start_IT(&htim12);
 
 
   host_link::setup(serial::serial1);
