@@ -1,18 +1,17 @@
 
-Verify the accuracy of the 1Khz timer2 timebase (compare to millis() over a long period)
+Add unit test for data.copy_from(data).
 
-Write ADC SPI driver.
+Write SD card driver.
+
+Implement end to end ADC reporting to the PC.
+
 
 ---
-
-Match the board configuration to weact example, especially the quadspi.
 
 
 Write script to fix openocd.
 
-Port the arduino tests and delete the arduino directory.
 
-Add unit test for data.copy_from(data).
 
 ----------
 Firmware
@@ -21,9 +20,6 @@ Verify the project build on Mac and Linux
 
 revisit the issue of heap allocation policy, consider static allocation and type 1.
 
-
-Fix build warnings.
-
 Revisit the error handling in the serial and CDC logger drivers. Should we send to a trap?
 
 Consider to switch the serial driver to use DMA instead of interrupts.
@@ -31,15 +27,7 @@ Consider to switch the serial driver to use DMA instead of interrupts.
 ----------
 Hardware
 
-Add connector or USB module for data serial port.
-
-Add jumper/switch/connector for serial loop for unit tests.
-
 Consider to have damper resistors to the bus signals.
 
-Consider using the hardware CRC to compute packet CRC.
-
-
-Consider using the hardware CRC to compute packet CRC.
 
 
