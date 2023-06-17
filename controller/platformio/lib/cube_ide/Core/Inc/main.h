@@ -71,8 +71,8 @@ void Error_Handler(void);
 #define ADC_CS_PWM_GPIO_Port GPIOB
 #define TEST1_Pin GPIO_PIN_1
 #define TEST1_GPIO_Port GPIOD
-#define TEST2_Pin GPIO_PIN_4
-#define TEST2_GPIO_Port GPIOD
+#define SD_SWITCH_Pin GPIO_PIN_4
+#define SD_SWITCH_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
 

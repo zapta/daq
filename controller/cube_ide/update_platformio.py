@@ -84,6 +84,7 @@ copy_and_overwrite_dir("./Core", f"{DST_LIB}/Core")
 copy_and_overwrite_dir("./Drivers", f"{DST_LIB}/Drivers")
 copy_and_overwrite_dir("./Middlewares", f"{DST_LIB}/Middlewares")
 copy_and_overwrite_dir("./USB_DEVICE", f"{DST_LIB}/USB_DEVICE")
+copy_and_overwrite_dir("./FATFS", f"{DST_LIB}/FATFS")
 
 # Copy individual  files.
 copy_and_overwrite_file("STM32H750VBTX_FLASH.ld", f"{DST}/STM32H750VBTX_FLASH.ld")

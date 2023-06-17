@@ -11,12 +11,13 @@
 #include "host_link.h"
 #include "io.h"
 #include "logger.h"
+#include "sd.h"
 #include "serial.h"
 #include "spi.h"
 #include "static_task.h"
+#include "tim.h"
 #include "usart.h"
 #include "usbd_cdc_if.h"
-#include "tim.h"
 
 static SerialPacketsData data;
 
@@ -29,11 +30,10 @@ void app_main() {
   // HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
   // __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 100);
 
-    HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_1);
   __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_1, 100);
   // HAL_TIM_IRQHandler(&htim12);
   HAL_TIM_Base_Start_IT(&htim12);
-
 
   host_link::setup(serial::serial1);
   if (!host_link_rx_task.start()) {
@@ -42,8 +42,12 @@ void app_main() {
 
   adc::test_setup();
 
+  // sd::test_setup();
+
   for (int i = 1;; i++) {
     adc::test_loop();
+
+    // sd::test_loop();
 
     io::LED.toggle();
     data.clear();

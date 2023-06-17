@@ -15,11 +15,15 @@
 #include "usart.h"
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
+#include "fatfs.h"
+#include "sdmmc.h"
 
 void app_main();
 
 // Implemented in cube ide generated main.c.
 extern "C" void SystemClock_Config(void);
+extern "C" void PeriphCommonClock_Config(void);
+
 
 // For OpenOCD thread awareness. Per
 // https://community.platformio.org/t/freertos-with-stm32cube-framework-on-nucleof767zi/9601
@@ -59,13 +63,16 @@ int main(void) {
 
   HAL_Init();
   SystemClock_Config();
+  PeriphCommonClock_Config();
+
 
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_SPI1_Init();
   MX_USART1_UART_Init();
-  // MX_TIM2_Init();
   MX_TIM12_Init();
+  MX_SDMMC1_SD_Init();
+  MX_FATFS_Init();
 
 
   if (!main_task.start()) {
