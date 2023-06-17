@@ -1,7 +1,7 @@
 
-Add unit test for data.copy_from(data).
-
 Write SD card driver.
+
+Add unit test for data.copy_from(data).
 
 Implement end to end ADC reporting to the PC.
 
