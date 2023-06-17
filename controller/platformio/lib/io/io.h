@@ -61,7 +61,7 @@ extern OutputPin LED;
 extern OutputPin TEST1;
 extern OutputPin TEST2;
 // extern OutputPin TEST3;
-extern OutputPin ADC_CS;
+// extern OutputPin ADC_CS;
 
 extern InputPin SWITCH;
 
