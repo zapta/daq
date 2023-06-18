@@ -68,14 +68,17 @@ async def event_async_callback(event: PacketsEvent) -> None:
 
 def handle_adc_report_message(data: PacketData):
     global output_file
+    # Get message metadata
     data.reset_read_location()
     message_format_version = data.read_uint8()
     assert (message_format_version == 1)
     isr_millis = data.read_uint32()
     points_expected = data.read_uint16()
+    # Open file if first time
     if not output_file:
         logger.info(f"Opening output data file [{args.output_file}]")
         output_file = open(args.output_file, "w")
+    # Write data to file.
     points_written = 0
     output_file.write(f"--- Packet {points_expected}, {isr_millis}\n")
     while not data.all_read():
@@ -84,6 +87,7 @@ def handle_adc_report_message(data: PacketData):
             break
         output_file.write(f"{val}\n")
         points_written += 1
+    # Report errors.
     if data.read_error() or points_written != points_expected :
         logger.error("Error while processing an incoming adc report message.")
 
