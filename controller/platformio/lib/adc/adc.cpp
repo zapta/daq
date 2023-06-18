@@ -186,9 +186,9 @@ int32_t decode_int24(const uint8_t *bfr3) {
 
 int32_t grams(int32_t adc_reading) {
   const int32_t result = (adc_reading - 25000) * (5000.0 / 600000.0);
-  if (result < -500 || result > 500) {
-    io::TEST1.high();
-  }
+  // if (result < -500 || result > 500) {
+  //   io::TEST1.high();
+  // }
   return result;
 }
 
@@ -258,6 +258,8 @@ void start_DMA() {
 }
 
 static void setup() {
+  io::TEST1.high();
+
   cs_high();
 
   // Register interrupt handler. These handler are marked in
@@ -277,11 +279,16 @@ static void setup() {
     Error_Handler();
   }
 
+  // for (int i = 0; i < 3; i++) {
   cmd_reset();
+  // }
 
   // Configure ADC registers. We use a single short mode and
   // start a new conversion on each reading.
-  static const AdcRegs wr_regs = {0x0c, 0xc0, 0x00, 0x02};
+  // static const AdcRegs wr_regs = {0x0c, 0xc0, 0x00, 0x02};
+
+  // ADC inputs: p=2, n=3.
+  static const AdcRegs wr_regs = {0x5c, 0xc0, 0x00, 0x02};
   cmd_write_registers(wr_regs);
 
   // Sanity check that we wrote the registers correctly.
@@ -302,6 +309,8 @@ static void setup() {
   // if (queue_handle == nullptr) {
   //   Error_Handler();
   // }
+
+  io::TEST1.low();
 
   // Pulsate the CS signal to the ADC. The DMA transactions are synced
   // to this time base.
