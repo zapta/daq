@@ -90,7 +90,7 @@ void rx_task_body(void* argument) {
   Error_Handler();
 }
 
-static StaticTask<2000> rx_task(rx_task_body, "rx_test", 10);
+static StaticTask<2000> rx_task(rx_task_body, "rx_test", 5);
 
 void setUp() {
   rx_task.stop();

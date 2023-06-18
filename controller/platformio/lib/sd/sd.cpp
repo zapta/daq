@@ -10,7 +10,7 @@ namespace sd {
 void test_setup() {
 
 FRESULT res; /* FatFs function common result code */
-uint32_t byteswritten, bytesread; /* File write/read counts */
+uint32_t byteswritten; /* File write counts */
 uint8_t wtext[] = "STM32 FATFS works great!"; /* File write buffer */
 uint8_t rtext[_MAX_SS];/* File read buffer */
 

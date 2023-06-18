@@ -93,11 +93,11 @@ class Serial {
 
   UART_HandleTypeDef* _huart;
   // TX
-  CircularBuffer<uint8_t, 1000> _tx_buffer;
+  CircularBuffer<uint8_t, 5000> _tx_buffer;
   StaticMutex _tx_mutex;
   uint8_t _tx_transfer_buffer[20];
   // RX
-  CircularBuffer<uint8_t, 1000> _rx_buffer;
+  CircularBuffer<uint8_t, 5000> _rx_buffer;
   StaticMutex _rx_mutext;
   uint8_t _rx_transfer_buffer[20];
 
