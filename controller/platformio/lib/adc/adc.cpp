@@ -7,15 +7,15 @@
 #include <cstring>
 
 #include "dma.h"
+#include "host_link.h"
 #include "io.h"
 #include "logger.h"
 #include "main.h"
+#include "serial_packets_client.h"
 #include "spi.h"
 #include "static_queue.h"
 #include "tim.h"
 #include "time_util.h"
-#include "serial_packets_client.h"
-#include "host_link.h"
 
 extern DMA_HandleTypeDef hdma_spi1_tx;
 
@@ -35,9 +35,14 @@ static SerialPacketsData packet_data;
 // static uint8_t queue_items_static_mem[5] = {};
 // static StaticQueue_t queue_static_mem;
 // static QueueHandle_t queue_handle;
-enum IrqEvent {
+enum IrqEventId {
   EVENT_HALF_COMPLETE = 1,
   EVENT_FULL_COMPLETE = 2,
+};
+
+struct IrqEvent {
+  IrqEventId id;
+  uint32_t isr_millis;
 };
 
 static StaticQueue<IrqEvent, 5> irq_event_queue;
@@ -84,7 +89,9 @@ void spi_TxRxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
   trap();
   irq_half_count++;
   BaseType_t task_woken;
-  irq_event_queue.add_from_isr(EVENT_HALF_COMPLETE, &task_woken);
+  IrqEvent event = {.id = EVENT_HALF_COMPLETE,
+                    .isr_millis = time_util::millis_from_isr()};
+  irq_event_queue.add_from_isr(event, &task_woken);
   portYIELD_FROM_ISR(task_woken)
 }
 
@@ -93,7 +100,9 @@ void spi_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
   trap();
   irq_full_count++;
   BaseType_t task_woken;
-  irq_event_queue.add_from_isr(EVENT_FULL_COMPLETE, &task_woken);
+IrqEvent event = {.id = EVENT_FULL_COMPLETE,
+                    .isr_millis = time_util::millis_from_isr()};
+  irq_event_queue.add_from_isr(event, &task_woken);
   portYIELD_FROM_ISR(task_woken)
 }
 
@@ -328,15 +337,19 @@ void dump_state() {
 
 // Elappsed dump_timer;
 
-void process_dma_rx_buffer(int id, uint8_t *bfr) {
+void process_dma_rx_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
   packet_data.clear();
-  for (uint32_t i = 0; i < kBytesPerGroup; i+=3) {
+  packet_data.write_uint8(1); // version
+  packet_data.write_uint32(isr_millis);  // Acq end time millis. Assuming systicks = millis.
+  packet_data.write_uint16(kPointsPerGroup); // Expected num of points.
+  for (uint32_t i = 0; i < kBytesPerGroup; i += 3) {
     packet_data.write_bytes(&bfr[i], 3);
   }
   if (packet_data.had_write_errors()) {
     Error_Handler();
   }
   host_link::client.sendMessage(10, packet_data);
+  logger.info("Processed in %lu ms", time_util::millis() - isr_millis);
 
   logger.info("ADC %d: %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx", id,
               decode_int24(&bfr[0]), decode_int24(&bfr[3]),
@@ -363,12 +376,12 @@ void adc_task_body(void *argument) {
       continue;
     }
     // logger.info("Event %d", event);
-    if (event == EVENT_HALF_COMPLETE) {
+    if (event.id == EVENT_HALF_COMPLETE) {
       event_half_count++;
-      process_dma_rx_buffer(0, &rx_buffer[0]);
-    } else if (event == EVENT_FULL_COMPLETE) {
+      process_dma_rx_buffer(0, event.isr_millis, &rx_buffer[0]);
+    } else if (event.id == EVENT_FULL_COMPLETE) {
       event_full_count++;
-      process_dma_rx_buffer(1, &rx_buffer[kBytesPerGroup]);
+      process_dma_rx_buffer(1, event.isr_millis, &rx_buffer[kBytesPerGroup]);
     } else {
       Error_Handler();
     }

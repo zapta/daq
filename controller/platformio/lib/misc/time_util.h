@@ -8,6 +8,7 @@
 
 namespace time_util {
 
+// Call from tasks.
 inline uint32_t millis() {
   // This should be optimized out by the compiler.
   if (configTICK_RATE_HZ != 1000) {
@@ -15,6 +16,17 @@ inline uint32_t millis() {
   }
   return xTaskGetTickCount();
 }
+
+// Call from ISRs.
+inline uint32_t millis_from_isr() {
+  // This should be optimized out by the compiler.
+  if (configTICK_RATE_HZ != 1000) {
+    Error_Handler();
+  }
+  return xTaskGetTickCountFromISR();
+}
+
+
 
 inline void delay_millis(uint32_t millis) {
   // This should be optimized out by the compiler.
