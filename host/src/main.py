@@ -27,8 +27,8 @@ logging.basicConfig(
 logger = logging.getLogger("main")
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--port", dest="port", default=None, help="Serial port to use.")
-parser.add_argument("--output_file", dest="output_file", default="data_output_file.txt", help="Name of output file.")
+parser.add_argument("--port", dest="port", default="COM21", help="Serial port to use.")
+parser.add_argument("--output_file", dest="output_file", default="test.txt", help="Name of output file.")
 args = parser.parse_args()
 
 output_file = None
