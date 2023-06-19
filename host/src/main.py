@@ -9,20 +9,25 @@ import sys
 import os
 import atexit
 from typing import List
-from statistics import mean 
+from statistics import mean
 import math
-
+import pyformulas as pf
+import matplotlib.pyplot as plt
+import numpy as np
+import argparse
+import asyncio
+import logging
+from typing import Tuple, Optional
 
 # For using the local version of serial_packet. Comment out if
 # using serial_packets package installed by pip.
 # sys.path.insert(0, "../../../../serial_packets_py/repo/src")
 
-import argparse
-import asyncio
-import logging
-from typing import Tuple, Optional
 from serial_packets.client import SerialPacketsClient
 from serial_packets.packets import PacketStatus, PacketsEvent, PacketData
+
+# Pyplot documentation:
+# https://matplotlib.org/stable/api/pyplot_summary.html
 
 logging.basicConfig(
     level=logging.INFO,
@@ -32,15 +37,28 @@ logger = logging.getLogger("main")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--port", dest="port", default="COM21", help="Serial port to use.")
-parser.add_argument("--output_file", dest="output_file", default="test.txt", help="Name of output file.")
+parser.add_argument("--output_file",
+                    dest="output_file",
+                    default="test.txt",
+                    help="Name of output file.")
 args = parser.parse_args()
 
 output_file = None
 
+# Graphing example from https://stackoverflow.com/a/49594258/15038713
+
+fig = None
+canvas = None
+screen = None
+
+
+def grams(adc_ticks: int) -> int:
+    return int(adc_ticks * 0.01)
+
 
 def atexit_handler():
     global output_file
-    if output_file: 
+    if output_file:
         logger.info(f"Flushing data file [{args.output_file}]")
         output_file.flush()
         output_file = None
@@ -70,6 +88,59 @@ async def event_async_callback(event: PacketsEvent) -> None:
     logger.info("%s event", event)
 
 
+window_width = 1000
+window_height = 700
+DPI = 100
+
+
+def init_graph():
+    global fig, canvas, screen
+    fig = plt.figure(figsize=(window_width / DPI, window_height / DPI), dpi=DPI)
+    canvas = np.zeros((window_height, window_width))
+    screen = pf.screen(canvas, 'Load cell ADC')
+
+
+ZERO_OFFSET = 27210.57
+DISPLAY_NUM_POINTS = 501
+
+display_points_grams = [0 for v in range(0, DISPLAY_NUM_POINTS)]
+
+
+def process_new_points(new_points_ticks: List[int]) -> None:
+    global ZERO_OFFSET, display_points_grams
+    new_points_grams = [grams(v - ZERO_OFFSET) for v in new_points_ticks]
+    display_points_grams.extend(new_points_grams)
+    display_points_grams = display_points_grams[-DISPLAY_NUM_POINTS:]
+    update_graph(display_points_grams)
+
+
+def update_graph(gram_points: List[int]):
+    fig.clear()
+
+    plt.subplot(211)
+    y = gram_points
+    x = [v * 2 for v in range(0, len(gram_points))]
+    plt.xlim(min(x), max(x))
+    plt.ylim(-100, 3000)
+    plt.plot(x, y, color='blue')
+
+    plt.subplot(212)
+    m = mean(gram_points)
+    normalized = [v - m for v in gram_points]
+    y = normalized
+    x = [v * 2 for v in range(0, len(gram_points))]
+    plt.xlabel('Time [ms]')
+    plt.ylabel('Force [g]')
+    plt.xlim(min(x), max(x))
+    plt.ylim(-31, 31)
+    plt.plot(x, y, color='red')
+
+    fig.canvas.draw()
+    image = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+    image = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    screen.update(image)
+
+
 def handle_adc_report_message(data: PacketData):
     global output_file
     # Get message metadata
@@ -94,21 +165,10 @@ def handle_adc_report_message(data: PacketData):
         points.append(val)
         points_written += 1
     # Report errors.
-    if data.read_error() or points_written != points_expected :
+    if data.read_error() or points_written != points_expected:
         logger.error("Error while processing an incoming adc report message.")
     else:
-      analyze_points(points)
-
-def analyze_points(points: List[int] ) -> None:
-  avg = mean(points)
-  normalized = [point - 1 for point in points]
-  sum = 0
-  for value in normalized:
-    sum += value * value
-  rms = math.sqrt(sum / len(normalized))
-  low = min(normalized)
-  high = max(normalized)
-  logger.info(f"Avg: {avg}, Min: {low}, max: {high}, span: {high-low}, rms: {int(rms)}")
+        process_new_points(points)
 
 
 async def async_main():
@@ -116,19 +176,16 @@ async def async_main():
     assert args.port is not None
     client = SerialPacketsClient(args.port, command_async_callback, message_async_callback,
                                  event_async_callback)
+
+    init_graph()
+
     while True:
         # Connect if needed.
         if not client.is_connected():
             if not await client.connect():
                 await asyncio.sleep(2.0)
                 continue
-        # Here connected. Send a command every 500 ms.
         await asyncio.sleep(0.5)
-        # endpoint = 20
-        # cmd_data = PacketData().add_uint8(200).add_uint32(1234)
-        # logger.info("Sending command: [%d], %s", endpoint, cmd_data.hex_str())
-        # status, response_data = await client.send_command_blocking(endpoint, cmd_data, timeout=0.2)
-        # logger.info(f"Command result: [%d], %s", status, response_data.hex_str())
 
 
 asyncio.run(async_main(), debug=True)
