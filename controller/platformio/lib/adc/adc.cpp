@@ -284,7 +284,10 @@ static void setup() {
   // }
 
   // ADC load cell inputs: p=ain2, n=ain3.
-  static const AdcRegs wr_regs = {0x5c, 0xc0, 0x00, 0x00};
+  // static const AdcRegs wr_regs = {0x5c, 0xc0, 0x00, 0x00};
+  static const AdcRegs wr_regs = {0x5c, 0xc0, 0x30, 0x00};
+  // Thermistor inputs p=ain0, n=gnd, 2x10ua current source via ain0.
+  // static const AdcRegs wr_regs = {0x80, 0xc0, 0x11, 0x24};
   cmd_write_registers(wr_regs);
 
   // Sanity check that we wrote the registers correctly.

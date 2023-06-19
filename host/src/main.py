@@ -8,6 +8,10 @@ from __future__ import annotations
 import sys
 import os
 import atexit
+from typing import List
+from statistics import mean 
+import math
+
 
 # For using the local version of serial_packet. Comment out if
 # using serial_packets package installed by pip.
@@ -80,16 +84,31 @@ def handle_adc_report_message(data: PacketData):
         output_file = open(args.output_file, "w")
     # Write data to file.
     points_written = 0
-    output_file.write(f"--- Packet {points_expected}, {isr_millis}\n")
+    points = []
+    #output_file.write(f"--- Packet {points_expected}, {isr_millis}\n")
     while not data.all_read():
         val = data.read_int24()
         if data.read_error():
             break
         output_file.write(f"{val}\n")
+        points.append(val)
         points_written += 1
     # Report errors.
     if data.read_error() or points_written != points_expected :
         logger.error("Error while processing an incoming adc report message.")
+    else:
+      analyze_points(points)
+
+def analyze_points(points: List[int] ) -> None:
+  avg = mean(points)
+  normalized = [point - 1 for point in points]
+  sum = 0
+  for value in normalized:
+    sum += value * value
+  rms = math.sqrt(sum / len(normalized))
+  low = min(normalized)
+  high = max(normalized)
+  logger.info(f"Avg: {avg}, Min: {low}, max: {high}, span: {high-low}, rms: {int(rms)}")
 
 
 async def async_main():
