@@ -283,12 +283,8 @@ static void setup() {
   cmd_reset();
   // }
 
-  // Configure ADC registers. We use a single short mode and
-  // start a new conversion on each reading.
-  // static const AdcRegs wr_regs = {0x0c, 0xc0, 0x00, 0x02};
-
-  // ADC inputs: p=2, n=3.
-  static const AdcRegs wr_regs = {0x5c, 0xc0, 0x00, 0x02};
+  // ADC load cell inputs: p=ain2, n=ain3.
+  static const AdcRegs wr_regs = {0x5c, 0xc0, 0x00, 0x00};
   cmd_write_registers(wr_regs);
 
   // Sanity check that we wrote the registers correctly.
