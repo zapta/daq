@@ -101,6 +101,7 @@ def init_graph():
     screen = pf.screen(canvas, 'Load cell ADC')
 
 
+
 ZERO_OFFSET = 16925
 DISPLAY_NUM_POINTS = 501
 
@@ -116,76 +117,86 @@ def process_new_points(new_points_ticks: List[int]) -> None:
     display_points_grams = display_points_grams[-DISPLAY_NUM_POINTS:]
     update_graph(display_points_grams)
 
+
 fft_last_yf = None
 slot = 0
+
+
 def update_graph(gram_points: List[int]):
     global slot, fft_last_yf
     # Increment slot number
     slot += 1
     if slot > 10:
-      slot = 1
+        slot = 1
     # logger.info(f"*** slot = {slot}")
-      
-      
-    # fig.clear()
+
+    # fig.tight_layout() 
+    # fig.tight_layout(h_pad=2)
+    # fig.suptitle('Loadcell ADC')
+    # plt.subplots_adjust(top=0.85)
+    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.95, top=0.95, wspace=0.4, hspace=0.4)
+    # plt.subplots_adjust(top=0.1)
 
     # Force graph.
     ax = plt.subplot(311)
     ax.clear()
     y = gram_points
     x = [v * 2 for v in range(0, len(gram_points))]
+    plt.xlabel('Time [ms]')
+    plt.ylabel('Force [g]')
     plt.xlim(min(x), max(x))
     plt.ylim(-100, 3000)
     plt.plot(x, y, color='blue')
 
     # Noise graph
-
-      
     if slot in [3, 6, 9]:
-      m = mean(gram_points)
-      normalized = [v - m for v in gram_points]
-      ax = plt.subplot(312)
-      ax.clear()
-      y = normalized
-      x = [v * 2 for v in range(0, len(gram_points))]
-      plt.xlabel('Time [ms]')
-      plt.ylabel('Force [g]')
-      plt.xlim(min(x), max(x))
-      plt.ylim(-30, 30)
-      plt.plot(x, y, color='red')
-    
+        m = mean(gram_points)
+        normalized = [v - m for v in gram_points]
+        ax = plt.subplot(312)
+        ax.clear()
+        y = normalized
+        sum_squars = 0
+        for v in normalized:
+          sum_squars += v * v
+        rms = math.sqrt(sum_squars/ len(normalized))
+        plt.text(10, -18, f"RMS: {rms:.2f},  p2p: {max(normalized) - min(normalized):.2f} ")
+        x = [v * 2 for v in range(0, len(gram_points))]
+        plt.xlabel('Time [ms]')
+        plt.ylabel('AC Force [g]')
+        plt.xlim(min(x), max(x))
+        plt.ylim(-20, 20)
+        plt.plot(x, y, color='red')
+
     # Noise FFT graph
     if fft_last_yf is None or slot == 1:
-      m = mean(gram_points)
-      normalized = [v - m for v in gram_points]
-      ax = plt.subplot(313)
-      ax.clear()
-      # logger.info("*** Computing fft")
-      # Number of samplepoints
-      N = len(normalized)
-      # sample interval
-      T = 1.0 / 500.0
-      # Signal in.
-      x = np.linspace(0.0, N*T, N)
-      y = np.asarray(normalized)
-      # y = np.sin(50.0 * 2.0*np.pi*x) + 0.5*np.sin(80.0 * 2.0*np.pi*x)
-      # print(f"Len_x={len(x)}, len_y={len(y)}")
-      # FFT values
-      fft_last_yf = scipy.fftpack.fft(y)
-      
-      yf = fft_last_yf  
-      xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
-      # supress dc
-      # yf[0] = 0
-      # print(f"Len_xf={len(xf)}, len_yf={len(yf)}")
-      plt.xlabel('Level')
-      plt.xlabel('Frequency [Hz]')
-      plt.ylim(0, 10)
-      # fig, ax = plt.subplots()
-      plt.plot(xf, 2.0/N * np.abs(yf[:N//2]))
-      # plt.show()
+        m = mean(gram_points)
+        normalized = [v - m for v in gram_points]
+        ax = plt.subplot(313)
+        ax.clear()
+        # logger.info("*** Computing fft")
+        # Number of samplepoints
+        N = len(normalized)
+        # sample interval
+        T = 1.0 / 500.0
+        # Signal in.
+        x = np.linspace(0.0, N * T, N)
+        y = np.asarray(normalized)
+        # y = np.sin(50.0 * 2.0*np.pi*x) + 0.5*np.sin(80.0 * 2.0*np.pi*x)
+        # print(f"Len_x={len(x)}, len_y={len(y)}")
+        # FFT values
+        fft_last_yf = scipy.fftpack.fft(y)
 
-
+        yf = fft_last_yf
+        xf = np.linspace(0.0, 1.0 / (2.0 * T), N // 2)
+        # supress dc
+        # yf[0] = 0
+        # print(f"Len_xf={len(xf)}, len_yf={len(yf)}")
+        plt.xlabel('Frequency [Hz]')
+        plt.ylabel('Rel level')
+        plt.ylim(0, 10)
+        # fig, ax = plt.subplots()
+        plt.plot(xf, 2.0 / N * np.abs(yf[:N // 2]))
+        # plt.show()
     fig.canvas.draw()
     image = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
     image = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
