@@ -240,14 +240,33 @@ async def async_main():
                                  event_async_callback)
 
     init_graph()
-
+    
+    init_level = 0
     while True:
         # Connect if needed.
-        if not client.is_connected():
+        if init_level == 0 or not client.is_connected():
+            init_level = 0
             if not await client.connect():
                 await asyncio.sleep(2.0)
                 continue
+            init_level = 1
+              
+        # Enable ADC report messages if needed.
+        if init_level == 1:
+          cmd_data = PacketData().add_uint8(0x02).add_uint8(0x01)
+          status, response_data = await client.send_command_blocking(0x01, cmd_data, timeout=0.2)
+          if status !=0x00:
+            await asyncio.sleep(2.0)
+            continue
+          init_level = 2
+            
+        # Do nothing.    
         await asyncio.sleep(0.5)
+        # NOP command.
+        cmd_data = PacketData().add_uint8(0x01)
+        status, response_data = await client.send_command_blocking(0x01, cmd_data, timeout=0.2)
+        logger.info(f"NOP command status: {status}")
+
 
 
 asyncio.run(async_main(), debug=True)
