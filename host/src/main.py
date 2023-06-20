@@ -18,6 +18,7 @@ import argparse
 import asyncio
 import logging
 from typing import Tuple, Optional
+import scipy
 
 # For using the local version of serial_packet. Comment out if
 # using serial_packets package installed by pip.
@@ -88,8 +89,8 @@ async def event_async_callback(event: PacketsEvent) -> None:
     logger.info("%s event", event)
 
 
-window_width = 1000
-window_height = 700
+window_width = 1100
+window_height = 900
 DPI = 100
 
 
@@ -113,27 +114,72 @@ def process_new_points(new_points_ticks: List[int]) -> None:
     display_points_grams = display_points_grams[-DISPLAY_NUM_POINTS:]
     update_graph(display_points_grams)
 
-
+fft_last_yf = None
+slot = 0
 def update_graph(gram_points: List[int]):
-    fig.clear()
+    global slot, fft_last_yf
+    # Increment slot number
+    slot += 1
+    if slot > 10:
+      slot = 1
+    # logger.info(f"*** slot = {slot}")
+      
+      
+    # fig.clear()
 
-    plt.subplot(211)
+    # Force graph.
+    ax = plt.subplot(311)
+    ax.clear()
     y = gram_points
     x = [v * 2 for v in range(0, len(gram_points))]
     plt.xlim(min(x), max(x))
     plt.ylim(-100, 3000)
     plt.plot(x, y, color='blue')
 
-    plt.subplot(212)
+    # Noise graph
     m = mean(gram_points)
     normalized = [v - m for v in gram_points]
-    y = normalized
-    x = [v * 2 for v in range(0, len(gram_points))]
-    plt.xlabel('Time [ms]')
-    plt.ylabel('Force [g]')
-    plt.xlim(min(x), max(x))
-    plt.ylim(-31, 31)
-    plt.plot(x, y, color='red')
+      
+    if slot in [3, 6, 9]:
+      ax = plt.subplot(312)
+      ax.clear()
+      y = normalized
+      x = [v * 2 for v in range(0, len(gram_points))]
+      plt.xlabel('Time [ms]')
+      plt.ylabel('Force [g]')
+      plt.xlim(min(x), max(x))
+      plt.ylim(-31, 31)
+      plt.plot(x, y, color='red')
+    
+    # Noise FFT graph
+    if fft_last_yf is None or slot == 1:
+      ax = plt.subplot(313)
+      ax.clear()
+      # logger.info("*** Computing fft")
+      # Number of samplepoints
+      N = len(normalized)
+      # sample interval
+      T = 1.0 / 500.0
+      # Signal in.
+      x = np.linspace(0.0, N*T, N)
+      y = np.asarray(normalized)
+      # y = np.sin(50.0 * 2.0*np.pi*x) + 0.5*np.sin(80.0 * 2.0*np.pi*x)
+      # print(f"Len_x={len(x)}, len_y={len(y)}")
+      # FFT values
+      fft_last_yf = scipy.fftpack.fft(y)
+      
+      yf = fft_last_yf  
+      xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
+      # supress dc
+      # yf[0] = 0
+      # print(f"Len_xf={len(xf)}, len_yf={len(yf)}")
+      plt.xlabel('Level')
+      plt.xlabel('Frequency [Hz]')
+      plt.ylim(0, 10)
+      # fig, ax = plt.subplots()
+      plt.plot(xf, 2.0/N * np.abs(yf[:N//2]))
+      # plt.show()
+
 
     fig.canvas.draw()
     image = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
