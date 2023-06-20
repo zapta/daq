@@ -1,7 +1,11 @@
 
-Write a python host controller.
 
-Write SD card driver.
+Add a controller that accepts commands such as enable/disable ADC reporting.
+
+Perform multi channel ADC reading
+
+Log ADC data to file
+
 
 Add unit test for data.copy_from(data).
 
