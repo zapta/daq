@@ -25,9 +25,9 @@ constexpr uint16_t DEFAULT_CMD_TIMEOUT_MILLIS = 1000;
 // A callback type for all incoming commands. Handler should
 // set response_status and response_data with the response
 // info.
-typedef void (*SerialPacketsIncomingCommandHandler)(
+typedef PacketStatus (*SerialPacketsIncomingCommandHandler)(
     uint8_t endpoint, const SerialPacketsData& command_data,
-    uint8_t& response_status, SerialPacketsData& response_data);
+    SerialPacketsData& response_data);
 
 // A callback type for incoming messages.
 typedef void (*SerialPacketsIncomingMessageHandler)(

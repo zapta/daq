@@ -19,6 +19,8 @@
 
 extern DMA_HandleTypeDef hdma_spi1_tx;
 
+using host_link::HostPorts;
+
 namespace adc {
 
 // We use double buffering using cyclic DMA transfer over two buffers.
@@ -354,7 +356,7 @@ void process_dma_rx_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
   if (packet_data.had_write_errors()) {
     Error_Handler();
   }
-  host_link::client.sendMessage(10, packet_data);
+  host_link::client.sendMessage(HostPorts::ADC_REPORT_MESSAGE, packet_data);
   logger.info("Processed in %lu ms", time_util::millis() - isr_millis);
 
   logger.info("ADC %d: %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx", id,

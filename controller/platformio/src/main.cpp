@@ -24,7 +24,6 @@ static SerialPacketsData data;
 StaticTask<2000> host_link_rx_task(host_link::rx_task_body, "Host RX", 8);
 StaticTask<2000> adc_task(adc::adc_task_body, "ADC", 7);
 
-
 // Called from from the main FreeRTOS task.
 void app_main() {
   serial::serial1.init();
@@ -41,29 +40,18 @@ void app_main() {
   if (!host_link_rx_task.start()) {
     Error_Handler();
   }
-   if (!adc_task.start()) {
+  if (!adc_task.start()) {
     Error_Handler();
   }
 
-  // adc::test_setup();
-
-  // sd::test_setup();
-
   for (int i = 1;; i++) {
-    adc::dump_state();
-    // adc::test_loop();
-
-    // sd::test_loop();
-
+    // adc::dump_state();
     io::LED.toggle();
     data.clear();
     data.write_uint32(0x12345678);
-
     const PacketStatus status = host_link::client.sendCommand(0x20, data);
     logger.info("%04d: Recieced respond, status = %d, size=%hu", i, status,
                 data.size());
-    // logger.info("RELOAD = %lu", __HAL_TIM_GET_AUTORELOAD(&htim12));
-
     time_util::delay_millis(500);
   }
 }

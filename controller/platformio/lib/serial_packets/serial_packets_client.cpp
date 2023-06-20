@@ -79,8 +79,7 @@ void SerialPacketsClient::rx_process_decoded_command_packet(
     const DecodedCommandMetadata& metadata, const SerialPacketsData& data) {
   // This accesses rx task only vars so no need to use _prot_mutex.
   _rx_task_data.tmp_data.clear();
-  uint8_t status = OK;
-  _command_handler(metadata.endpoint, data, status, _rx_task_data.tmp_data);
+  const uint8_t status = _command_handler(metadata.endpoint, data, _rx_task_data.tmp_data);
 
   // Send response
   // Determine if to insert a packet flag.

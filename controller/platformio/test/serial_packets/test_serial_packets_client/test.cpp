@@ -37,23 +37,22 @@ static std::vector<Message> message_list;
 // Contains a fake response that the test setup for the command
 // handler to return.
 struct FakeResponse {
-  void clear() { set(0, {}, 0); }
-  void set(uint8_t new_status, const std::vector<uint8_t>& new_data,
+  void clear() { set(PacketStatus::OK, {}, 0); }
+  void set(PacketStatus new_status, const std::vector<uint8_t>& new_data,
            uint16_t new_delay) {
     status = new_status;
     data.clear();
     data.insert(data.end(), new_data.begin(), new_data.end());
     delay = new_delay;
   }
-  uint8_t status;
+  PacketStatus status;
   std::vector<uint8_t> data;
   uint16_t delay;
 };
 
 static FakeResponse fake_response;
 
-void command_handler(uint8_t endpoint, const SerialPacketsData& data,
-                     uint8_t& response_status,
+PacketStatus command_handler(uint8_t endpoint, const SerialPacketsData& data,
                      SerialPacketsData& response_data) {
   // Record the incoming command.
   Command item;
@@ -62,11 +61,12 @@ void command_handler(uint8_t endpoint, const SerialPacketsData& data,
   item.data = copy_data(data);
   command_list.push_back(item);
   // Return a requested fake response.
-  response_status = fake_response.status;
   populate_data(response_data, fake_response.data);
   if (fake_response.delay) {
     time_util::delay_millis(fake_response.delay);
   }
+  return   fake_response.status;
+
 }
 
 
@@ -152,7 +152,7 @@ void test_send_command_loop() {
 
   const std::vector<uint8_t> data = {0x11, 0x22, 0x33};
   populate_data(packet_data, data);
-  fake_response.set(0x99, {0xaa, 0xbb, 0xcc}, 0);
+  fake_response.set((PacketStatus)0x99, {0xaa, 0xbb, 0xcc}, 0);
  
   const PacketStatus status = client->sendCommand(0x20, packet_data, 1000);
   // We get back the fake response status we requested above.
