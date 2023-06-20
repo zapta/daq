@@ -54,7 +54,7 @@ screen = None
 
 
 def grams(adc_ticks: int) -> int:
-    return int(adc_ticks * 0.01)
+    return int(adc_ticks * 0.0167)
 
 
 def atexit_handler():
@@ -101,7 +101,7 @@ def init_graph():
     screen = pf.screen(canvas, 'Load cell ADC')
 
 
-ZERO_OFFSET = 27210.57
+ZERO_OFFSET = 16925
 DISPLAY_NUM_POINTS = 501
 
 display_points_grams = [0 for v in range(0, DISPLAY_NUM_POINTS)]
@@ -109,6 +109,8 @@ display_points_grams = [0 for v in range(0, DISPLAY_NUM_POINTS)]
 
 def process_new_points(new_points_ticks: List[int]) -> None:
     global ZERO_OFFSET, display_points_grams
+    m = mean(new_points_ticks)
+    # logger.info(f"*** mean adc tick: {m}")
     new_points_grams = [grams(v - ZERO_OFFSET) for v in new_points_ticks]
     display_points_grams.extend(new_points_grams)
     display_points_grams = display_points_grams[-DISPLAY_NUM_POINTS:]
@@ -137,10 +139,11 @@ def update_graph(gram_points: List[int]):
     plt.plot(x, y, color='blue')
 
     # Noise graph
-    m = mean(gram_points)
-    normalized = [v - m for v in gram_points]
+
       
     if slot in [3, 6, 9]:
+      m = mean(gram_points)
+      normalized = [v - m for v in gram_points]
       ax = plt.subplot(312)
       ax.clear()
       y = normalized
@@ -148,11 +151,13 @@ def update_graph(gram_points: List[int]):
       plt.xlabel('Time [ms]')
       plt.ylabel('Force [g]')
       plt.xlim(min(x), max(x))
-      plt.ylim(-31, 31)
+      plt.ylim(-30, 30)
       plt.plot(x, y, color='red')
     
     # Noise FFT graph
     if fft_last_yf is None or slot == 1:
+      m = mean(gram_points)
+      normalized = [v - m for v in gram_points]
       ax = plt.subplot(313)
       ax.clear()
       # logger.info("*** Computing fft")

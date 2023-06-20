@@ -184,13 +184,13 @@ int32_t decode_int24(const uint8_t *bfr3) {
   return (int32_t)value;
 }
 
-int32_t grams(int32_t adc_reading) {
-  const int32_t result = (adc_reading - 25000)  / 100;
-  // if (result < -500 || result > 500) {
-  //   io::TEST1.high();
-  // }
-  return result;
-}
+// int32_t grams(int32_t adc_reading) {
+//   const int32_t result = (adc_reading - 25000)  / 100;
+//   // if (result < -500 || result > 500) {
+//   //   io::TEST1.high();
+//   // }
+//   return result;
+// }
 
 // Assuming cs is pulsing.
 void start_DMA() {
@@ -283,11 +283,9 @@ static void setup() {
   cmd_reset();
   // }
 
-  // ADC load cell inputs: p=ain2, n=ain3.
-  static const AdcRegs wr_regs = {0x5c, 0xc0, 0x00, 0x00};
-  //static const AdcRegs wr_regs = {0x5c, 0xc0, 0x30, 0x00};
-  // Thermistor inputs p=ain0, n=gnd, 2x10ua current source via ain0.
-  // static const AdcRegs wr_regs = {0x80, 0xc0, 0x11, 0x24};
+  // ADC load cell inputs: p=ain2, n=ain3. Ratiometric measurement
+  // with AVDD as reference.
+  static const AdcRegs wr_regs = {0x5c, 0xc0, 0xc0, 0x00};
   cmd_write_registers(wr_regs);
 
   // Sanity check that we wrote the registers correctly.
@@ -366,12 +364,12 @@ void process_dma_rx_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
               decode_int24(&bfr[18]), decode_int24(&bfr[21]),
               decode_int24(&bfr[24]), decode_int24(&bfr[27]));
 
-  logger.info("Grams %d: %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld", id,
-              grams(decode_int24(&bfr[0])), grams(decode_int24(&bfr[3])),
-              grams(decode_int24(&bfr[6])), grams(decode_int24(&bfr[9])),
-              grams(decode_int24(&bfr[12])), grams(decode_int24(&bfr[15])),
-              grams(decode_int24(&bfr[18])), grams(decode_int24(&bfr[21])),
-              grams(decode_int24(&bfr[24])), grams(decode_int24(&bfr[27])));
+  // logger.info("Grams %d: %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld", id,
+  //             grams(decode_int24(&bfr[0])), grams(decode_int24(&bfr[3])),
+  //             grams(decode_int24(&bfr[6])), grams(decode_int24(&bfr[9])),
+  //             grams(decode_int24(&bfr[12])), grams(decode_int24(&bfr[15])),
+  //             grams(decode_int24(&bfr[18])), grams(decode_int24(&bfr[21])),
+  //             grams(decode_int24(&bfr[24])), grams(decode_int24(&bfr[27])));
 }
 
 void adc_task_body(void *argument) {
