@@ -6,6 +6,7 @@
 
 #include <cstring>
 
+#include "controller.h"
 #include "dma.h"
 #include "host_link.h"
 #include "io.h"
@@ -102,7 +103,7 @@ void spi_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
   trap();
   irq_full_count++;
   BaseType_t task_woken;
-IrqEvent event = {.id = EVENT_FULL_COMPLETE,
+  IrqEvent event = {.id = EVENT_FULL_COMPLETE,
                     .isr_millis = time_util::millis_from_isr()};
   irq_event_queue.add_from_isr(event, &task_woken);
   portYIELD_FROM_ISR(task_woken)
@@ -346,18 +347,21 @@ void dump_state() {
 // Elappsed dump_timer;
 
 void process_dma_rx_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
-  packet_data.clear();
-  packet_data.write_uint8(1); // version
-  packet_data.write_uint32(isr_millis);  // Acq end time millis. Assuming systicks = millis.
-  packet_data.write_uint16(kPointsPerGroup); // Expected num of points.
-  for (uint32_t i = 0; i < kBytesPerGroup; i += 3) {
-    packet_data.write_bytes(&bfr[i], 3);
+  const bool reports_enabled = controller::is_adc_report_enabled();
+  if (reports_enabled) {
+    packet_data.clear();
+    packet_data.write_uint8(1);  // version
+    packet_data.write_uint32(
+        isr_millis);  // Acq end time millis. Assuming systicks = millis.
+    packet_data.write_uint16(kPointsPerGroup);  // Expected num of points.
+    for (uint32_t i = 0; i < kBytesPerGroup; i += 3) {
+      packet_data.write_bytes(&bfr[i], 3);
+    }
+    if (packet_data.had_write_errors()) {
+      Error_Handler();
+    }
+    host_link::client.sendMessage(HostPorts::ADC_REPORT_MESSAGE, packet_data);
   }
-  if (packet_data.had_write_errors()) {
-    Error_Handler();
-  }
-  host_link::client.sendMessage(HostPorts::ADC_REPORT_MESSAGE, packet_data);
-  logger.info("Processed in %lu ms", time_util::millis() - isr_millis);
 
   logger.info("ADC %d: %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx", id,
               decode_int24(&bfr[0]), decode_int24(&bfr[3]),
@@ -366,12 +370,8 @@ void process_dma_rx_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
               decode_int24(&bfr[18]), decode_int24(&bfr[21]),
               decode_int24(&bfr[24]), decode_int24(&bfr[27]));
 
-  // logger.info("Grams %d: %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld", id,
-  //             grams(decode_int24(&bfr[0])), grams(decode_int24(&bfr[3])),
-  //             grams(decode_int24(&bfr[6])), grams(decode_int24(&bfr[9])),
-  //             grams(decode_int24(&bfr[12])), grams(decode_int24(&bfr[15])),
-  //             grams(decode_int24(&bfr[18])), grams(decode_int24(&bfr[21])),
-  //             grams(decode_int24(&bfr[24])), grams(decode_int24(&bfr[27])));
+  logger.info("Processed in %lu ms, reports_enabled: %hd",
+              time_util::millis() - isr_millis, reports_enabled);
 }
 
 void adc_task_body(void *argument) {
