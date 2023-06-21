@@ -30,6 +30,23 @@ void test_constructor() {
   TEST_ASSERT_TRUE(d1.all_read_ok());
 }
 
+void test_copy_from() {
+  d1.write_uint32(0x12345);
+  d1.read_uint8();
+  d1.read_uint32();
+  TEST_ASSERT_EQUAL(1, d1.bytes_read());
+  TEST_ASSERT_TRUE(d1.had_read_errors());
+  d2.write_uint16(0x2233);
+  d1.copy_from(d2);
+  TEST_ASSERT_EQUAL(2, d1.size());
+  TEST_ASSERT_EQUAL(2, d2.size());
+  assert_data_equal(d1, {0x22, 0x33});
+  assert_data_equal(d2, {0x22, 0x33});
+  // Reading state got cleared.
+  TEST_ASSERT_EQUAL(0, d1.bytes_read());
+  TEST_ASSERT_FALSE(d1.had_read_errors());
+}
+
 void test_write_uint8() {
   d1.write_uint8(0x02);
   TEST_ASSERT_FALSE(d1.had_read_errors());

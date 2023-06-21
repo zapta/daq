@@ -1,6 +1,5 @@
 
 
-Add unit test for data.copy_from(data).
 
 
 Perform multi channel ADC reading
