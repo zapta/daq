@@ -47,11 +47,11 @@ void app_main() {
   for (int i = 1;; i++) {
     // adc::dump_state();
     io::LED.toggle();
-    data.clear();
-    data.write_uint32(0x12345678);
-    const PacketStatus status = host_link::client.sendCommand(0x20, data);
-    logger.info("%04d: Recieced respond, status = %d, size=%hu", i, status,
-                data.size());
+    // data.clear();
+    // data.write_uint32(0x12345678);
+    // const PacketStatus status = host_link::client.sendCommand(0x20, data);
+    // logger.info("%04d: Recieced respond, status = %d, size=%hu", i, status,
+    //             data.size());
     time_util::delay_millis(500);
   }
 }

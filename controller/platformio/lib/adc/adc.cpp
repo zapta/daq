@@ -15,12 +15,20 @@
 #include "serial_packets_client.h"
 #include "spi.h"
 #include "static_queue.h"
+#include "stm32h7xx_hal_spi.h"
+#include "stm32h7xx_hal_spi_ex.h"
 #include "tim.h"
 #include "time_util.h"
 
 extern DMA_HandleTypeDef hdma_spi1_tx;
+// extern DMA_HandleTypeDef hdma_spi1_rx;
 
 using host_link::HostPorts;
+
+// enum TransferMode {
+//   SINGLE_COMMAND,
+//   CONTINIOUS_READING
+// };
 
 namespace adc {
 
@@ -50,37 +58,20 @@ struct IrqEvent {
 
 static StaticQueue<IrqEvent, 5> irq_event_queue;
 
+// Indicates if we transfer a one time command or
+// we are in a continious cyclic transfer.
+static volatile bool continious_DMA;
+
 // static bool dma_active = false;
-static uint32_t irq_half_count = 0;
-static uint32_t irq_full_count = 0;
-static uint32_t irq_error_count = 0;
+static volatile uint32_t irq_half_count = 0;
+static volatile uint32_t irq_full_count = 0;
+static volatile uint32_t irq_error_count = 0;
 
-static uint32_t event_half_count = 0;
-static uint32_t event_full_count = 0;
+static volatile uint32_t event_half_count = 0;
+static volatile uint32_t event_full_count = 0;
 
-// In continuous reading we use TIM12 PWM output to trigger the DMA transactions
-// and as ADC CS signal. During initialization, we use it as a manual CS
-// by setting the PWM duty cycle to either 0% or 100%.
-static void cs_high() {
-  const uint32_t period = 1 + __HAL_TIM_GET_AUTORELOAD(&htim12);
-  __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_1, period);
-  // Let the PWM reload next cycle.
-  time_util::delay_millis(5);
-}
+// static bool dma_one_shot = false;
 
-static void cs_low() {
-  __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_1, 0);
-  // Let the PWM reload next cycle.
-  time_util::delay_millis(5);
-}
-
-// The TIM12 PWM output is pulsating at sampling rate to synchroize
-// the DMA transfers.
-static void cs_pulsing() {
-  __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_1, 100);
-  // Let the PWM reload next cycle.
-  time_util::delay_millis(5);
-}
 
 static void trap() {
   // Breakpoint here.
@@ -90,18 +81,32 @@ static void trap() {
 // Called when the first half of rx_buffer is ready for processing.
 void spi_TxRxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
   trap();
-  irq_half_count++;
-  BaseType_t task_woken;
-  IrqEvent event = {.id = EVENT_HALF_COMPLETE,
-                    .isr_millis = time_util::millis_from_isr()};
-  irq_event_queue.add_from_isr(event, &task_woken);
-  portYIELD_FROM_ISR(task_woken)
+
+  // In one time transfer we ignore the half complete since
+  // we want to transfer the entire buffer before we stop
+  // the DMA.
+  if (continious_DMA) {
+    irq_half_count++;
+    BaseType_t task_woken;
+    IrqEvent event = {.id = EVENT_HALF_COMPLETE,
+                      .isr_millis = time_util::millis_from_isr()};
+    irq_event_queue.add_from_isr(event, &task_woken);
+    portYIELD_FROM_ISR(task_woken)
+  }
 }
 
 // Called when the second half of rx_buffer is ready for processing.
 void spi_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
   trap();
-  irq_full_count++;
+
+  // If trasfering a one time transaction, we shut off the
+  // DMA transfer once the first transfer is completed.
+  if (!continious_DMA) {
+    HAL_SPI_Abort(&hspi1);
+  } else {
+    irq_full_count++;
+  }
+
   BaseType_t task_woken;
   IrqEvent event = {.id = EVENT_FULL_COMPLETE,
                     .isr_millis = time_util::millis_from_isr()};
@@ -114,37 +119,71 @@ void spi_ErrorCallback(SPI_HandleTypeDef *hspi) {
   trap();
 }
 
-// static void wait_for_dma_completion() {
-//   for (;;) {
-//     if (!dma_active) {
-//       // io::ADC_CS.high();
-//       return;
-//     }
-//     time_util::delay_millis(1);
-//   }
-// }
+
+// Set up the DMA MUX request generator which controls how many
+// transfers (bytes in out case) are done on each TIM12 PWM
+// sync which we use as a repeating ADC CS.
+static void set_dma_request_generator(uint32_t num_transfers_per_sync) {
+
+  // Set tx DMA request generator.
+
+
+  // A woraround to reset the request generator. 
+  CLEAR_BIT(hdma_spi1_tx.DMAmuxChannel->CCR, (DMAMUX_CxCR_SE));
+
+
+  const uint32_t mask = DMAMUX_CxCR_NBREQ_Msk;
+  MODIFY_REG(hdma_spi1_tx.DMAmuxChannel->CCR, mask,
+             (num_transfers_per_sync - 1U) << DMAMUX_CxCR_NBREQ_Pos);
+
+
+  SET_BIT(hdma_spi1_tx.DMAmuxChannel->CCR, (DMAMUX_CxCR_SE));
+
+}
+
+
 
 // Blocks until completion. Recieved bytes are returned in rx_buffer.
 static void send_command(const uint8_t *cmd, uint16_t num_bytes) {
+  time_util::delay_millis(50);
+  logger.info("Sending command (%hu bytes)", num_bytes);
   if (num_bytes > sizeof(rx_buffer)) {
     Error_Handler();
   }
   memset(rx_buffer, 0, num_bytes);
-  cs_low();
-  HAL_StatusTypeDef status =
-      HAL_SPI_TransmitReceive(&hspi1, cmd, rx_buffer, num_bytes, 500);
-  if (HAL_OK != status) {
-    // dma_active = false;
+
+  // irq_event_queue.reset();
+
+  set_dma_request_generator(num_bytes);
+  continious_DMA = false;
+  irq_event_queue.reset();
+
+  const HAL_StatusTypeDef status =
+      HAL_SPI_TransmitReceive_DMA(&hspi1, cmd, rx_buffer, num_bytes);
+  if (status != HAL_StatusTypeDef::HAL_OK) {
     Error_Handler();
   }
-  cs_high();
+
+
+
+  IrqEvent event;
+  if (!irq_event_queue.consume_from_task(&event, 300)) {
+    Error_Handler();
+  }
+
+  logger.info("IRQ event: %d", event.id);
+  if (event.id != IrqEventId::EVENT_FULL_COMPLETE) {
+    Error_Handler();
+  }
+
+
 }
 
 void cmd_reset() {
   static const uint8_t cmd[] = {0x06};
   send_command(cmd, sizeof(cmd));
-  // Datasheet says to wait ~50us.
-  time_util::delay_millis(1);
+  // Since commands are done at a TIM12 intervals, we don't
+  // need to insert a ~50us delay here as called by the datasheet.
 }
 
 void cmd_start() {
@@ -187,45 +226,27 @@ int32_t decode_int24(const uint8_t *bfr3) {
   return (int32_t)value;
 }
 
-// int32_t grams(int32_t adc_reading) {
-//   const int32_t result = (adc_reading - 25000)  / 100;
-//   // if (result < -500 || result > 500) {
-//   //   io::TEST1.high();
-//   // }
-//   return result;
-// }
+
 
 // Assuming cs is pulsing.
-void start_DMA() {
-  cs_pulsing();
+void start_continuos_DMA() {
+  set_dma_request_generator(3);
+  continious_DMA = true;
+  irq_event_queue.reset();
+  irq_error_count = 0;
+  irq_half_count = 0;
+  irq_full_count = 0;
 
-  // io::TEST1.low();
-
-  // memset(rx_buffer, 0, sizeof(rx_buffer));
-
-  // TODO: Create this one during initialization, or use a const
-  // build time array.
+  
   for (uint32_t i = 0; i < sizeof(tx_buffer); i++) {
     const uint32_t j = i % 3;
-    // Every fourth byte is start comment, for next reading.
+    // Every third byte is start comment, for next reading.
     tx_buffer[i] = (j == 0) ? 0x08 : 00;
   }
 
-  // Assert that the DMAMUX request generator is configured to
-  // send 3 bytes per trigger. This value comes from the TX DMA setting
-  // of the SPI channel, in Cube IDE and is imported as part of spi.c.
-  const uint32_t num_requests =
-      1 + ((hdma_spi1_tx.DMAmuxChannel->CCR >> 19) & 0x0000001f);
-  if (num_requests != 3) {
-    Error_Handler();
-  }
 
-  // A workaround to reset the DMAMUX request generator.
-  // Based on a call to HAL_DMAEx_ConfigMuxSync in spi.c.
-  CLEAR_BIT(hdma_spi1_tx.DMAmuxChannel->CCR, (DMAMUX_CxCR_SE));
-  SET_BIT(hdma_spi1_tx.DMAmuxChannel->CCR, (DMAMUX_CxCR_SE));
 
-  // dma_active = true;
+ 
 
   // Should read 3 bytes but we read for to simulate DMA burst of
   // 4.
@@ -237,33 +258,9 @@ void start_DMA() {
   }
 
   logger.info("ADC dma started.");
-  // wait_for_dma_completion();
-
-  // logger.info("ADC: %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx",
-  //             decode_int24(&rx_buffer[0]), decode_int24(&rx_buffer[3]),
-  //             decode_int24(&rx_buffer[6]), decode_int24(&rx_buffer[9]),
-  //             decode_int24(&rx_buffer[12]), decode_int24(&rx_buffer[15]),
-  //             decode_int24(&rx_buffer[18]), decode_int24(&rx_buffer[21]),
-  //             decode_int24(&rx_buffer[24]), decode_int24(&rx_buffer[27]));
-
-  // logger.info(
-  //     "Grams: %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld",
-  //     grams(decode_int24(&rx_buffer[0])), grams(decode_int24(&rx_buffer[3])),
-  //     grams(decode_int24(&rx_buffer[6])), grams(decode_int24(&rx_buffer[9])),
-  //     grams(decode_int24(&rx_buffer[12])),
-  //     grams(decode_int24(&rx_buffer[15])),
-  //     grams(decode_int24(&rx_buffer[18])),
-  //     grams(decode_int24(&rx_buffer[21])),
-  //     grams(decode_int24(&rx_buffer[24])),
-  //     grams(decode_int24(&rx_buffer[27])));
-
-  // return decode_int24(rx_buffer);
 }
 
 static void setup() {
-  io::TEST1.high();
-
-  cs_high();
 
   // Register interrupt handler. These handler are marked in
   // cube ide for registration rather than overriding a weak
@@ -282,9 +279,10 @@ static void setup() {
     Error_Handler();
   }
 
-  // for (int i = 0; i < 3; i++) {
+  // for (;;) {
+  io::TEST1.high();
+
   cmd_reset();
-  // }
 
   // ADC load cell inputs: p=ain2, n=ain3. Ratiometric measurement
   // with AVDD as reference.
@@ -301,21 +299,18 @@ static void setup() {
   // Start the first conversion.
   cmd_start();
 
-  //   static uint8_t queue_items_static_mem[5] = {};
-  // static StaticQueue_t  queue_static_mem;
-  // queue_handle = xQueueCreateStatic(sizeof(queue_items_static_mem), 1,
-  //                                   queue_items_static_mem,
-  //                                   &queue_static_mem);
-  // if (queue_handle == nullptr) {
-  //   Error_Handler();
-  // }
+
 
   io::TEST1.low();
+
+  time_util::delay_millis(500);
+  logger.info("Setup loop");
+  // }
 
   // Pulsate the CS signal to the ADC. The DMA transactions are synced
   // to this time base.
   // cs_pulsing();
-  start_DMA();
+  start_continuos_DMA();
 }
 
 void dump_state() {
@@ -338,10 +333,7 @@ void dump_state() {
   logger.info("DMA counters: half: %lu (%lu), full: %lu (%lu), err: %lu",
               _irq_half_count, _event_half_count, _irq_full_count,
               _event_full_count, _irq_error_count);
-  // const int32_t value =
-  // read_data_DMA();
-  // logger.info("ADC: %ld", value);
-  // logger.info("Grams: %ld", grams(value));
+ 
 }
 
 // Elappsed dump_timer;
