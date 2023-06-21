@@ -20,6 +20,9 @@ class StaticQueue {
 
   inline QueueHandle_t handle() { return _handle; }
 
+  inline void reset() { xQueueReset(_handle); }
+
+
   // Must call portYIELD_FROM_ISR(task_woken) at the very end of the ISR.
   inline bool add_from_isr(const T& item, BaseType_t* task_woken) {
     BaseType_t status = xQueueSendToBackFromISR(_handle, &item, task_woken);
