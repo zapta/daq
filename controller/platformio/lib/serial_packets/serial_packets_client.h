@@ -117,7 +117,7 @@ class SerialPacketsClient {
     // Used to assign command ids. Wraparound is ok. Skipping zero values.
     uint32_t cmd_id_counter = 0;
     // Used to insert pre packet flag byte when packates are sparse.
-    Elappsed pre_flag_timer;
+    // Elappsed pre_flag_timer;
     // Used to periodically clean pending commands that timeout.
     Elappsed cleanup_timer;
     // A table that contains information about pending commands.
@@ -164,10 +164,10 @@ class SerialPacketsClient {
 
   // Manipulate the pre flag timer to force a pre packet flag byte
   // before next packet. Invoked when when we detect errors on the line.
-  void force_next_pre_flag() {
-    _prot.pre_flag_timer.set(serial_packets_consts::PRE_FLAG_TIMEOUT_MILLIS +
-                             1);
-  }
+  // void force_next_pre_flag() {
+  //   _prot.pre_flag_timer.set(serial_packets_consts::PRE_FLAG_TIMEOUT_MILLIS +
+  //                            1);
+  // }
 
   // Lookup a non idle context entry with given command id.
   CommandContext* find_context_by_cmd_id(uint32_t cmd_id) {
@@ -192,11 +192,11 @@ class SerialPacketsClient {
 
   // Determine if the interval from previous packet is large enough that
   // warrants the insertion of a flag byte beofore next packet.
-  bool prot_check_pre_flag() {
-    // _data_stream->flush();
-    const bool result = _prot.pre_flag_timer.elapsed_millis() >
-                        serial_packets_consts::PRE_FLAG_TIMEOUT_MILLIS;
-    _prot.pre_flag_timer.reset();
-    return result;
-  }
+  // bool prot_check_pre_flag() {
+  //   // _data_stream->flush();
+  //   const bool result = _prot.pre_flag_timer.elapsed_millis() >
+  //                       serial_packets_consts::PRE_FLAG_TIMEOUT_MILLIS;
+  //   _prot.pre_flag_timer.reset();
+  //   return result;
+  // }
 };

@@ -59,9 +59,9 @@ class PacketEncoderInspector {
  public:
   PacketEncoderInspector(SerialPacketsEncoder& encoder) : _encoder(encoder) {}
 
-  bool run_byte_stuffing(const EncodedPacketBuffer& in, bool insert_pre_flag,
+  bool run_byte_stuffing(const EncodedPacketBuffer& in, 
                          StuffedPacketBuffer* out) {
-    return _encoder.byte_stuffing(in, insert_pre_flag, out);
+    return _encoder.byte_stuffing(in,  out);
   }
 
  private:

@@ -71,6 +71,12 @@ class SerialPacketsDecoder {
   // new packet is available.
   bool process_packet();
 
+  void reset_packet(bool in_packet) {
+      _in_packet = in_packet;
+    _packet_len = 0;
+    _pending_escape = false;
+  }
+
   // Decode a big endian uint16.
   inline uint16_t decode_uint16_at_index(uint16_t i) {
     return (((uint16_t)_packet_buffer[i]) << 8) |

@@ -13,8 +13,6 @@
 #include "static_task.h"
 #include "time_util.h"
 
-
-
 static Serial& DATA_SERIAL = serial::serial1;
 
 struct Command {
@@ -22,8 +20,6 @@ struct Command {
   uint8_t endpoint;
   std::vector<uint8_t> data;
 };
-
-
 
 struct Message {
   uint32_t time_millis;
@@ -53,7 +49,7 @@ struct FakeResponse {
 static FakeResponse fake_response;
 
 PacketStatus command_handler(uint8_t endpoint, const SerialPacketsData& data,
-                     SerialPacketsData& response_data) {
+                             SerialPacketsData& response_data) {
   // Record the incoming command.
   Command item;
   item.time_millis = time_util::millis();
@@ -65,11 +61,8 @@ PacketStatus command_handler(uint8_t endpoint, const SerialPacketsData& data,
   if (fake_response.delay) {
     time_util::delay_millis(fake_response.delay);
   }
-  return   fake_response.status;
-
+  return fake_response.status;
 }
-
-
 
 void message_handler(uint8_t endpoint, const SerialPacketsData& data) {
   Message item;
@@ -148,12 +141,12 @@ void test_send_message_loop() {
 }
 
 void test_send_command_loop() {
-    rx_task.start();
+  rx_task.start();
 
   const std::vector<uint8_t> data = {0x11, 0x22, 0x33};
   populate_data(packet_data, data);
   fake_response.set((PacketStatus)0x99, {0xaa, 0xbb, 0xcc}, 0);
- 
+
   const PacketStatus status = client->sendCommand(0x20, packet_data, 1000);
   // We get back the fake response status we requested above.
   TEST_ASSERT_EQUAL(0x99, status);
@@ -165,13 +158,13 @@ void test_send_command_loop() {
   const Command& command = command_list.at(0);
   TEST_ASSERT_EQUAL_HEX8(0x20, command.endpoint);
   assert_vectors_equal(data, command.data);
- 
+
   assert_data_equal(packet_data, {0xaa, 0xbb, 0xcc});
 }
 
 // Inject delay to the response and test for timeout status.
 void test_command_timeout() {
-    rx_task.start();
+  rx_task.start();
 
   const std::vector<uint8_t> data = {0x11, 0x22, 0x33};
   populate_data(packet_data, data);
@@ -184,8 +177,6 @@ void test_command_timeout() {
   TEST_ASSERT_GREATER_OR_EQUAL(200, time_millis);
   TEST_ASSERT_LESS_OR_EQUAL(250, time_millis);
 
-
-
   // The client should call the response handler with TIMEOUT status.
   TEST_ASSERT_EQUAL(1, command_list.size());
   // TEST_ASSERT_EQUAL(1, response_list.size());
@@ -193,8 +184,6 @@ void test_command_timeout() {
   TEST_ASSERT_EQUAL(0, client->num_pending_commands());
   // Timeout error returns empty data.
   assert_data_equal(packet_data, {});
-
-
 }
 
 void app_main() {
@@ -202,17 +191,14 @@ void app_main() {
 
   serial::serial1.init();
 
-  
-
   UNITY_BEGIN();
 
-   RUN_TEST(test_simple_serial_loop);
-   RUN_TEST(test_send_message_loop);
-   RUN_TEST(test_send_command_loop);
+  RUN_TEST(test_simple_serial_loop);
+  RUN_TEST(test_send_message_loop);
+  RUN_TEST(test_send_command_loop);
   RUN_TEST(test_command_timeout);
 
   UNITY_END();
 
   unity_util::common_end();
 }
-

@@ -26,7 +26,7 @@ PacketStatus SerialPacketsClient::begin(
   _command_handler = command_handler;
   _message_handler = message_handler;
 
-  force_next_pre_flag();
+  // force_next_pre_flag();
   return PacketStatus::OK;
 }
 
@@ -82,15 +82,14 @@ void SerialPacketsClient::rx_process_decoded_command_packet(
   const uint8_t status = _command_handler(metadata.endpoint, data, _rx_task_data.tmp_data);
 
   // Send response
-  // Determine if to insert a packet flag.
   {
     MutexScope mutex_scope(_prot_mutex);
 
-    const bool insert_pre_flag = prot_check_pre_flag();
+    // const bool insert_pre_flag = prot_check_pre_flag();
 
     // Encode the packet in wire format.
     if (!_prot.packet_encoder.encode_response_packet(
-            metadata.cmd_id, status, _rx_task_data.tmp_data, insert_pre_flag,
+            metadata.cmd_id, status, _rx_task_data.tmp_data, 
             &_prot.tmp_stuffed_packet)) {
       logger.error("Failed to encode response packet. Dropping.");
       return;
@@ -169,11 +168,11 @@ PacketStatus SerialPacketsClient::sendCommand(uint8_t endpoint,
     cmd_id = assign_cmd_id();
 
     // Determine if to insert a packet flag.
-    const bool insert_pre_flag = prot_check_pre_flag();
+    // const bool insert_pre_flag = prot_check_pre_flag();
 
     // Encode the packet in wire format.
     if (!_prot.packet_encoder.encode_command_packet(
-            cmd_id, endpoint, data, insert_pre_flag,
+            cmd_id, endpoint, data, 
             &_prot.tmp_stuffed_packet)) {
       // NOTE: This is blocking.
       logger.error("Failed to encode command packet");
@@ -241,11 +240,11 @@ PacketStatus SerialPacketsClient::sendMessage(uint8_t endpoint,
     MutexScope mutex(_prot_mutex);
 
     // Determine if to insert a packet flag.
-    const bool insert_pre_flag = prot_check_pre_flag();
+    // const bool insert_pre_flag = prot_check_pre_flag();
 
     // Encode the packet in wire format.
     if (!_prot.packet_encoder.encode_message_packet(
-            endpoint, data, insert_pre_flag, &_prot.tmp_stuffed_packet)) {
+            endpoint, data,  &_prot.tmp_stuffed_packet)) {
       logger.error("Failed to encode message packet, data_size=%hu",
                    data.size());
       return PacketStatus::GENERAL_ERROR;

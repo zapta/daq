@@ -42,13 +42,14 @@ enum PacketStatus {
 // Internal consts that users don't need to access.
 namespace serial_packets_consts {
 
-// Flag and escape bytes per HDLC specification.
-constexpr uint8_t PACKET_FLAG = 0x7E;
+// Flag and escape bytes, inspired by the HDLC specification.
+constexpr uint8_t PACKET_START_FLAG = 0x7C;
+constexpr uint8_t PACKET_END_FLAG = 0x7E;
 constexpr uint8_t PACKET_ESC = 0X7D;
 
 // When sending a packet, if the time from previous packate was
 // longer than these, than we insert a pre packet flag byte.
-constexpr uint16_t PRE_FLAG_TIMEOUT_MILLIS = 1000;
+// constexpr uint16_t PRE_FLAG_TIMEOUT_MILLIS = 1000;
 
 // Packet sizes in bytes, with zero data length, and before
 // byte stuffing, and flagging.
