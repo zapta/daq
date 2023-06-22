@@ -1,10 +1,13 @@
 
+Revisit build flags, having symbols with a small flash.
 
+Introduce the notion of a session id. E.g. a random number.
+
+Log ADC data to file using serial packets format.
 
 
 Perform multi channel ADC reading
 
-Log ADC data to file
 
 
 ---

@@ -280,7 +280,7 @@ static void setup() {
   }
 
   // for (;;) {
-  io::TEST1.high();
+  // io::TEST1.high();
 
   cmd_reset();
 
@@ -301,9 +301,9 @@ static void setup() {
 
 
 
-  io::TEST1.low();
+  // io::TEST1.low();
 
-  time_util::delay_millis(500);
+  // time_util::delay_millis(500);
   logger.info("Setup loop");
   // }
 
@@ -352,7 +352,11 @@ void process_dma_rx_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
     if (packet_data.had_write_errors()) {
       Error_Handler();
     }
+
+    io::TEST1.high();
     host_link::client.sendMessage(HostPorts::ADC_REPORT_MESSAGE, packet_data);
+    io::TEST1.low();
+
   }
 
   logger.info("ADC %d: %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx", id,
