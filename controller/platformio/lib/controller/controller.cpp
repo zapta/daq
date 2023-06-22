@@ -9,16 +9,16 @@ namespace controller {
 // Protect access to prot_vars.
 static StaticMutex mutex;
 
-struct ProtVars {
-  bool adc_report_enabled = false;
-};
+// struct ProtVars {
+//   // bool adc_report_enabled = false;
+// };
 
-static ProtVars prot_vars;
+// static ProtVars prot_vars;
 
-bool is_adc_report_enabled() {
-  MutexScope scope(mutex);
-  return prot_vars.adc_report_enabled;
-}
+// bool is_adc_report_enabled() {
+//   MutexScope scope(mutex);
+//   return prot_vars.adc_report_enabled;
+// }
 
 PacketStatus handle_control_command(const SerialPacketsData& command_data,
                                     SerialPacketsData& response_data) {
@@ -42,22 +42,22 @@ PacketStatus handle_control_command(const SerialPacketsData& command_data,
     //             else -> error
     // Response data:
     //   empty
-    case 0x02: {
-      const uint8_t flag = command_data.read_uint8();
-      if (!command_data.all_read_ok() || (flag > 1)) {
-        logger.error("Error in control command 0x02 (%hu, %02hu)",
-                     command_data.size(), flag);
-        return PacketStatus::INVALID_ARGUMENT;
-      }
-      // Update the flag within a critical section.
-      {
-      MutexScope scope(mutex);
-      prot_vars.adc_report_enabled = flag != 0;
-      }
-      logger.info("Set adc reporting to %hd", flag);
-      return PacketStatus::OK;
+    // case 0x02: {
+    //   const uint8_t flag = command_data.read_uint8();
+    //   if (!command_data.all_read_ok() || (flag > 1)) {
+    //     logger.error("Error in control command 0x02 (%hu, %02hu)",
+    //                  command_data.size(), flag);
+    //     return PacketStatus::INVALID_ARGUMENT;
+    //   }
+    //   // Update the flag within a critical section.
+    //   {
+    //   MutexScope scope(mutex);
+    //   prot_vars.adc_report_enabled = flag != 0;
+    //   }
+    //   logger.info("Set adc reporting to %hd", flag);
+    //   return PacketStatus::OK;
 
-    } break;
+    // } break;
 
     default:
       logger.error("Unknown control command code %hx", op_code);

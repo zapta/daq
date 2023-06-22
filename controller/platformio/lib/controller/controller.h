@@ -3,7 +3,7 @@
 namespace controller {
 
 
-bool is_adc_report_enabled();
+// bool is_adc_report_enabled();
   
 
 

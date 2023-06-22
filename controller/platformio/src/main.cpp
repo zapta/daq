@@ -28,13 +28,11 @@ StaticTask<2000> adc_task(adc::adc_task_body, "ADC", 7);
 void app_main() {
   serial::serial1.init();
 
-  // HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  // __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 100);
-
   HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_1);
   __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_1, 100);
-  // HAL_TIM_IRQHandler(&htim12);
   HAL_TIM_Base_Start_IT(&htim12);
+
+  sd::open_log_file("log_file.bin");
 
   host_link::setup(serial::serial1);
   if (!host_link_rx_task.start()) {
@@ -53,6 +51,9 @@ void app_main() {
     const PacketStatus status = host_link::client.sendCommand(0x20, data);
     logger.info("%04d: Recieced command respond, status = %d, size=%hu", i, status,
                 data.size());
+    if (!sd::is_log_file_open_ok()) {
+      logger.error("SD log file not opened()");
+    }
     time_util::delay_millis(500);
   }
 }

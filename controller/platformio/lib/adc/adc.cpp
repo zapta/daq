@@ -12,6 +12,7 @@
 #include "io.h"
 #include "logger.h"
 #include "main.h"
+#include "sd.h"
 #include "serial_packets_client.h"
 #include "spi.h"
 #include "static_queue.h"
@@ -43,6 +44,10 @@ static uint8_t rx_buffer[2 * kBytesPerGroup] = {};
 
 static SerialPacketsData packet_data;
 
+// For encoding the data as packets for logging to SD card.
+SerialPacketsEncoder packet_encoder;
+StuffedPacketBuffer stuffed_packet;
+
 // static uint8_t queue_items_static_mem[5] = {};
 // static StaticQueue_t queue_static_mem;
 // static QueueHandle_t queue_handle;
@@ -71,7 +76,6 @@ static volatile uint32_t event_half_count = 0;
 static volatile uint32_t event_full_count = 0;
 
 // static bool dma_one_shot = false;
-
 
 static void trap() {
   // Breakpoint here.
@@ -119,29 +123,21 @@ void spi_ErrorCallback(SPI_HandleTypeDef *hspi) {
   trap();
 }
 
-
 // Set up the DMA MUX request generator which controls how many
 // transfers (bytes in out case) are done on each TIM12 PWM
 // sync which we use as a repeating ADC CS.
 static void set_dma_request_generator(uint32_t num_transfers_per_sync) {
-
   // Set tx DMA request generator.
 
-
-  // A woraround to reset the request generator. 
+  // A woraround to reset the request generator.
   CLEAR_BIT(hdma_spi1_tx.DMAmuxChannel->CCR, (DMAMUX_CxCR_SE));
-
 
   const uint32_t mask = DMAMUX_CxCR_NBREQ_Msk;
   MODIFY_REG(hdma_spi1_tx.DMAmuxChannel->CCR, mask,
              (num_transfers_per_sync - 1U) << DMAMUX_CxCR_NBREQ_Pos);
 
-
   SET_BIT(hdma_spi1_tx.DMAmuxChannel->CCR, (DMAMUX_CxCR_SE));
-
 }
-
-
 
 // Blocks until completion. Recieved bytes are returned in rx_buffer.
 static void send_command(const uint8_t *cmd, uint16_t num_bytes) {
@@ -164,8 +160,6 @@ static void send_command(const uint8_t *cmd, uint16_t num_bytes) {
     Error_Handler();
   }
 
-
-
   IrqEvent event;
   if (!irq_event_queue.consume_from_task(&event, 300)) {
     Error_Handler();
@@ -175,8 +169,6 @@ static void send_command(const uint8_t *cmd, uint16_t num_bytes) {
   if (event.id != IrqEventId::EVENT_FULL_COMPLETE) {
     Error_Handler();
   }
-
-
 }
 
 void cmd_reset() {
@@ -226,8 +218,6 @@ int32_t decode_int24(const uint8_t *bfr3) {
   return (int32_t)value;
 }
 
-
-
 // Assuming cs is pulsing.
 void start_continuos_DMA() {
   set_dma_request_generator(3);
@@ -237,16 +227,11 @@ void start_continuos_DMA() {
   irq_half_count = 0;
   irq_full_count = 0;
 
-  
   for (uint32_t i = 0; i < sizeof(tx_buffer); i++) {
     const uint32_t j = i % 3;
     // Every third byte is start comment, for next reading.
     tx_buffer[i] = (j == 0) ? 0x08 : 00;
   }
-
-
-
- 
 
   // Should read 3 bytes but we read for to simulate DMA burst of
   // 4.
@@ -261,7 +246,6 @@ void start_continuos_DMA() {
 }
 
 static void setup() {
-
   // Register interrupt handler. These handler are marked in
   // cube ide for registration rather than overriding a weak
   // global handler.
@@ -299,8 +283,6 @@ static void setup() {
   // Start the first conversion.
   cmd_start();
 
-
-
   // io::TEST1.low();
 
   // time_util::delay_millis(500);
@@ -333,31 +315,37 @@ void dump_state() {
   logger.info("DMA counters: half: %lu (%lu), full: %lu (%lu), err: %lu",
               _irq_half_count, _event_half_count, _irq_full_count,
               _event_full_count, _irq_error_count);
- 
 }
 
 // Elappsed dump_timer;
 
 void process_dma_rx_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
-  const bool reports_enabled = controller::is_adc_report_enabled();
-  if (reports_enabled) {
-    packet_data.clear();
-    packet_data.write_uint8(1);  // version
-    packet_data.write_uint32(
-        isr_millis);  // Acq end time millis. Assuming systicks = millis.
-    packet_data.write_uint16(kPointsPerGroup);  // Expected num of points.
-    for (uint32_t i = 0; i < kBytesPerGroup; i += 3) {
-      packet_data.write_bytes(&bfr[i], 3);
-    }
-    if (packet_data.had_write_errors()) {
-      Error_Handler();
-    }
-
-    io::TEST1.high();
-    host_link::client.sendMessage(HostPorts::ADC_REPORT_MESSAGE, packet_data);
-    io::TEST1.low();
-
+  // const bool reports_enabled = controller::is_adc_report_enabled();
+  packet_data.clear();
+  packet_data.write_uint8(1);  // version
+  packet_data.write_uint32(
+      isr_millis);  // Acq end time millis. Assuming systicks = millis.
+  packet_data.write_uint16(kPointsPerGroup);  // Expected num of points.
+  for (uint32_t i = 0; i < kBytesPerGroup; i += 3) {
+    packet_data.write_bytes(&bfr[i], 3);
   }
+  if (packet_data.had_write_errors()) {
+    Error_Handler();
+  }
+
+  // if (reports_enabled) {
+    host_link::client.sendMessage(HostPorts::ADC_REPORT_MESSAGE, packet_data);
+  // }
+
+  io::TEST1.high();
+  packet_encoder.encode_message_packet(HostPorts::ADC_REPORT_MESSAGE, packet_data, &stuffed_packet);
+//   SerialPacketsEncoder packet_encoder;
+// StuffedPacketBuffer stuffed_packet;
+  if (!sd::append_to_log_file(stuffed_packet)) {
+
+    logger.error("Failed to write ADC packet to SD.");
+  }
+  io::TEST1.low();
 
   logger.info("ADC %d: %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx", id,
               decode_int24(&bfr[0]), decode_int24(&bfr[3]),
@@ -366,8 +354,8 @@ void process_dma_rx_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
               decode_int24(&bfr[18]), decode_int24(&bfr[21]),
               decode_int24(&bfr[24]), decode_int24(&bfr[27]));
 
-  logger.info("Processed in %lu ms, reports_enabled: %hd",
-              time_util::millis() - isr_millis, reports_enabled);
+  logger.info("Processed in %lu ms",
+              time_util::millis() - isr_millis);
 }
 
 void adc_task_body(void *argument) {

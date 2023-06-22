@@ -59,6 +59,7 @@ constexpr uint16_t MAX_PACKET_OVERHEAD = 8;
 // Range of packet lengths before flagging and byte stuffing.
 constexpr uint16_t MIN_PACKET_LEN = MIN_PACKET_OVERHEAD;
 constexpr uint16_t MAX_PACKET_LEN = MAX_PACKET_OVERHEAD + MAX_PACKET_DATA_LEN;
+constexpr uint16_t MAX_STUFFED_PACKET_LEN = (MAX_PACKET_LEN * 2) + 2;
 
 // The value of the packet_type field of the packet. Defines the
 // packet type.

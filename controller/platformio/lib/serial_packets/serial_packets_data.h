@@ -4,11 +4,11 @@
 
 #pragma once
 
+#include <cstring>
 
 #include "logger.h"
 #include "serial_packets_consts.h"
 #include "serial_packets_crc.h"
-#include <cstring>
 
 template <uint16_t N>
 class SerialPacketsBuffer {
@@ -55,7 +55,7 @@ class SerialPacketsBuffer {
         "  had_read_errros: %hu\n"
         "  capacity: %hu",
         title, _size, _bytes_read, _had_read_errors, capacity());
-    // TODO: dump _data bytes in hex  
+    // TODO: dump _data bytes in hex
   }
 
   // Compute the data's CRC.
@@ -151,7 +151,7 @@ class SerialPacketsBuffer {
   }
 
   // Copy from a same size buffer.
-  void copy_from(const SerialPacketsBuffer<N>& other ) {
+  void copy_from(const SerialPacketsBuffer<N>& other) {
     clear();
     memcpy(_buffer, other._buffer, other._size);
     _size = other._size;
@@ -178,8 +178,6 @@ typedef SerialPacketsBuffer<MAX_PACKET_DATA_LEN> SerialPacketsData;
 typedef SerialPacketsBuffer<serial_packets_consts::MAX_PACKET_LEN + 2>
     EncodedPacketBuffer;
 
-// For encoded packets, after stuffing and flagging (wire format). Assuming at
-// most 50% of bytes are stuffed.
-typedef SerialPacketsBuffer<((serial_packets_consts::MAX_PACKET_LEN * 3) / 2) +
-                            2>
+// For encoded packets, after stuffing and flagging (wire format).
+typedef SerialPacketsBuffer<serial_packets_consts::MAX_STUFFED_PACKET_LEN>
     StuffedPacketBuffer;
