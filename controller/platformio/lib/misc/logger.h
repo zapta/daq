@@ -18,14 +18,9 @@ enum LoggerLevel {
 
 class Logger {
  public:
-  // enum Level { VERBOSE = 1, INFO = 2, WARNING = 3, ERROR = 4, NONE = 5 };
-
   Logger() {}
 
   Logger(LoggerLevel level) : _level(constrain_level(level)) {}
-
-  // Setting to nullptr equivalent to no logging.
-  // void set_stream(Stream* stream) { _optional_stream = stream; }
 
   void set_level(LoggerLevel level) { _level = constrain_level(level); }
 
@@ -92,12 +87,10 @@ class Logger {
   }
 
  private:
-  // Null if not availble. Not the owner of this pointer.
-  // mutable Stream* _optional_stream = nullptr;
+ 
 
-  // We enable the logger only after the scheduler starts since
-  // it requires it for its operation.
-  LoggerLevel _level = LOG_NONE;
+
+  LoggerLevel _level;
 
   // Primitive method to output the log message.
   void _vlog(const char* level_str, const char* format, va_list args) const;

@@ -13,26 +13,4 @@ void assert_vectors_equal(const std::vector<uint8_t> expected,
   }
 }
 
-// void loop_client(SerialPacketsClient& client, uint32_t time_millis) {
-//   const uint32_t start_time_millis = time_util::millis();
-//   for (;;) {
-//     client.loop();
-//     if ((time_util::millis() - start_time_millis) >= time_millis) {
-//       return;
-//     }
-//   }
-// }
 
-// void common_setup_init() {
-//   pinMode(LED_BUILTIN, OUTPUT);
-
-//   // Time for the USB/CDC serial to stabalize.
-//   delay(5000);
-// }
-
-// void common_loop_body() {
-//   digitalWrite(LED_BUILTIN, HIGH);
-//   delay(100);
-//   digitalWrite(LED_BUILTIN, LOW);
-//   delay(600);
-// }

@@ -17,7 +17,8 @@
     "limits": "cpp",
     "sstream": "cpp",
     "streambuf": "cpp",
-    "utility": "cpp"
+    "utility": "cpp",
+    "sd_diskio.h": "c"
   },
   "cmake.configureOnOpen": false
 }

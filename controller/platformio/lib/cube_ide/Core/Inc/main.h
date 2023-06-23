@@ -61,20 +61,18 @@ void Error_Handler(void);
 #define LED_GPIO_Port GPIOE
 #define SWITCH_Pin GPIO_PIN_13
 #define SWITCH_GPIO_Port GPIOC
-#define ADC_CS_Pin GPIO_PIN_4
-#define ADC_CS_GPIO_Port GPIOA
 #define ADC_SCK_Pin GPIO_PIN_5
 #define ADC_SCK_GPIO_Port GPIOA
 #define ADC_MISO_Pin GPIO_PIN_6
 #define ADC_MISO_GPIO_Port GPIOA
 #define ADC_MOSI_Pin GPIO_PIN_7
 #define ADC_MOSI_GPIO_Port GPIOA
+#define ADC_CS_PWM_Pin GPIO_PIN_14
+#define ADC_CS_PWM_GPIO_Port GPIOB
 #define TEST1_Pin GPIO_PIN_1
 #define TEST1_GPIO_Port GPIOD
-#define TEST2_Pin GPIO_PIN_2
-#define TEST2_GPIO_Port GPIOD
-#define TEST3_Pin GPIO_PIN_4
-#define TEST3_GPIO_Port GPIOD
+#define SD_SWITCH_Pin GPIO_PIN_4
+#define SD_SWITCH_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
 

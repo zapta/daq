@@ -1,0 +1,6 @@
+
+Add to the host program flags to control if noise and fft are displayed.
+
+Add verification of time interval between ADC reporting message (detecting missing data)
+
+Increase the asyncion slow loop warning  threshold.

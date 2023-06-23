@@ -1,19 +1,14 @@
 // Unit test of the packet encoder function.
 
-// #include <Arduino.h>
 #include <unity.h>
 
 #include <memory>
 #include <vector>
 
-#include "../serial_packets_test_utils.h"
 #include "../../unity_util.h"
+#include "../serial_packets_test_utils.h"
 #include "serial_packets_encoder.h"
 
-// For STM32 'black pill'.
-// #define BUILTIN_LED PC13
-
-// static std::unique_ptr<SerialPacketsLogger> logger;
 static std::unique_ptr<SerialPacketsEncoder> encoder;
 static std::unique_ptr<PacketEncoderInspector> inspector;
 
@@ -27,198 +22,61 @@ void setUp(void) {
   out.clear();
   inspector.reset();
   encoder.reset();
-  // NOTE: Run platformio verbose test to see any logger output.
-  // logger = std::make_unique<SerialPacketsLogger>(SERIAL_PACKETS_LOG_VERBOSE);
-  // logger->set_stream(&Serial);
   encoder = std::make_unique<SerialPacketsEncoder>();
   inspector = std::make_unique<PacketEncoderInspector>(*encoder);
 }
 
 void tearDown() {}
 
-void test_byte_sutffing_with_pre_flag() {
-  // const uint8_t bytes[] = {0xff, 0x00, 0x7e, 0x22, 0x7d, 0x99};
-  // SerialPacketsData in(30);
-  populate_data(in, {0xff, 0x00, 0x7e, 0x22, 0x7d, 0x99});
-  // in.write_bytes(bytes, sizeof(bytes));
-  // SerialPacketsData out(30);
-  TEST_ASSERT_TRUE(inspector->run_byte_stuffing(in, true, &out));
-  // TEST_ASSERT_EQUAL(10, out.size());
-  // uint8_t actual[10] = {};
-  // out.read_bytes(actual, sizeof(actual));
-  // TEST_ASSERT_TRUE(out.all_read_ok());
+void test_byte_sutffing() {
+  populate_data(in, {0xff, 0x00, 0x7c, 0x22, 0x7e, 0x22, 0x7d, 0x99});
+  TEST_ASSERT_TRUE(inspector->run_byte_stuffing(in, &out));
+  assert_data_equal(out, {0x7c, 0xff, 0x00, 0x7d, 0x5c, 0x22, 0x7d, 0x5e, 0x22,
+                          0x7d, 0x5d, 0x99, 0x7e});
+}
+
+void test_encode_command_packet() {
+  populate_data(data, {0xff, 0x00, 0x7c, 0x11, 0x7e, 0x22, 0x7d, 0x99});
+
+  TEST_ASSERT_TRUE(
+      encoder->encode_command_packet(0xff123456, 0x20, data, &out));
+
   assert_data_equal(
-      out, {0x7e, 0xff, 0x00, 0x7d, 0x5e, 0x22, 0x7d, 0x5d, 0x99, 0x7e});
-  // const uint8_t expected[10] = {0x7e, 0xff, 0x00, 0x7d, 0x5e,
-  //                               0x22, 0x7d, 0x5d, 0x99, 0x7e};
-  // TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, actual, sizeof(expected));
+      out, {0x7c, 0x01, 0xff, 0x12, 0x34, 0x56, 0x20, 0xff, 0x00, 0x7d, 0x5c,
+            0x11, 0x7d, 0x5e, 0x22, 0x7d, 0x5d, 0x99, 0x7a, 0xa7, 0x7e});
 }
 
-void test_byte_sutffing_without_pre_flag() {
-  // const uint8_t bytes[] = {0xff, 0x00, 0x7e, 0x22, 0x7d, 0x99};
-  // SerialPacketsData in(30);
-  populate_data(in, {0xff, 0x00, 0x7e, 0x22, 0x7d, 0x99});
-  // in.write_bytes(bytes, sizeof(bytes));
-  // SerialPacketsData out(30);
-  TEST_ASSERT_TRUE(inspector->run_byte_stuffing(in, false, &out));
-  // TEST_ASSERT_EQUAL(9, out.size());
-  // uint8_t actual[9] = {};
-  // out.read_bytes(actual, sizeof(actual));
-  // TEST_ASSERT_TRUE(out.all_read_ok());
-  // const uint8_t expected[9] = {0xff, 0x00, 0x7d, 0x5e, 0x22,
-  //                              0x7d, 0x5d, 0x99, 0x7e};
-  // TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, actual, sizeof(expected));
+void test_encode_response_packet() {
+  populate_data(data, {0xff, 0x00, 0x7c, 0x11, 0x7e, 0x22, 0x7d, 0x99});
 
-  assert_data_equal(out,
-                     {0xff, 0x00, 0x7d, 0x5e, 0x22, 0x7d, 0x5d, 0x99, 0x7e});
-}
-
-void test_encode_command_packet_with_pre_flag() {
-  // const uint8_t data[] = {0xff, 0x00, 0x7e, 0x22, 0x7d, 0x99};
-  // SerialPacketsData in(30);
-  populate_data(data, {0xff, 0x00, 0x7e, 0x22, 0x7d, 0x99});
-  // in.write_bytes(data, sizeof(data));
-  // SerialPacketsData out(30);
   TEST_ASSERT_TRUE(
-      encoder->encode_command_packet(0x12345678, 0x20, data, true, &out));
-  // TEST_ASSERT_EQUAL(18, out.size());
-  // uint8_t actual[18] = {};
-  // out.read_bytes(actual, 18);
-  // TEST_ASSERT_TRUE(out.all_read_ok());
-  // const uint8_t expected[18] = {0x7e, 0x01, 0x12, 0x34, 0x56, 0x78,
-  //                               0x20, 0xff, 0x00, 0x7d, 0x5e, 0x22,
-  //                               0x7d, 0x5d, 0x99, 0xD4, 0x80, 0x7e};
-  // TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, actual, sizeof(expected));
+      encoder->encode_response_packet(0xff123456, 0x20, data, &out));
+
   assert_data_equal(
-      out, {0x7e, 0x01, 0x12, 0x34, 0x56, 0x78, 0x20, 0xff, 0x00, 0x7d, 0x5e,
-            0x22, 0x7d, 0x5d, 0x99, 0xD4, 0x80, 0x7e});
+      out, {0x7c, 0x02, 0xff, 0x12, 0x34, 0x56, 0x20, 0xff, 0x00, 0x7d, 0x5c,
+            0x11, 0x7d, 0x5e, 0x22, 0x7d, 0x5d, 0x99, 0xf7, 0x04, 0x7e});
 }
 
-void test_encode_command_packet_without_pre_flag() {
-  // const uint8_t data[] = {0xff, 0x00, 0x7e, 0x22, 0x7d, 0x99};
-  // SerialPacketsData in(30);
-  populate_data(data, {0xff, 0x00, 0x7e, 0x22, 0x7d, 0x99});
-  // in.write_bytes(data, sizeof(data));
-  // SerialPacketsData out(30);
-  TEST_ASSERT_TRUE(
-      encoder->encode_command_packet(0x12345678, 0x20, data, false, &out));
-  // TEST_ASSERT_EQUAL(17, out.size());
-  // uint8_t actual[17] = {};
-  // out.read_bytes(actual, 17);
-  // TEST_ASSERT_TRUE(out.all_read_ok());
-  // const uint8_t expected[17] = {0x01, 0x12, 0x34, 0x56, 0x78, 0x20,
-  //                               0xff, 0x00, 0x7d, 0x5e, 0x22, 0x7d,
-  //                               0x5d, 0x99, 0xD4, 0x80, 0x7e};
-  // TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, actual, sizeof(expected));
-  assert_data_equal(out, {0x01, 0x12, 0x34, 0x56, 0x78, 0x20, 0xff, 0x00, 0x7d,
-                           0x5e, 0x22, 0x7d, 0x5d, 0x99, 0xD4, 0x80, 0x7e});
-}
+void test_encode_message_packet() {
+  populate_data(data, {0xff, 0x00, 0x7c, 0x11, 0x7e, 0x22, 0x7d, 0x99});
 
-void test_encode_response_packet_with_pre_flag() {
-  // const uint8_t data[] = {0xff, 0x00, 0x7e, 0x22, 0x7d, 0x99};
-  // SerialPacketsData in(30);
-  populate_data(data, {0xff, 0x00, 0x7e, 0x22, 0x7d, 0x99});
-  // in.write_bytes(data, sizeof(data));
-  // SerialPacketsData out(30);
-  TEST_ASSERT_TRUE(
-      encoder->encode_response_packet(0x12345678, 0x20, data, true, &out));
-  // TEST_ASSERT_EQUAL(18, out.size());
-  // uint8_t actual[18] = {};
-  // out.read_bytes(actual, 18);
-  // TEST_ASSERT_TRUE(out.all_read_ok());
-  // const uint8_t expected[18] = {0x7e, 0x02, 0x12, 0x34, 0x56, 0x78,
-  //                               0x20, 0xff, 0x00, 0x7d, 0x5e, 0x22,
-  //                               0x7d, 0x5d, 0x99, 0xd1, 0x1f, 0x7e};
-  // TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, actual, sizeof(expected));
-  assert_data_equal(
-      out, {0x7e, 0x02, 0x12, 0x34, 0x56, 0x78, 0x20, 0xff, 0x00, 0x7d, 0x5e,
-            0x22, 0x7d, 0x5d, 0x99, 0xd1, 0x1f, 0x7e});
-}
+  TEST_ASSERT_TRUE(encoder->encode_message_packet(0x20, data, &out));
 
-void test_encode_response_packet_without_pre_flag() {
-  // const uint8_t data[] = {0xff, 0x00, 0x7e, 0x22, 0x7d, 0x99};
-  // SerialPacketsData in(30);
-  populate_data(data, {0xff, 0x00, 0x7e, 0x22, 0x7d, 0x99});
-  // in.write_bytes(data, sizeof(data));
-  // SerialPacketsData out(30);
-  TEST_ASSERT_TRUE(
-      encoder->encode_response_packet(0x12345678, 0x20, data, false, &out));
-  // TEST_ASSERT_EQUAL(17, out.size());
-  // uint8_t actual[17] = {};
-  // out.read_bytes(actual, 17);
-  // TEST_ASSERT_TRUE(out.all_read_ok());
-  // const uint8_t expected[17] = {0x02, 0x12, 0x34, 0x56, 0x78, 0x20,
-  //                               0xff, 0x00, 0x7d, 0x5e, 0x22, 0x7d,
-  //                               0x5d, 0x99, 0xd1, 0x1f, 0x7e};
-  // TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, actual, sizeof(expected));
-  assert_data_equal(out, {0x02, 0x12, 0x34, 0x56, 0x78, 0x20, 0xff, 0x00, 0x7d,
-                           0x5e, 0x22, 0x7d, 0x5d, 0x99, 0xd1, 0x1f, 0x7e});
-}
-
-void test_encode_message_packet_with_pre_flag() {
-  // const uint8_t data[] = {0xff, 0x00, 0x7e, 0x22, 0x7d, 0x99};
-  // SerialPacketsData in(30);
-  populate_data(data, {0xff, 0x00, 0x7e, 0x22, 0x7d, 0x99});
-  // in.write_bytes(data, sizeof(data));
-  // SerialPacketsData out(30);
-  TEST_ASSERT_TRUE(encoder->encode_message_packet(0x20, data, true, &out));
-  // TEST_ASSERT_EQUAL(14, out.size());
-  // uint8_t actual[14] = {};
-  // out.read_bytes(actual, 14);
-  // TEST_ASSERT_TRUE(out.all_read_ok());
-  // const uint8_t expected[14] = {0x7e, 0x03, 0x20, 0xff, 0x00, 0x7d, 0x5e,
-  //                               0x22, 0x7d, 0x5d, 0x99, 0xa7, 0x1e, 0x7e};
-  // TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, actual, sizeof(expected));
-  assert_data_equal(out, {0x7e, 0x03, 0x20, 0xff, 0x00, 0x7d, 0x5e, 0x22, 0x7d,
-                           0x5d, 0x99, 0xa7, 0x1e, 0x7e});
-}
-
-void test_encode_message_packet_without_pre_flag() {
-  // const uint8_t data[] = {0xff, 0x00, 0x7e, 0x22, 0x7d, 0x99};
-  // SerialPacketsData in(30);
-  populate_data(data, {0xff, 0x00, 0x7e, 0x22, 0x7d, 0x99});
-  // in.write_bytes(data, sizeof(data));
-  // SerialPacketsData out(30);
-  TEST_ASSERT_TRUE(encoder->encode_message_packet(0x20, data, false, &out));
-  // TEST_ASSERT_EQUAL(13, out.size());
-  // uint8_t actual[13] = {};
-  // out.read_bytes(actual, 13);
-  // TEST_ASSERT_TRUE(out.all_read_ok());
-  // const uint8_t expected[13] = {0x03, 0x20, 0xff, 0x00, 0x7d, 0x5e, 0x22,
-  //                               0x7d, 0x5d, 0x99, 0xa7, 0x1e, 0x7e};
-  // TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, actual, sizeof(expected));
-  assert_data_equal(out, {0x03, 0x20, 0xff, 0x00, 0x7d, 0x5e, 0x22, 0x7d, 0x5d,
-                           0x99, 0xa7, 0x1e, 0x7e});
+  assert_data_equal(out, {0x7c, 0x03, 0x20, 0xff, 0x00, 0x7d, 0x5c, 0x11, 0x7d,
+                          0x5e, 0x22, 0x7d, 0x5d, 0x99, 0xe7, 0x2d, 0x7e});
 }
 
 void app_main() {
   unity_util::common_start();
-  // pinMode(BUILTIN_LED, OUTPUT);
-
-  // Time for the USB/CDC serial to stabalize.
-  // delay(2000);
 
   UNITY_BEGIN();
 
-  RUN_TEST(test_byte_sutffing_with_pre_flag);
-  RUN_TEST(test_byte_sutffing_without_pre_flag);
-  RUN_TEST(test_encode_command_packet_with_pre_flag);
-  RUN_TEST(test_encode_command_packet_without_pre_flag);
-  RUN_TEST(test_encode_response_packet_with_pre_flag);
-  RUN_TEST(test_encode_response_packet_without_pre_flag);
-  RUN_TEST(test_encode_message_packet_with_pre_flag);
-  RUN_TEST(test_encode_message_packet_without_pre_flag);
+  RUN_TEST(test_byte_sutffing);
+  RUN_TEST(test_encode_command_packet);
+  RUN_TEST(test_encode_response_packet);
+  RUN_TEST(test_encode_message_packet);
 
   UNITY_END();
 
-    unity_util::common_end();
-
+  unity_util::common_end();
 }
-
-// void loop() {
-//   common_loop_body();
-//   // digitalWrite(BUILTIN_LED, HIGH);
-//   // delay(500);
-//   // digitalWrite(BUILTIN_LED, LOW);
-//   // delay(500);
-// }

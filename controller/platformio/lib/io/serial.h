@@ -1,3 +1,4 @@
+// Serial driver. Interrupt driven, no worker tasks.
 #pragma once
 
 #include "FreeRTOS.h"
@@ -5,23 +6,20 @@
 #include "semphr.h"
 #include "static_mutex.h"
 #include "usart.h"
+#include "time_util.h"
 
 class Serial {
  public:
   Serial(UART_HandleTypeDef* huart) : _huart(huart) {}
-  //    HAL_UART_RegisterCallback()
-  //  }
 
   void write_str(const char* str) { write((uint8_t*)str, strlen(str)); }
 
-  // // TODO: add a mutex for multiple writer threads.
   void write(uint8_t* bfr, uint16_t len) {
     for (;;) {
       bool written = false;
       bool tx_in_progress = false;
       {
         MutexScope mutex_scope(_tx_mutex);
-        // xSemaphoreTake(_tx_mutex.handle(), portMAX_DELAY);
         __disable_irq();
         {
           written = _tx_buffer.write(bfr, len);
@@ -31,38 +29,31 @@ class Serial {
         if (!tx_in_progress) {
           tx_next_chunk();
         }
-        // xSemaphoreGive(_tx_mutex);
       }
       if (written) {
         return;
       }
       // Wait and try again.
-      vTaskDelay(5);
+      time_util::delay_millis(5);
     }
   }
 
   // How many rx bytes are available for consumption.
   uint16_t available() {
-    // for (;;) {
-      uint16_t result = 0;
-      // bool tx_in_progress = false;
-      // xSemaphoreTake(_rx_mutex, portMAX_DELAY);
-      {
-        MutexScope mutex_scope(_rx_mutext);
-        __disable_irq();
-        { result = _rx_buffer.size(); }
-        __enable_irq();
-      }
-      return result;
-      
+    uint16_t result = 0;
+    {
+      MutexScope mutex_scope(_rx_mutext);
+      __disable_irq();
+      { result = _rx_buffer.size(); }
+      __enable_irq();
+    }
+    return result;
   }
 
   // If blocking = true, blocks and return non zero count.
   uint16_t read(uint8_t* bfr, uint16_t len, bool blocking = true) {
     for (;;) {
       int bytes_read = 0;
-      // bool tx_in_progress = false;
-      // xSemaphoreTake(_rx_mutex, portMAX_DELAY);
       {
         MutexScope mutex_scope(_rx_mutext);
         __disable_irq();
@@ -73,7 +64,7 @@ class Serial {
         return bytes_read;
       }
       // Wait and try again.
-      vTaskDelay(5);
+      time_util::delay_millis(5);
     }
   }
 
@@ -102,11 +93,11 @@ class Serial {
 
   UART_HandleTypeDef* _huart;
   // TX
-  CircularBuffer<uint8_t, 1000> _tx_buffer;
+  CircularBuffer<uint8_t, 5000> _tx_buffer;
   StaticMutex _tx_mutex;
   uint8_t _tx_transfer_buffer[20];
   // RX
-  CircularBuffer<uint8_t, 1000> _rx_buffer;
+  CircularBuffer<uint8_t, 5000> _rx_buffer;
   StaticMutex _rx_mutext;
   uint8_t _rx_transfer_buffer[20];
 

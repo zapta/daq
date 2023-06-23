@@ -8,30 +8,31 @@ class OutputPin {
  public:
   OutputPin(GPIO_TypeDef* gpio_port, uint16_t gpio_pin, bool inverted,
             bool initial_value)
-      : _gpio_port(gpio_port),
-        _gpio_pin(gpio_pin),
-        _inverted(inverted)
-        // _initial_value(initial_value)
-         {
+      : _gpio_port(gpio_port), _gpio_pin(gpio_pin), _inverted(inverted) {
     set(initial_value);
   }
 
+inline void high() {
+    HAL_GPIO_WritePin(_gpio_port, _gpio_pin, GPIO_PIN_SET);
+  }
 
+    inline void low() {
+    HAL_GPIO_WritePin(_gpio_port, _gpio_pin, GPIO_PIN_RESET );
+  }
 
   inline void on() {
     HAL_GPIO_WritePin(_gpio_port, _gpio_pin,
-                      _inverted ?  GPIO_PIN_RESET : GPIO_PIN_SET );
+                      _inverted ? GPIO_PIN_RESET : GPIO_PIN_SET);
   }
 
   inline void off() {
     HAL_GPIO_WritePin(_gpio_port, _gpio_pin,
-                      _inverted ? GPIO_PIN_SET:  GPIO_PIN_RESET);
+                      _inverted ? GPIO_PIN_SET : GPIO_PIN_RESET);
   }
 
   inline void set(bool is_on) {
-    HAL_GPIO_WritePin(
-        _gpio_port, _gpio_pin,
-        (is_on == _inverted) ? GPIO_PIN_RESET :  GPIO_PIN_SET );
+    HAL_GPIO_WritePin(_gpio_port, _gpio_pin,
+                      (is_on == _inverted) ? GPIO_PIN_RESET : GPIO_PIN_SET);
   }
 
   inline void toggle() { HAL_GPIO_TogglePin(_gpio_port, _gpio_pin); }
@@ -44,37 +45,24 @@ class OutputPin {
 
 class InputPin {
  public:
-  InputPin(GPIO_TypeDef* gpio_port, uint16_t gpio_pin) : _gpio_port(gpio_port), _gpio_pin(gpio_pin) {
-    // gpio_set_direction(pin_num_, GPIO_MODE_INPUT);
-    // gpio_set_pull_mode(pin_num_, pull_mode);
-  }
-  inline bool read() { 
-       return HAL_GPIO_ReadPin(_gpio_port, _gpio_pin);
-        // _gpio_port, _gpio_pin,
-        // (is_on == _inverted) ? GPIO_PIN_RESET :  GPIO_PIN_SET );
-   }
+  InputPin(GPIO_TypeDef* gpio_port, uint16_t gpio_pin)
+      : _gpio_port(gpio_port), _gpio_pin(gpio_pin) {}
 
-  // inline bool is_high() { return read(); }
-  // inline bool is_low() { return !read(); }
-
-  // inline gpio_num_t pin_num() { return pin_num_; }
+  inline bool read() { return HAL_GPIO_ReadPin(_gpio_port, _gpio_pin); }
 
  private:
-   GPIO_TypeDef* const _gpio_port;
+  GPIO_TypeDef* const _gpio_port;
   const uint16_t _gpio_pin;
-  // const gpio_num_t pin_num_;
 };
 
 namespace io {
 
-void setup();
-
 extern OutputPin LED;
 extern OutputPin TEST1;
-extern OutputPin TEST2;
-extern OutputPin TEST3;
+// extern OutputPin TEST2;
+// extern OutputPin TEST3;
+// extern OutputPin ADC_CS;
 
 extern InputPin SWITCH;
-
 
 }  // namespace io.

@@ -59,9 +59,9 @@ class PacketEncoderInspector {
  public:
   PacketEncoderInspector(SerialPacketsEncoder& encoder) : _encoder(encoder) {}
 
-  bool run_byte_stuffing(const EncodedPacketBuffer& in, bool insert_pre_flag,
+  bool run_byte_stuffing(const EncodedPacketBuffer& in, 
                          StuffedPacketBuffer* out) {
-    return _encoder.byte_stuffing(in, insert_pre_flag, out);
+    return _encoder.byte_stuffing(in,  out);
   }
 
  private:
@@ -81,21 +81,4 @@ class PacketDecoderInspector {
   const SerialPacketsDecoder& _decoder;
 };
 
-// class SerialPacketsClientInspector {
-//  public:
-//   SerialPacketsClientInspector(SerialPacketsClient& client) : _client(client){};
 
-//   void ignore_rx_for_testing(bool value) {
-//     _client._ignore_rx_for_testing = value;
-//   }
-
-//  private:
-//   SerialPacketsClient& _client;
-// };
-
-// void loop_client(SerialPacketsClient& client, uint32_t time_millis);
-
-// Should be invoked at the begining of setup();
-// void common_setup_init();
-
-// void common_loop_body();
