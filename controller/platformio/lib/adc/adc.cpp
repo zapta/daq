@@ -38,6 +38,10 @@ constexpr uint32_t kBytesPerPoint = 3;
 constexpr uint32_t kPointsPerGroup = 100;
 constexpr uint32_t kBytesPerGroup = kBytesPerPoint * kPointsPerGroup;
 
+// With the ADS1220, DMA sync rate is 500Hz and we perform
+// a reading every cycle.
+constexpr uint16_t kAdcReadingInternvalMillis = 2;
+
 // Each of tx/rx buffer contains two groups (halves) for cyclic DMA transfer
 static uint8_t tx_buffer[2 * kBytesPerGroup] = {};
 static uint8_t rx_buffer[2 * kBytesPerGroup] = {};
@@ -323,9 +327,18 @@ void process_dma_rx_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
   // const bool reports_enabled = controller::is_adc_report_enabled();
   packet_data.clear();
   packet_data.write_uint8(1);  // version
-  packet_data.write_uint32(
-      isr_millis);  // Acq end time millis. Assuming systicks = millis.
-  packet_data.write_uint16(kPointsPerGroup);  // Expected num of points.
+  // NOTE: In case of a millis wrap around, it's ok if this wraps back. All timestamps
+  // are mod 2^32.
+  const uint32_t packet_base_millis = isr_millis - (kPointsPerGroup * kAdcReadingInternvalMillis);
+  packet_data.write_uint32(packet_base_millis);  
+  packet_data.write_uint8(4); // Group id:  Load cell chan 0.
+  packet_data.write_uint8(0); // Millis offset to first value.
+  packet_data.write_uint8(kAdcReadingInternvalMillis);  // Millis between readings.
+  packet_data.write_uint8(kPointsPerGroup);  // Num of points to follow.
+  // Write kPointsPerGroup 24 bit values.
+  // NOTE: The ADC returns value in big endian format which is 
+  // the same as our packet_data.write_x() format so we just 
+  // copy directly the three bytes per value.
   for (uint32_t i = 0; i < kBytesPerGroup; i += 3) {
     packet_data.write_bytes(&bfr[i], 3);
   }

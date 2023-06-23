@@ -2,3 +2,4 @@
 .*.swp
 _log_file.bin
 _output.csv
+__pycache__

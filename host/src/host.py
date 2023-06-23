@@ -19,10 +19,11 @@ import asyncio
 import logging
 from typing import Tuple, Optional
 import scipy
+from log_parser import LogPacketsParser, LoadCellGroup, ParsedLogPacket
 
 # For using the local version of serial_packet. Comment out if
 # using serial_packets package installed by pip.
-sys.path.insert(0, "../../../../serial_packets_py/repo/src")
+# sys.path.insert(0, "../../../../serial_packets_py/repo/src")
 
 from serial_packets.client import SerialPacketsClient
 from serial_packets.packets import PacketStatus, PacketsEvent, PacketData
@@ -36,15 +37,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger("main")
 
+log_packets_parser = LogPacketsParser()
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--port", dest="port", default="COM21", help="Serial port to use.")
-#parser.add_argument("--output_file",
-#                    dest="output_file",
-#                    default="test.txt",
-#                    help="Name of output file.")
 args = parser.parse_args()
-
-#output_file = None
 
 # Graphing example from https://stackoverflow.com/a/49594258/15038713
 
@@ -57,18 +54,6 @@ def grams(adc_ticks: int) -> int:
     return int(adc_ticks * 0.0167)
 
 
-#def atexit_handler():
-#    global output_file
-#    if output_file:
-#        logger.info(f"Flushing data file [{args.output_file}]")
-#        output_file.flush()
-#        output_file = None
-#    os._exit(0)
-
-
-#atexit.register(atexit_handler)
-
-
 async def command_async_callback(endpoint: int, data: PacketData) -> Tuple[int, PacketData]:
     logger.info(f"Received command: [%d] %s", endpoint, data.hex_str(max_bytes=10))
     # In this example we don't expect incoming commands at the master side.
@@ -78,11 +63,8 @@ async def command_async_callback(endpoint: int, data: PacketData) -> Tuple[int, 
 async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, PacketData]:
     logger.info(f"Received message: [%d] %s", endpoint, data.hex_str(max_bytes=10))
     if endpoint == 10:
-        handle_adc_report_message(data)
+        handle_log_message(data)
         return
-    # v1 = data.read_uint32()
-    # assert (v1 == 12345678)
-    # assert (data.all_read_ok())
 
 
 async def event_async_callback(event: PacketsEvent) -> None:
@@ -99,7 +81,6 @@ def init_graph():
     fig = plt.figure(figsize=(window_width / DPI, window_height / DPI), dpi=DPI)
     canvas = np.zeros((window_height, window_width))
     screen = pf.screen(canvas, 'Load cell ADC')
-
 
 
 ZERO_OFFSET = 16925
@@ -128,14 +109,8 @@ def update_graph(gram_points: List[int]):
     slot += 1
     if slot > 10:
         slot = 1
-    # logger.info(f"*** slot = {slot}")
 
-    # fig.tight_layout() 
-    # fig.tight_layout(h_pad=2)
-    # fig.suptitle('Loadcell ADC')
-    # plt.subplots_adjust(top=0.85)
     plt.subplots_adjust(left=0.1, bottom=0.1, right=0.95, top=0.95, wspace=0.4, hspace=0.4)
-    # plt.subplots_adjust(top=0.1)
 
     # Force graph.
     ax = plt.subplot(311)
@@ -157,8 +132,8 @@ def update_graph(gram_points: List[int]):
         y = normalized
         sum_squars = 0
         for v in normalized:
-          sum_squars += v * v
-        rms = math.sqrt(sum_squars/ len(normalized))
+            sum_squars += v * v
+        rms = math.sqrt(sum_squars / len(normalized))
         plt.text(10, -18, f"RMS: {rms:.2f},  p2p: {max(normalized) - min(normalized):.2f} ")
         x = [v * 2 for v in range(0, len(gram_points))]
         plt.xlabel('Time [ms]')
@@ -181,97 +156,72 @@ def update_graph(gram_points: List[int]):
         # Signal in.
         x = np.linspace(0.0, N * T, N)
         y = np.asarray(normalized)
-        # y = np.sin(50.0 * 2.0*np.pi*x) + 0.5*np.sin(80.0 * 2.0*np.pi*x)
-        # print(f"Len_x={len(x)}, len_y={len(y)}")
         # FFT values
         fft_last_yf = scipy.fftpack.fft(y)
 
         yf = fft_last_yf
         xf = np.linspace(0.0, 1.0 / (2.0 * T), N // 2)
-        # supress dc
-        # yf[0] = 0
-        # print(f"Len_xf={len(xf)}, len_yf={len(yf)}")
         plt.xlabel('Frequency [Hz]')
         plt.ylabel('Rel level')
         plt.ylim(0, 10)
-        # fig, ax = plt.subplots()
         plt.plot(xf, 2.0 / N * np.abs(yf[:N // 2]))
-        # plt.show()
+
     fig.canvas.draw()
-    # image = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
     image = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
     image = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
     screen.update(image)
 
 
-def handle_adc_report_message(data: PacketData):
-    #global output_file
+def handle_log_message(data: PacketData):
+    parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(data)
+    # For now, we expect a single group with load cell data.
+    assert parsed_log_packet.size() == 1
+    load_cell_group = parsed_log_packet.groups()[0]
+    assert isinstance(load_cell_group, LoadCellGroup)
     # Get message metadata
-    data.reset_read_location()
-    message_format_version = data.read_uint8()
-    assert (message_format_version == 1)
-    isr_millis = data.read_uint32()
-    points_expected = data.read_uint16()
-    # Open file if first time
-    #if not output_file:
-    #    logger.info(f"Opening output data file [{args.output_file}]")
-    #    output_file = open(args.output_file, "w")
+    # data.reset_read_location()
+    # message_format_version = data.read_uint8()
+    # assert (message_format_version == 1)
+    # isr_millis = data.read_uint32()
+    # points_expected = data.read_uint16()
     # Write data to file.
-    points_written = 0
     points = []
     #output_file.write(f"--- Packet {points_expected}, {isr_millis}\n")
-    while not data.all_read():
-        val = data.read_int24()
-        if data.read_error():
-            break
-        #output_file.write(f"{val}\n")
+    for _, val in load_cell_group:
+        # val = data.read_int24()
+        # if data.read_error():
+        #     break
+        # #output_file.write(f"{val}\n")
         points.append(val)
-        points_written += 1
     # Report errors.
-    if data.read_error() or points_written != points_expected:
-        logger.error("Error while processing an incoming adc report message.")
-    else:
-        process_new_points(points)
+    # if data.read_error() or len(points) != points_expected:
+    #     logger.error("Error while processing an incoming adc report message.")
+    # else:
+    process_new_points(points)
 
 
 async def async_main():
     # Supress slow loop warnings for loops that are less than 0.5sec.
     # See https://stackoverflow.com/a/76521656/15038713
-    asyncio.get_event_loop().slow_callback_duration = 0.5 
+    asyncio.get_event_loop().slow_callback_duration = 0.5
     logger.info("Started.")
     assert args.port is not None
     client = SerialPacketsClient(args.port, command_async_callback, message_async_callback,
                                  event_async_callback)
 
     init_graph()
-    
+
     # init_level = 0
     while True:
         # Connect if needed.
-        if  not client.is_connected():
+        if not client.is_connected():
             # init_level = 0
             if not await client.connect():
                 await asyncio.sleep(2.0)
                 continue
             # init_level = 1
-              
-        # Enable ADC report messages if needed. Useful in debugging
-        # when we restart the device.
-        # if init_level == 1:
-        #cmd_data = PacketData().add_uint8(0x02).add_uint8(0x01)
-        #status, response_data = await client.send_command_blocking(0x01, cmd_data, timeout=0.5)
-        #logger.info(f"Enable reports command returned status {status}")
-        # if status !=0x00:
-        #   await asyncio.sleep(2.0)
-        #   continue
-        # init_level = 2
-  
-        await asyncio.sleep(0.5)
-        # NOP command.
-        # cmd_data = PacketData().add_uint8(0x01)
-        # status, response_data = await client.send_command_blocking(0x01, cmd_data, timeout=0.2)
-        # logger.info(f"NOP command status: {status}")
 
+        await asyncio.sleep(0.5)
 
 
 asyncio.run(async_main(), debug=True)
