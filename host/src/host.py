@@ -22,7 +22,7 @@ import scipy
 
 # For using the local version of serial_packet. Comment out if
 # using serial_packets package installed by pip.
-# sys.path.insert(0, "../../../../serial_packets_py/repo/src")
+sys.path.insert(0, "../../../../serial_packets_py/repo/src")
 
 from serial_packets.client import SerialPacketsClient
 from serial_packets.packets import PacketStatus, PacketsEvent, PacketData

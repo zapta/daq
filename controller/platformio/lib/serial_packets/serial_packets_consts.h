@@ -67,6 +67,7 @@ enum PacketType {
   TYPE_COMMAND = 1,
   TYPE_RESPONSE = 2,
   TYPE_MESSAGE = 3,
+  TYPE_LOG = 4,
 };
 
 

@@ -6,8 +6,10 @@ using serial_packets_consts::PACKET_END_FLAG;
 using serial_packets_consts::PACKET_ESC;
 using serial_packets_consts::PACKET_START_FLAG;
 using serial_packets_consts::TYPE_COMMAND;
-using serial_packets_consts::TYPE_MESSAGE;
 using serial_packets_consts::TYPE_RESPONSE;
+using serial_packets_consts::TYPE_MESSAGE;
+using serial_packets_consts::TYPE_LOG;
+
 
 bool SerialPacketsEncoder::byte_stuffing(const EncodedPacketBuffer& in,
                                          StuffedPacketBuffer* out) {
@@ -114,7 +116,21 @@ bool SerialPacketsEncoder::encode_message_packet(uint8_t endpoint,
                  data.size());
     return false;
   }
+  // Byte stuffed into the outupt data.
+  return byte_stuffing(_tmp_data, out);
+}
 
+bool SerialPacketsEncoder::encode_log_packet(const SerialPacketsData& data,
+                                             StuffedPacketBuffer* out) {
+  // Encode packet in _tmp_data.
+  _tmp_data.clear();
+  _tmp_data.write_uint8(TYPE_LOG);
+  _tmp_data.write_bytes(data._buffer, data._size);
+  _tmp_data.write_uint16(_tmp_data.crc16());
+  if (_tmp_data.had_write_errors()) {
+    logger.error("Error encoding a log packet. Data size: %hu", data.size());
+    return false;
+  }
   // Byte stuffed into the outupt data.
   return byte_stuffing(_tmp_data, out);
 }

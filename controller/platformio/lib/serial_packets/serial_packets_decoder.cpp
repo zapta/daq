@@ -11,8 +11,10 @@ using serial_packets_consts::PACKET_END_FLAG;
 using serial_packets_consts::PACKET_ESC;
 using serial_packets_consts::PACKET_START_FLAG;
 using serial_packets_consts::TYPE_COMMAND;
-using serial_packets_consts::TYPE_MESSAGE;
 using serial_packets_consts::TYPE_RESPONSE;
+using serial_packets_consts::TYPE_MESSAGE;
+using serial_packets_consts::TYPE_LOG;
+
 
 bool SerialPacketsDecoder::decode_next_byte(uint8_t b) {
   // When not in packet, wait for next  flag byte.
@@ -58,7 +60,7 @@ bool SerialPacketsDecoder::decode_next_byte(uint8_t b) {
     // _in_packet = false;
     // _packet_len = 0;
     // _pending_escape = false;
-    logger.error("Incoming packet overrun");
+    logger.error("Decoded packet overrun");
     return false;
   }
 
@@ -67,7 +69,7 @@ bool SerialPacketsDecoder::decode_next_byte(uint8_t b) {
     // Flip the bit per HDLC conventions.
     const uint8_t b1 = b ^ 0x20;
     if (b1 != PACKET_START_FLAG && b1 != PACKET_END_FLAG && b1 != PACKET_ESC) {
-      logger.error("Incoming packet has the byte %02hx after an escape byte",
+      logger.error("Decoded packet has the byte %02hx after an escape byte",
                    b1);
       reset_packet(false);
       // _in_packet = false;
@@ -104,7 +106,7 @@ bool SerialPacketsDecoder::process_packet() {
   }
 
   if (_packet_len < MIN_PACKET_LEN) {
-    logger.error("Incoming packet is too short: %hu", _packet_len);
+    logger.error("Decoded packet is too short: %hu", _packet_len);
     return false;
   }
 
@@ -114,7 +116,7 @@ bool SerialPacketsDecoder::process_packet() {
       serial_packets_gen_crc16(_packet_buffer, _packet_len - 2);
   if (packet_crc != computed_crc) {
     // Serial.printf("crc: %04hx vs %04hx\n", packet_crc, computed_crc);
-    logger.error("Incoming packet has bad CRC: %04hx vs %04hx", packet_crc,
+    logger.error("Decoded packet has bad CRC: %04hx vs %04hx", packet_crc,
                  computed_crc);
     return false;
   }
@@ -125,7 +127,7 @@ bool SerialPacketsDecoder::process_packet() {
   // Decode a command packet.
   if (packet_type == TYPE_COMMAND) {
     if (_packet_len < 8) {
-      logger.error("Incoming command packet is too short: %hu", _packet_len);
+      logger.error("Decoded command packet is too short: %hu", _packet_len);
       return false;
     }
     _decoded_metadata.packet_type = TYPE_COMMAND;
@@ -139,7 +141,7 @@ bool SerialPacketsDecoder::process_packet() {
   // Decode a response packet.
   if (packet_type == TYPE_RESPONSE) {
     if (_packet_len < 8) {
-      logger.error("Incoming response packet is too short: %hu", _packet_len);
+      logger.error("Decoded response packet is too short: %hu", _packet_len);
       return false;
     }
     _decoded_metadata.packet_type = TYPE_RESPONSE;
@@ -154,7 +156,7 @@ bool SerialPacketsDecoder::process_packet() {
   // Decode a message packet.
   if (packet_type == TYPE_MESSAGE) {
     if (_packet_len < 4) {
-      logger.error("Incoming message packet is too short: %hu", _packet_len);
+      logger.error("Decoded message packet is too short: %hu", _packet_len);
       return false;
     }
     _decoded_metadata.packet_type = TYPE_MESSAGE;
@@ -164,6 +166,19 @@ bool SerialPacketsDecoder::process_packet() {
     return true;
   }
 
-  logger.error("Incoming packet has an invalid type: %hu", packet_type);
+    // Decode a log packet.
+  if (packet_type == TYPE_LOG) {
+    if (_packet_len < 3) {
+      logger.error("Decoded log packet is too short: %hu", _packet_len);
+      return false;
+    }
+    _decoded_metadata.packet_type = TYPE_LOG;
+    // _decoded_metadata.message.endpoint = _packet_buffer[1];
+    _decoded_data.clear();
+    _decoded_data.write_bytes(&_packet_buffer[1], _packet_len - 3);
+    return true;
+  }
+
+  logger.error("Decoded packet has an invalid type: %hu", packet_type);
   return false;
 }

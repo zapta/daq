@@ -23,12 +23,17 @@ struct DecodedMessageMetadata {
   uint8_t endpoint;
 };
 
+struct DecodedLogMetadata {
+};
+
 struct DecodedPacketMetadata {
   PacketType packet_type;
+  // Per type additional metadata.
   union {
     DecodedCommandMetadata command;
     DecodedResponseMetadata response;
     DecodedMessageMetadata message;
+    DecodedLogMetadata log;
   };
 };
 

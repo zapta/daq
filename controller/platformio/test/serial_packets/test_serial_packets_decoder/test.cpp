@@ -98,6 +98,19 @@ void test_message_decoding() {
                     {0xff, 0x00, 0x7c, 0x11, 0x7e, 0x22, 0x7d, 0x99});
 }
 
+void test_log_decoding() {
+  check_dedoding(*decoder,
+                 {0x7c, 0x04, 0xff, 0x00, 0x7d, 0x5c, 0x11, 0x7d,
+                          0x5e, 0x22, 0x7d, 0x5d, 0x99, 0x94, 0xba, 0x7e},
+                 {0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1});
+  TEST_ASSERT_EQUAL(0, inspector->packet_len());
+  TEST_ASSERT_FALSE(inspector->in_packet());
+  TEST_ASSERT_FALSE(inspector->pending_escape());
+  TEST_ASSERT_EQUAL(0x04, decoder->packet_metadata().packet_type);
+  assert_data_equal(decoder->packet_data(),
+                    {0xff, 0x00, 0x7c, 0x11, 0x7e, 0x22, 0x7d, 0x99});
+}
+
 void app_main() {
   unity_util::common_start();
 
@@ -108,6 +121,7 @@ void app_main() {
   RUN_TEST(test_command_decoding);
   RUN_TEST(test_response_decoding);
   RUN_TEST(test_message_decoding);
+  RUN_TEST(test_log_decoding);
 
   UNITY_END();
 

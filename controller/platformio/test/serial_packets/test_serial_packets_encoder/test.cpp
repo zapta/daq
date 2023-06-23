@@ -66,6 +66,15 @@ void test_encode_message_packet() {
                           0x5e, 0x22, 0x7d, 0x5d, 0x99, 0xe7, 0x2d, 0x7e});
 }
 
+void test_encode_log_packet() {
+  populate_data(data, {0xff, 0x00, 0x7c, 0x11, 0x7e, 0x22, 0x7d, 0x99});
+
+  TEST_ASSERT_TRUE(encoder->encode_log_packet(data, &out));
+
+  assert_data_equal(out, {0x7c, 0x04, 0xff, 0x00, 0x7d, 0x5c, 0x11, 0x7d,
+                          0x5e, 0x22, 0x7d, 0x5d, 0x99, 0x94, 0xba, 0x7e});
+}
+
 void app_main() {
   unity_util::common_start();
 
@@ -75,6 +84,7 @@ void app_main() {
   RUN_TEST(test_encode_command_packet);
   RUN_TEST(test_encode_response_packet);
   RUN_TEST(test_encode_message_packet);
+  RUN_TEST(test_encode_log_packet);
 
   UNITY_END();
 
