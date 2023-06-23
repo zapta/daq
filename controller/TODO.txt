@@ -1,9 +1,12 @@
 
-Revisit build flags, having symbols with a small flash.
+Add to the adc report packet information of start time and time interval.
 
-Introduce the notion of a session id. E.g. a random number.
+Add to the SD log a packet with system info such as sampling channel names and frequencies.
 
-Log ADC data to file using serial packets format.
+add controller commands to start a and end a session, given a name.
+
+
+
 
 
 Perform multi channel ADC reading

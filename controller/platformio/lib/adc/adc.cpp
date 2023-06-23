@@ -333,17 +333,12 @@ void process_dma_rx_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
     Error_Handler();
   }
 
-  // if (reports_enabled) {
-    host_link::client.sendMessage(HostPorts::ADC_REPORT_MESSAGE, packet_data);
-  // }
+  host_link::client.sendMessage(HostPorts::ADC_REPORT_MESSAGE, packet_data);
 
   io::TEST1.high();
-  packet_encoder.encode_message_packet(HostPorts::ADC_REPORT_MESSAGE, packet_data, &stuffed_packet);
-//   SerialPacketsEncoder packet_encoder;
-// StuffedPacketBuffer stuffed_packet;
+  packet_encoder.encode_log_packet( packet_data, &stuffed_packet);
   if (!sd::append_to_log_file(stuffed_packet)) {
-
-    logger.error("Failed to write ADC packet to SD.");
+    logger.error("Failed to write ADC log packet to SD.");
   }
   io::TEST1.low();
 
