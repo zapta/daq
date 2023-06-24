@@ -10,6 +10,7 @@ import logging
 from typing import Tuple, Optional, List
 import time
 import sys
+import glob
 from log_parser import  LogPacketsParser, ParsedLogPacket, LoadCellGroup
 
 # For using the local version of serial_packet. Comment out if
@@ -31,10 +32,10 @@ parser.add_argument("--input_file",
                     dest="input_file",
                     default=None,
                     help="Input log file to process.")
-parser.add_argument("--output_file",
-                    dest="output_file",
+parser.add_argument("--output_name",
+                    dest="output_name",
                     default=None,
-                    help="Output file for extracted data.")
+                    help="Base name for output files.")
 
 args = parser.parse_args()
 
@@ -59,39 +60,19 @@ last_point_rel_time = None
 
 log_packets_parser = LogPacketsParser()
 
-# def process_adc_report_message(data: PacketData, out_f):
-#     global point_count, last_point_rel_time
-#     # out_f.write("ccc\n")
-#     global session_start_time_millis
-#     message_format_version = data.read_uint8()
-#     assert message_format_version == 1
-#     # Time of last point
-#     end_time_millis = data.read_uint32()
-#     # Num of points
-#     n = data.read_uint16()
-#     points = []
-#     for i in range(n):
-#         val = data.read_int24()
-#         points.append(val)
-#     # Make sure all reads where OK.
-#     assert not data.read_error(), "Errors reading a packet"
-#     assert data.all_read(), "Unexpected extra bytes in packet"
-#     if session_start_time_millis is None:
-#         session_start_time_millis = end_time_millis - (n * SAMPLING_INTERVAL_MILLIS)
-#     for i in range(n):
-#         point_count += 1
-#         rel_time_millis = (end_time_millis -
-#                            session_start_time_millis) - (n - i) * SAMPLING_INTERVAL_MILLIS
-#         if last_point_rel_time is not None:
-#             dt = rel_time_millis - last_point_rel_time
-#             if dt != SAMPLING_INTERVAL_MILLIS:
-#                 logger.warning(f"Gap {dt} ms @ {point_count}")
-#         last_point_rel_time = rel_time_millis
-#         g = grams(points[i] - ZERO_OFFSET)
-#         out_f.write(f"{rel_time_millis:09d}, {g:5d}\n")
+output_files_dict = {}
 
+def get_output_file(chan_id: str, header: str):
+   """Header is used only first call per file"""
+   if chan_id in output_files_dict:
+     return output_files_dict[chan_id]
+   f = open(f"{args.output_name}_{chan_id}.csv" , "w")
+   f.write(header + "\n")
+   output_files_dict[chan_id] = f
+   return f
+     
 
-def process_packet(packet: DecodedLogPacket, out_f):
+def process_packet(packet: DecodedLogPacket):
     global log_packets_parser, session_start_time_millis, point_count, group_count
     assert isinstance(packet, DecodedLogPacket), f"Unexpected packet type: {type(packet)}"
     parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(packet.data)
@@ -101,12 +82,14 @@ def process_packet(packet: DecodedLogPacket, out_f):
       group_count += 1
       # For now we have only one kind of group.
       assert isinstance(group, LoadCellGroup)
-      chan = group.chan()
+      chan_index = group.chan()
+      chan_id_str = f"lc{chan_index+1}"
+      f = get_output_file(f"{chan_id_str}", f"T[ms],{chan_id_str.upper()}[g]", )
       for time, value in group:
          millis_in_session = time - session_start_time_millis     
          g = grams(value - ZERO_OFFSET)
          point_count += 1
-         out_f.write(f"{millis_in_session:09d}, lc{chan}, {g:5d}\n")
+         f.write(f"{millis_in_session},{g}\n")
         
 
 
@@ -121,12 +104,15 @@ def main():
     last_report_time = time.time()
     logger.info("Log processor started.")
     logger.info(f"Input file:  {args.input_file}")
-    logger.info(f"Output file: {args.output_file}")
+    logger.info(f"Output name: {args.output_name}")
     assert args.input_file is not None
+    assert args.output_name is not None
+    existing_files = glob.glob(args.output_name + "*")
+    assert not existing_files, f"Found existing files with prefix {args.output_name}: {existing_files[0]}"
     decoder = PacketDecoder()
     in_f = open(args.input_file, "rb")
-    out_f = open(args.output_file, "w")
-    out_f.write("time[ms], chan, value\n")
+    # out_f = open(args.output_file, "w")
+    # out_f.write("time[ms], chan, value\n")
     while (bfr := in_f.read(1000)):
         if time.time() - last_report_time > 2.0:
             last_report_time = time.time()
@@ -137,13 +123,14 @@ def main():
             packet = decoder.receive_byte(b)
             if packet:
                 packet_count += 1
-                process_packet(packet, out_f)
+                process_packet(packet)
                 #  logger.info(f"Got packet: {packet}")
     # out_f.write("xxxxxxx\n")
     in_f.close()
-    out_f.close()
     report_status()
-    logger.info(f"Closing output file {args.output_file}")
+    for chan_id, file in output_files_dict.items():
+      logger.info(f"Closing output file: {file.name}")
+      file.close()
     logger.info(f"All done.")
 
 
