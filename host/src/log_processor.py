@@ -10,6 +10,7 @@ import logging
 from typing import Tuple, Optional, List
 import time
 import sys
+import os
 import glob
 from log_parser import  LogPacketsParser, ParsedLogPacket, LoadCellGroup
 
@@ -32,10 +33,10 @@ parser.add_argument("--input_file",
                     dest="input_file",
                     default=None,
                     help="Input log file to process.")
-parser.add_argument("--output_name",
-                    dest="output_name",
+parser.add_argument("--output_dir",
+                    dest="output_dir",
                     default=None,
-                    help="Base name for output files.")
+                    help="Output directory for generated files.")
 
 args = parser.parse_args()
 
@@ -66,7 +67,9 @@ def get_output_file(chan_id: str, header: str):
    """Header is used only first call per file"""
    if chan_id in output_files_dict:
      return output_files_dict[chan_id]
-   f = open(f"{args.output_name}_{chan_id}.csv" , "w")
+   path = os.path.join(args.output_dir, f"_channel_{chan_id}.csv")
+   logger.info(f"Creating output file: {path}")
+   f = open(path , "w")
    f.write(header + "\n")
    output_files_dict[chan_id] = f
    return f
@@ -104,11 +107,12 @@ def main():
     last_report_time = time.time()
     logger.info("Log processor started.")
     logger.info(f"Input file:  {args.input_file}")
-    logger.info(f"Output name: {args.output_name}")
+    logger.info(f"Output directory: {args.output_dir}")
     assert args.input_file is not None
-    assert args.output_name is not None
-    existing_files = glob.glob(args.output_name + "*")
-    assert not existing_files, f"Found existing files with prefix {args.output_name}: {existing_files[0]}"
+    assert args.output_dir is not None
+    assert os.path.isdir(args.output_dir), f"No such dir {args.output_dir}"
+    existing_files = glob.glob(os.path.join(args.output_dir, "channel_*"))
+    assert not existing_files, f"Found in output dir preexisting files with prefix 'channel_': {existing_files[0]}"
     decoder = PacketDecoder()
     in_f = open(args.input_file, "rb")
     # out_f = open(args.output_file, "w")

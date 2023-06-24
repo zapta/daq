@@ -1,5 +1,5 @@
 .run.sh
 .*.swp
 _log_file.bin
-_output.csv
+_channel_*.csv
 __pycache__
