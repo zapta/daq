@@ -1,0 +1,9 @@
+# System configuration file
+
+[channel.load_cell.1]
+# grams = (adc_reading - offset) * scale
+offset = 12345
+scale = 0.012345
+
+
+
