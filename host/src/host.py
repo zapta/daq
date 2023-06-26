@@ -31,6 +31,10 @@ from serial_packets.packets import PacketStatus, PacketsEvent, PacketData
 # Pyplot documentation:
 # https://matplotlib.org/stable/api/pyplot_summary.html
 
+
+ADC_TICKS_ZERO_OFFSET = 36000
+GRAMS_PER_ADC_TICK = 0.008871875
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(relativeCreated)07d %(levelname)-7s %(filename)-10s: %(message)s",
@@ -51,7 +55,7 @@ screen = None
 
 
 def grams(adc_ticks: int) -> int:
-    return int(adc_ticks * 0.0167)
+    return adc_ticks * GRAMS_PER_ADC_TICK
 
 
 async def command_async_callback(endpoint: int, data: PacketData) -> Tuple[int, PacketData]:
@@ -83,17 +87,17 @@ def init_graph():
     screen = pf.screen(canvas, 'Load cell ADC')
 
 
-ZERO_OFFSET = 16925
 DISPLAY_NUM_POINTS = 501
 
 display_points_grams = [0 for v in range(0, DISPLAY_NUM_POINTS)]
 
 
 def process_new_points(new_points_ticks: List[int]) -> None:
-    global ZERO_OFFSET, display_points_grams
+    global ADC_TICKS_ZERO_OFFSET, display_points_grams
     m = mean(new_points_ticks)
     # logger.info(f"*** mean adc tick: {m}")
-    new_points_grams = [grams(v - ZERO_OFFSET) for v in new_points_ticks]
+    new_points_grams = [grams(v - ADC_TICKS_ZERO_OFFSET) for v in new_points_ticks]
+    # logger.info(f"Grams: {new_points_grams[0]}")
     display_points_grams.extend(new_points_grams)
     display_points_grams = display_points_grams[-DISPLAY_NUM_POINTS:]
     update_graph(display_points_grams)
@@ -134,12 +138,12 @@ def update_graph(gram_points: List[int]):
         for v in normalized:
             sum_squars += v * v
         rms = math.sqrt(sum_squars / len(normalized))
-        plt.text(10, -18, f"RMS: {rms:.2f},  p2p: {max(normalized) - min(normalized):.2f} ")
+        plt.text(10, -9, f"RMS: {rms:.2f},  p2p: {max(normalized) - min(normalized):.2f} ")
         x = [v * 2 for v in range(0, len(gram_points))]
         plt.xlabel('Time [ms]')
         plt.ylabel('AC Force [g]')
         plt.xlim(min(x), max(x))
-        plt.ylim(-20, 20)
+        plt.ylim(-10, 10)
         plt.plot(x, y, color='red')
 
     # Noise FFT graph
@@ -163,7 +167,7 @@ def update_graph(gram_points: List[int]):
         xf = np.linspace(0.0, 1.0 / (2.0 * T), N // 2)
         plt.xlabel('Frequency [Hz]')
         plt.ylabel('Rel level')
-        plt.ylim(0, 10)
+        plt.ylim(0, 2)
         plt.plot(xf, 2.0 / N * np.abs(yf[:N // 2]))
 
     fig.canvas.draw()
@@ -193,6 +197,7 @@ def handle_log_message(data: PacketData):
         #     break
         # #output_file.write(f"{val}\n")
         points.append(val)
+    # logger.info(f"points: {points[0]}, {points[1]}")
     # Report errors.
     # if data.read_error() or len(points) != points_expected:
     #     logger.error("Error while processing an incoming adc report message.")
