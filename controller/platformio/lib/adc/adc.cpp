@@ -34,7 +34,10 @@ using host_link::HostPorts;
 namespace adc {
 
 // We use double buffering using cyclic DMA transfer over two buffers.
-constexpr uint32_t kBytesPerPoint = 3;
+//
+// For eac reading we transfer 7 over SPI, 5 to read the last conversion
+// and two to start the new one.
+constexpr uint32_t kBytesPerPoint = 7;
 constexpr uint32_t kPointsPerGroup = 100;
 constexpr uint32_t kBytesPerGroup = kBytesPerPoint * kPointsPerGroup;
 
@@ -176,43 +179,62 @@ static void send_command(const uint8_t *cmd, uint16_t num_bytes) {
 }
 
 void cmd_reset() {
-  static const uint8_t cmd[] = {0x06};
+  static const uint8_t cmd[] = {0x06, 0x00};
   send_command(cmd, sizeof(cmd));
   // Since commands are done at a TIM12 intervals, we don't
   // need to insert a ~50us delay here as called by the datasheet.
 }
 
+uint8_t cmd_read_register(uint8_t reg_index) {
+  if (reg_index > 18) {
+    Error_Handler();
+  }
+  const uint8_t cmd_code = (uint8_t)0x20 | reg_index;
+  const uint8_t cmd[] = {cmd_code, 0x0, 0x0};
+  send_command(cmd, sizeof(cmd));
+  return rx_buffer[2];
+}
+
+void cmd_write_register(uint8_t reg_index, uint8_t val) {
+  if (reg_index > 18) {
+    Error_Handler();
+  }
+  const uint8_t cmd_code = (uint8_t)0x40 | reg_index;
+  const uint8_t cmd[] = {cmd_code, val};
+  send_command(cmd, sizeof(cmd));
+}
+
 void cmd_start() {
-  static const uint8_t cmd[] = {0x08};
+  static const uint8_t cmd[] = {0x08, 0x00};
   send_command(cmd, sizeof(cmd));
 }
 
-struct AdcRegs {
-  uint8_t r0;
-  uint8_t r1;
-  uint8_t r2;
-  uint8_t r3;
-};
+// struct AdcRegs {
+//   uint8_t r0;
+//   uint8_t r1;
+//   uint8_t r2;
+//   uint8_t r3;
+// };
 
-void cmd_read_registers(AdcRegs *regs) {
-  static const uint8_t cmd[] = {0x23, 0, 0, 0, 0};
-  // Initializaing with a visible sentinel.
-  // memset(rx_buffer, 0x99, sizeof(rx_buffer));
-  send_command(cmd, sizeof(cmd));
-  regs->r0 = rx_buffer[1];
-  regs->r1 = rx_buffer[2];
-  regs->r2 = rx_buffer[3];
-  regs->r3 = rx_buffer[4];
-}
+// void cmd_read_registers(AdcRegs *regs) {
+//   static const uint8_t cmd[] = {0x23, 0, 0, 0, 0};
+//   // Initializaing with a visible sentinel.
+//   // memset(rx_buffer, 0x99, sizeof(rx_buffer));
+//   send_command(cmd, sizeof(cmd));
+//   regs->r0 = rx_buffer[1];
+//   regs->r1 = rx_buffer[2];
+//   regs->r2 = rx_buffer[3];
+//   regs->r3 = rx_buffer[4];
+// }
 
-static void cmd_write_registers(const AdcRegs &regs) {
-  uint8_t cmd[] = {0x43, 0, 0, 0, 0};
-  cmd[1] = regs.r0;
-  cmd[2] = regs.r1;
-  cmd[3] = regs.r2;
-  cmd[4] = regs.r3;
-  send_command(cmd, sizeof(cmd));
-}
+// static void cmd_write_registers(const AdcRegs &regs) {
+//   uint8_t cmd[] = {0x43, 0, 0, 0, 0};
+//   cmd[1] = regs.r0;
+//   cmd[2] = regs.r1;
+//   cmd[3] = regs.r2;
+//   cmd[4] = regs.r3;
+//   send_command(cmd, sizeof(cmd));
+// }
 
 // Bfr3 points to three bytes with ADC value.
 int32_t decode_int24(const uint8_t *bfr3) {
@@ -224,17 +246,29 @@ int32_t decode_int24(const uint8_t *bfr3) {
 
 // Assuming cs is pulsing.
 void start_continuos_DMA() {
-  set_dma_request_generator(3);
+  set_dma_request_generator(kBytesPerPoint);
   continious_DMA = true;
   irq_event_queue.reset();
   irq_error_count = 0;
   irq_half_count = 0;
   irq_full_count = 0;
 
-  for (uint32_t i = 0; i < sizeof(tx_buffer); i++) {
-    const uint32_t j = i % 3;
-    // Every third byte is start comment, for next reading.
-    tx_buffer[i] = (j == 0) ? 0x08 : 00;
+  if (kBytesPerPoint != 7) {
+    Error_Handler();
+  }
+
+  for (uint32_t i = 0; i < sizeof(tx_buffer); i += kBytesPerPoint) {
+    tx_buffer[i + 0] = 0x12;  // Command: read data.
+    tx_buffer[i + 1] = 0x00;  // Dummy.
+    tx_buffer[i + 2] = 0x00;  // Read data byte 1 (MSB)
+    tx_buffer[i + 3] = 0x00;  // Read data byte 2
+    tx_buffer[i + 4] = 0x00;  // Read data byte 3 (LSB)
+    tx_buffer[i + 5] = 0x08;  // Command: start conversion.
+    tx_buffer[i + 6] = 0x00;  // Dummy.
+
+    // const uint32_t j = i % 3;
+    // // Every third byte is start comment, for next reading.
+    // tx_buffer[i] = (j == 0) ? 0x08 : 00;
   }
 
   // Should read 3 bytes but we read for to simulate DMA burst of
@@ -268,21 +302,38 @@ static void setup() {
   }
 
   // for (;;) {
-  // io::TEST1.high();
+    io::TEST1.high();
+    // logger.info("--------");
+    cmd_reset();
 
-  cmd_reset();
+    logger.info("ADC device id: 0x%02hx", cmd_read_register(0));
+
+    cmd_write_register(0x01, 0x00);  // Clear CRC and RESET flags.
+    cmd_write_register(0x02, 0x5c);  // 4800 SPS, FIR enabled.
+    cmd_write_register(0x03, 0x11);  // 50us start delay, one shot.
+    cmd_write_register(0x06, 0x05);  // Ref = VDD - VSS
+    cmd_write_register(0x10, 0x07);  // PGA = x128
+    cmd_write_register(0x11, 0x21);  // Ain1 = positive, Ain0 = Negative.
+
+    // for (uint8_t r = 0; r < 32; r++) {
+    // const uint8_t reg_val = cmd_read_register(0);
+    // logger.info("Reg 0:  0x%02hx", reg_val);
+    // }
+    io::TEST1.low();
+    time_util::delay_millis(500);
+  // }
 
   // ADC load cell inputs: p=ain2, n=ain3. Ratiometric measurement
   // with AVDD as reference.
-  static const AdcRegs wr_regs = {0x5c, 0xc0, 0xc0, 0x00};
-  cmd_write_registers(wr_regs);
+  // static const AdcRegs wr_regs = {0x5c, 0xc0, 0xc0, 0x00};
+  // cmd_write_registers(wr_regs);
 
   // Sanity check that we wrote the registers correctly.
-  AdcRegs rd_regs;
-  memset(&rd_regs, 0, sizeof(rd_regs));
-  cmd_read_registers(&rd_regs);
-  logger.info("Regs: %02hx, %02hx, %02hx, %02hx", rd_regs.r0, rd_regs.r1,
-              rd_regs.r2, rd_regs.r3);
+  // AdcRegs rd_regs;
+  // memset(&rd_regs, 0, sizeof(rd_regs));
+  // cmd_read_registers(&rd_regs);
+  // logger.info("Regs: %02hx, %02hx, %02hx, %02hx", rd_regs.r0, rd_regs.r1,
+  //             rd_regs.r2, rd_regs.r3);
 
   // Start the first conversion.
   cmd_start();
@@ -290,7 +341,7 @@ static void setup() {
   // io::TEST1.low();
 
   // time_util::delay_millis(500);
-  logger.info("Setup loop");
+  // logger.info("Setup loop");
   // }
 
   // Pulsate the CS signal to the ADC. The DMA transactions are synced
@@ -327,20 +378,22 @@ void process_dma_rx_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
   // const bool reports_enabled = controller::is_adc_report_enabled();
   packet_data.clear();
   packet_data.write_uint8(1);  // version
-  // NOTE: In case of a millis wrap around, it's ok if this wraps back. All timestamps
-  // are mod 2^32.
-  const uint32_t packet_base_millis = isr_millis - (kPointsPerGroup * kAdcReadingInternvalMillis);
-  packet_data.write_uint32(packet_base_millis);  
-  packet_data.write_uint8(4); // Group id:  Load cell chan 0.
-  packet_data.write_uint8(0); // Millis offset to first value.
-  packet_data.write_uint8(kAdcReadingInternvalMillis);  // Millis between readings.
+  // NOTE: In case of a millis wrap around, it's ok if this wraps back. All
+  // timestamps are mod 2^32.
+  const uint32_t packet_base_millis =
+      isr_millis - (kPointsPerGroup * kAdcReadingInternvalMillis);
+  packet_data.write_uint32(packet_base_millis);
+  packet_data.write_uint8(4);  // Group id:  Load cell chan 0.
+  packet_data.write_uint8(0);  // Millis offset to first value.
+  packet_data.write_uint8(
+      kAdcReadingInternvalMillis);           // Millis between readings.
   packet_data.write_uint8(kPointsPerGroup);  // Num of points to follow.
   // Write kPointsPerGroup 24 bit values.
-  // NOTE: The ADC returns value in big endian format which is 
-  // the same as our packet_data.write_x() format so we just 
+  // NOTE: The ADC returns value in big endian format which is
+  // the same as our packet_data.write_x() format so we just
   // copy directly the three bytes per value.
-  for (uint32_t i = 0; i < kBytesPerGroup; i += 3) {
-    packet_data.write_bytes(&bfr[i], 3);
+  for (uint32_t i = 0; i < kBytesPerGroup; i += kBytesPerPoint) {
+    packet_data.write_bytes(&bfr[i + 2], 3);
   }
   if (packet_data.had_write_errors()) {
     Error_Handler();
@@ -349,21 +402,17 @@ void process_dma_rx_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
   host_link::client.sendMessage(HostPorts::ADC_REPORT_MESSAGE, packet_data);
 
   io::TEST1.high();
-  packet_encoder.encode_log_packet( packet_data, &stuffed_packet);
+  packet_encoder.encode_log_packet(packet_data, &stuffed_packet);
   if (!sd::append_to_log_file(stuffed_packet)) {
     logger.error("Failed to write ADC log packet to SD.");
   }
   io::TEST1.low();
 
-  logger.info("ADC %d: %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx", id,
-              decode_int24(&bfr[0]), decode_int24(&bfr[3]),
-              decode_int24(&bfr[6]), decode_int24(&bfr[9]),
-              decode_int24(&bfr[12]), decode_int24(&bfr[15]),
-              decode_int24(&bfr[18]), decode_int24(&bfr[21]),
-              decode_int24(&bfr[24]), decode_int24(&bfr[27]));
+  logger.info("ADC %d: %lx, %lx, %lx, %lx, %lx", id, decode_int24(&bfr[2]),
+              decode_int24(&bfr[2+7]), decode_int24(&bfr[2+14]),
+              decode_int24(&bfr[2+21]), decode_int24(&bfr[2+28]));
 
-  logger.info("Processed in %lu ms",
-              time_util::millis() - isr_millis);
+  logger.info("Processed in %lu ms", time_util::millis() - isr_millis);
 }
 
 void adc_task_body(void *argument) {

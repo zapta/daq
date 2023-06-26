@@ -29,7 +29,9 @@ void app_main() {
   serial::serial1.init();
 
   HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_1);
-  __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_1, 100);
+  // Set TIM12 PWM to 60%. This signal acts as
+  // ADC ontinuos CS.
+  __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_1, 600);
   HAL_TIM_Base_Start_IT(&htim12);
 
   sd::open_log_file("log_file.bin");
