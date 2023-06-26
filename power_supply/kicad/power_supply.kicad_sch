@@ -1965,6 +1965,11 @@
     (effects (font (size 3 3) (thickness 0.6) bold) (justify left bottom))
     (uuid 07c3d975-2a8e-4852-bd51-a375ecf4c8b0)
   )
+  (text "TODO: Increase the resistor of the greed +5V LED. It's too bright."
+    (at 93.98 44.45 0)
+    (effects (font (size 2.54 2.54) (thickness 0.508) bold (color 255 0 0 1)) (justify left bottom))
+    (uuid 513b67fd-37f0-48ab-a9a7-b158932a0dbb)
+  )
   (text "9-36VDC\n12W" (at 91.44 69.85 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 75d8bc20-3a6d-418b-b346-fdec09602baf)
