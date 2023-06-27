@@ -3228,6 +3228,11 @@
     (effects (font (size 2.54 2.54) (thickness 0.508) bold (color 255 0 0 1)) (justify left bottom))
     (uuid aed3e5ca-64ab-4103-beb1-9a57b6bf31b3)
   )
+  (text "If possible. have a SWD connector at the top of the card."
+    (at 139.065 127.635 0)
+    (effects (font (size 2.54 2.54) (thickness 0.508) bold (color 255 0 0 1)) (justify left bottom))
+    (uuid b25022a4-c302-4ed4-9cf2-30b82b424ce1)
+  )
   (text "POWER" (at 170.18 106.68 0)
     (effects (font (size 3 3) (thickness 0.6) bold) (justify left bottom))
     (uuid c2e595b8-88c9-411e-bcf5-c579a1eb9cdf)

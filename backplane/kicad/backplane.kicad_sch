@@ -3664,6 +3664,15 @@
     (uuid fff664e0-5ce5-4ae6-ad4d-dadf4589500e)
   )
 
+  (text "TODO: Add a power LED" (at 264.795 213.36 0)
+    (effects (font (size 2.54 2.54) (color 255 0 0 1)) (justify left bottom))
+    (uuid 896b9e6d-954b-4d09-979b-7a7199e66811)
+  )
+  (text "TODO: Add a GROUND connection" (at 264.16 223.52 0)
+    (effects (font (size 2.54 2.54) (color 255 0 0 1)) (justify left bottom))
+    (uuid ebec6951-e114-480f-b635-66f938081e4a)
+  )
+
   (label "A29" (at 149.86 134.62 180) (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right bottom))
     (uuid 0023f04b-db60-482e-ba6b-0ddc587d84d1)
