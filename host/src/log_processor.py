@@ -22,6 +22,9 @@ from serial_packets.client import SerialPacketsClient
 from serial_packets.packets import PacketStatus, PacketsEvent, PacketData
 from serial_packets.packet_decoder import PacketDecoder,  DecodedLogPacket
 
+ADC_TICKS_ZERO_OFFSET = 37127
+GRAMS_PER_ADC_TICK = 0.008871875
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(relativeCreated)07d %(levelname)-7s %(filename)-10s: %(message)s",
@@ -41,8 +44,9 @@ parser.add_argument("--output_dir",
 args = parser.parse_args()
 
 
-def grams(adc_ticks: int) -> int:
-    return int(adc_ticks * 0.0167)
+def grams(adc_ticks: int) -> float:
+    """Converts ADC ticks to grams"""
+    return (adc_ticks - ADC_TICKS_ZERO_OFFSET) * GRAMS_PER_ADC_TICK
 
 # TODO: Make this per loadcell and per channel.
 ZERO_OFFSET = 16925
@@ -90,9 +94,9 @@ def process_packet(packet: DecodedLogPacket):
       f = get_output_file(f"{chan_id_str}", f"T[ms],{chan_id_str.upper()}[g]", )
       for time, value in group:
          millis_in_session = time - session_start_time_millis     
-         g = grams(value - ZERO_OFFSET)
+         g = grams(value)
          point_count += 1
-         f.write(f"{millis_in_session},{g}\n")
+         f.write(f"{millis_in_session},{g:.3f}\n")
         
 
 
@@ -129,7 +133,6 @@ def main():
                 packet_count += 1
                 process_packet(packet)
                 #  logger.info(f"Got packet: {packet}")
-    # out_f.write("xxxxxxx\n")
     in_f.close()
     report_status()
     for chan_id, file in output_files_dict.items():
