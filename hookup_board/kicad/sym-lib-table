@@ -1,0 +1,5 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "hookup_board")(type "KiCad")(uri "${KIPRJMOD}/hookup_board.kicad_sym")(options "")(descr ""))
+  (lib (name "backplane")(type "KiCad")(uri "C:/Users/user/projects/daq/repo/backplane/kicad/backplane.kicad_sym")(options "")(descr ""))
+)
