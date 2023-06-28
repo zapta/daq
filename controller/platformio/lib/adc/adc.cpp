@@ -311,9 +311,15 @@ static void setup() {
     cmd_write_register(0x01, 0x00);  // Clear CRC and RESET flags.
     cmd_write_register(0x02, 0x5c);  // 4800 SPS, FIR enabled.
     cmd_write_register(0x03, 0x11);  // 50us start delay, one shot.
-    cmd_write_register(0x06, 0x05);  // Ref = VDD - VSS
+    // cmd_write_register(0x06, 0x05);  // Ref = VDD - VSS
+    cmd_write_register(0x06, 0x09);  // Ref Ain0 - Ain1
+
+
     cmd_write_register(0x10, 0x07);  // PGA = x128
-    cmd_write_register(0x11, 0x21);  // Ain1 = positive, Ain0 = Negative.
+
+
+    // cmd_write_register(0x11, 0x21);  // Ain1 = positive, Ain0 = Negative.
+    cmd_write_register(0x11, 0x34);  // Ain1 = positive, Ain0 = Negative.
 
     // for (uint8_t r = 0; r < 32; r++) {
     // const uint8_t reg_val = cmd_read_register(0);
