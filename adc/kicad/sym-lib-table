@@ -2,6 +2,5 @@
   (version 7)
   (lib (name "adc")(type "KiCad")(uri "${KIPRJMOD}/adc.kicad_sym")(options "")(descr ""))
   (lib (name "common")(type "KiCad")(uri "/Users/user/projects/daq/repo/common/kicad/common.kicad_sym")(options "")(descr ""))
-  (lib (name "ble")(type "KiCad")(uri "C:/Users/user/projects/ble_stepper_motor_analyzer/repo/kicad/stepper_monitor.kicad_sym")(options "")(descr ""))
   (lib (name "breakout")(type "KiCad")(uri "/Users/user/projects/daq/repo/adc/breakout/breakout.kicad_sym")(options "")(descr ""))
 )
