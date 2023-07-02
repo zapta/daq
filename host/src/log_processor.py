@@ -12,7 +12,7 @@ import time
 import sys
 import os
 import glob
-from log_parser import  LogPacketsParser, ParsedLogPacket, LoadCellGroup
+from log_parser import  LogPacketsParser, ParsedLogPacket, ChannelData
 
 # For using the local version of serial_packet. Comment out if
 # using serial_packets package installed by pip.
@@ -58,7 +58,7 @@ session_start_time_millis = None
 
 byte_count = 0
 packet_count = 0
-group_count = 0
+chan_data_count = 0
 point_count = 0
 
 last_point_rel_time = None
@@ -80,30 +80,41 @@ def get_output_file(chan_id: str, header: str):
      
 
 def process_packet(packet: DecodedLogPacket):
-    global log_packets_parser, session_start_time_millis, point_count, group_count
+    global log_packets_parser, session_start_time_millis, point_count, chan_data_count
     assert isinstance(packet, DecodedLogPacket), f"Unexpected packet type: {type(packet)}"
     parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(packet.data)
     if session_start_time_millis is None:
       session_start_time_millis = parsed_log_packet.time_interval_millis()[0]
-    for group in parsed_log_packet.groups():
-      group_count += 1
+    for chan_data in parsed_log_packet.channels().values():
+      chan_data_count += 1
       # For now we have only one kind of group.
-      assert isinstance(group, LoadCellGroup)
-      chan_index = group.chan()
-      chan_id_str = f"lc{chan_index+1}"
-      f = get_output_file(f"{chan_id_str}", f"T[ms],{chan_id_str.upper()}[g]", )
-      for time, value in group:
-         millis_in_session = time - session_start_time_millis     
-         g = grams(value)
-         point_count += 1
-         f.write(f"{millis_in_session},{g:.3f}\n")
+      # assert isinstance(group, LoadCellGroup)
+      # chan_index = group.chan()
+      chan_name = chan_data.chan_name()
+      # logger.info(f"chan_name = {chan_name}")
+      if chan_name.startswith("LC"):
+        f = get_output_file(f"{chan_name.lower()}", f"T[ms],{chan_name}[g]", )
+        for time, value in chan_data:
+          millis_in_session = time - session_start_time_millis     
+          g = grams(value)
+          point_count += 1
+          f.write(f"{millis_in_session},{g:.3f}\n")
+      elif chan_name.startswith("THRM"):
+        f = get_output_file(f"{chan_name.lower()}", f"T[ms],{chan_name}[C]", )
+        for time, value in chan_data:
+          millis_in_session = time - session_start_time_millis     
+          c = value  # TODO: Convert to C
+          point_count += 1
+          f.write(f"{millis_in_session},{c:.3f}\n")
+      else:
+        raise RuntimeError(f"Unknown channel: {chan_name}")
         
 
 
 
 def report_status():
-    global byte_count, packet_count, group_count, point_count
-    logger.info(f"Bytes: {byte_count:,}, packets: {packet_count:,}, groups: {group_count}, values: {point_count:,}")
+    global byte_count, packet_count, chan_data_count, point_count
+    logger.info(f"Bytes: {byte_count:,}, packets: {packet_count:,}, chan_datas: {chan_data_count}, values: {point_count:,}")
 
 
 def main():

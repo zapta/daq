@@ -1,4 +1,4 @@
-from typing import Optional, List, Tuple, Literal
+from typing import Optional, List, Tuple, Literal, Any, Dict
 import sys
 
 # For using the local version of serial_packet. Comment out if
@@ -9,29 +9,29 @@ from serial_packets.packets import PacketData
 
 # from pandas import Interval
 
+# class BaseGroup:
 
-class BaseGroup:
-
-    def time_interval_millis(self) -> tuple[int, int]:
-        raise NotImplementedError(
-            f"Subclass {type(self).__name__}  should implement time_interval_millis().")
+#     def time_interval_millis(self) -> tuple[int, int]:
+#         raise NotImplementedError(
+#             f"Subclass {type(self).__name__}  should implement time_interval_millis().")
 
 
-class LoadCellGroup(BaseGroup):
 
-    def __init__(self, chan: int, start_time: int, __step_time_millis: int, values: List[int]):
+class ChannelData:
+
+    def __init__(self, chan_name: str, start_time: int, __step_time_millis: int, values: List[Any]):
         """Constructor."""
-        self.__chan = chan
+        self.__chan_name = chan_name
         self.__start_time_millis: int = start_time
         self.__step_time_millis: int = __step_time_millis
         self.__values: List[int] = values
 
     def __str__(self):
-        return f"Group(load_cell[{self.__chan}]: {self.time_interval_millis()}/{self.__step_time_millis}, {self.size()} points"
+        return f"Chan {self.__chan_name}: {self.time_interval_millis()}/{self.__step_time_millis}, {self.size()} points"
 
-    def chan(self):
-      return self.__chan
-    
+    def chan_name(self):
+        return self.__chan_name
+
     def size(self):
         return len(self.__values)
 
@@ -42,8 +42,7 @@ class LoadCellGroup(BaseGroup):
                 self.__start_time_millis + (self.size() * self.__step_time_millis))
 
     def __iter__(self):
-        return LoadCellGroup.__Iter(self.__start_time_millis, self.__step_time_millis,
-                                    self.__values)
+        return ChannelData.__Iter(self.__start_time_millis, self.__step_time_millis, self.__values)
 
     class __Iter:
         """Iterator class for load cell group (time_millis:int, value:int)"""
@@ -55,38 +54,45 @@ class LoadCellGroup(BaseGroup):
             self.__size = len(values)
             self.__next_index: int = 0
 
-        def __next__(self):
+        def __next__(self) -> Tuple[int, Any]:
             if self.__next_index >= self.__size:
                 raise StopIteration
             value = self.__values[self.__next_index]
-            time = self.__start_time_millis + (self.__next_index * self.__step_time_millis)
+            time_millis = self.__start_time_millis + (self.__next_index * self.__step_time_millis)
             self.__next_index += 1
-            return (time, value)
+            return (time_millis, value)
 
 
 class ParsedLogPacket:
 
-    def __init__(self, groups: List[BaseGroup]):
+    def __init__(self, channels: Dict[str, ChannelData]):
         """Constructor."""
-        self.__groups = groups
+        self.__channels = channels
 
-    def groups(self) -> List[BaseGroup]:
-        return self.__groups
+    def channels(self) -> Dict[str, ChannelData]:
+        return self.__channels
+      
+    def channel(self, chan_name: str) -> Optional[ChannelData]:
+        return self.__channels.get(chan_name, None)
 
     def size(self):
-        return len(self.__groups)
+        return len(self.__channels)
 
     def is_empty(self):
-        return not self.__groups
+        return not self.__channels
 
     def time_interval_millis(self) -> Optional[Tuple[int, int]]:
-        if len(self.__groups) is None:
+        """Time interval in millis of all data points from all channels."""
+        if self.is_empty():
             return None
-        start, end = self.__groups[0].time_interval_millis()
-        for group in self.__groups:
-            next_start, next_end = group.time_interval_millis()
-            start = min(start, next_start)
-            end = max(end, next_end)
+        start = None
+        end = None
+        for channelData in self.__channels.values():
+            next_start, next_end = channelData.time_interval_millis()
+            if (start is None) or next_start < start:
+                start = next_start
+            if (end is None) or next_end > end:
+                end = next_end
         return (start, end)
 
 
@@ -96,8 +102,8 @@ class LogPacketsParser:
         """Constructor."""
         pass
 
-    def _parse_load_cell_group(self, packet_start_time_millis: int, chan: int,
-                               data: PacketData) -> LoadCellGroup:
+    def _parse_int24_channel(self, chan_name: str, packet_start_time_millis: int,
+                             data: PacketData) -> ChannelData:
         rel_start_time = data.read_uint8()
         step_interval = data.read_uint8()
         num_values = data.read_uint8()
@@ -106,27 +112,47 @@ class LogPacketsParser:
         for i in range(num_values):
             values.append(data.read_int24())
         assert not data.read_error()
-        result = LoadCellGroup(chan, packet_start_time_millis + rel_start_time, step_interval,
-                               values)
+        result = ChannelData(chan_name, packet_start_time_millis + rel_start_time, step_interval,
+                             values)
         return result
+
+    # def _parse_thermistor_group(self, packet_start_time_millis: int, therm_chan: int,
+    #                             data: PacketData) -> LoadCellGroup:
+    #     rel_start_time = data.read_uint8()
+    #     step_interval = data.read_uint8()
+    #     num_values = data.read_uint8()
+    #     assert not data.read_error()
+    #     values = []
+    #     for i in range(num_values):
+    #         values.append(data.read_int24())
+    #     assert not data.read_error()
+    #     result = LoadCellGroup(therm_chan, packet_start_time_millis + rel_start_time, step_interval,
+    #                            values)
+    #     return result
 
     def parse_next_packet(self, data: PacketData) -> ParsedLogPacket:
         data.reset_read_location()
         version = data.read_uint8()
         assert version == 1, f"Unexpected log packet version: {version}"
         packet_start_sys_time_millis = data.read_uint32()
-        groups = []
+        channels_data = {}
         while not data.read_error() and not data.all_read():
-            group_id = data.read_uint8()
+            chan_id = data.read_uint8()
             assert not data.read_error()
-            if group_id >= 4 and group_id <= 7:
-                chan = group_id % 4
-                group = self._parse_load_cell_group(packet_start_sys_time_millis, chan, data)
-                groups.append(group)
+            if chan_id >= 0x11 and chan_id <= 0x14:
+                chan_name = f"LC{chan_id - 0x11 + 1}"
+                channel_data = self._parse_int24_channel(chan_name, packet_start_sys_time_millis, data)
+                assert(not chan_name in channels_data)
+                channels_data[chan_name] = channel_data
+            elif chan_id >= 0x21 and chan_id <= 0x26:
+                chan_name = f"THRM{chan_id - 0x21 + 1}"
+                channel_data = self._parse_int24_channel(chan_name, packet_start_sys_time_millis, data)
+                assert(not chan_name in channels_data)
+                channels_data[chan_name] = channel_data
             else:
                 raise ValueError("Unexpected log group id: {group_id}")
         assert data.all_read_ok()
-        result = ParsedLogPacket(groups)
+        result = ParsedLogPacket(channels_data)
         return result
 
 
@@ -161,7 +187,6 @@ class LogPacketsParser:
 #     parsed_packet = parser.parse_next_packet(packet_data)
 #     for group in parsed_packet.groups():
 #         print(f"  {group}")
-
 
 #     # group1 = LoadCellGroup(2, 100, 2, [11, 22, 33, 44])
 #     # group2 = LoadCellGroup(3, 120, 1, [88, 99])

@@ -19,7 +19,7 @@ import asyncio
 import logging
 from typing import Tuple, Optional
 import scipy
-from log_parser import LogPacketsParser, LoadCellGroup, ParsedLogPacket
+from log_parser import LogPacketsParser, ChannelData, ParsedLogPacket
 
 # For using the local version of serial_packet. Comment out if
 # using serial_packets package installed by pip.
@@ -178,10 +178,11 @@ def update_graph(gram_points: List[int]):
 
 def handle_log_message(data: PacketData):
     parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(data)
-    # For now, we expect a single group with load cell data.
-    assert parsed_log_packet.size() == 1
-    load_cell_group = parsed_log_packet.groups()[0]
-    assert isinstance(load_cell_group, LoadCellGroup)
+    # We are expecting a single LC channel + three thermistor 
+    # channels.
+    assert parsed_log_packet.size() == 4
+    load_cell_cata = parsed_log_packet.channel("LC1")
+    # assert isinstance(load_cell_group, LoadCellGroup)
     # Get message metadata
     # data.reset_read_location()
     # message_format_version = data.read_uint8()
@@ -191,7 +192,7 @@ def handle_log_message(data: PacketData):
     # Write data to file.
     points = []
     #output_file.write(f"--- Packet {points_expected}, {isr_millis}\n")
-    for _, val in load_cell_group:
+    for _, val in load_cell_cata:
         # val = data.read_int24()
         # if data.read_error():
         #     break

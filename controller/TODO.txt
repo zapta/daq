@@ -1,15 +1,15 @@
 
-Add to the adc report packet information of start time and time interval.
+Increase serial ports baud rate.
 
-Add to the SD log a packet with system info such as sampling channel names and frequencies.
+Report all thermistor adc points.
+
+Add TOML config file
+
+Convert thermistors to C.
 
 add controller commands to start a and end a session, given a name.
 
 
-
-
-
-Perform multi channel ADC reading
 
 
 

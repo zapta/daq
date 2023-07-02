@@ -1,9 +1,17 @@
 # System configuration file
 
-[channel.load_cell.1]
+[channel.LC1]
 # grams = (adc_reading - offset) * scale
 offset = 12345
 scale = 0.012345
 
+[channel.THRM1]
+# TBD
+
+[channel.THRM2]
+# TBD
+
+[channel.THRM3]
+# TBD
 
 
