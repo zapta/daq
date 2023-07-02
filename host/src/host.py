@@ -213,7 +213,7 @@ async def async_main():
     logger.info("Started.")
     assert args.port is not None
     client = SerialPacketsClient(args.port, command_async_callback, message_async_callback,
-                                 event_async_callback)
+                                 event_async_callback, baudrate=576000)
 
     init_graph()
 
