@@ -71,15 +71,16 @@ log_packets_parser = LogPacketsParser()
 
 output_files_dict = {}
 
-def get_output_file(chan_id: str, header: str):
+def get_output_file(chan_name: str, header: str, raw=False):
    """Header is used only first call per file"""
-   if chan_id in output_files_dict:
-     return output_files_dict[chan_id]
-   path = os.path.join(args.output_dir, f"_channel_{chan_id}.csv")
+   if (chan_name, raw) in output_files_dict:
+     return output_files_dict[(chan_name, raw)]
+   raw_suffix = "_raw" if raw else ""
+   path = os.path.join(args.output_dir, f"_channel_{chan_name.lower()}{raw_suffix}.csv")
    logger.info(f"Creating output file: {path}")
    f = open(path , "w")
    f.write(header + "\n")
-   output_files_dict[chan_id] = f
+   output_files_dict[(chan_name, raw)] = f
    return f
      
 
@@ -97,20 +98,24 @@ def process_packet(packet: DecodedLogPacket):
       chan_name = chan_data.chan_name()
       # logger.info(f"chan_name = {chan_name}")
       if chan_name.startswith("LC"):
-        f = get_output_file(f"{chan_name.lower()}", f"T[s],{chan_name}[g]", )
+        f = get_output_file(f"{chan_name}", f"T[s],{chan_name}[g]")
+        f_raw = get_output_file(f"{chan_name}", f"T[ms],{chan_name}[tick]", raw=True )
         load_cell_chan_config = sys_config.get_load_cell_config(chan_name)
         for time, value in chan_data:
           millis_in_session = time - session_start_time_millis     
           g = load_cell_chan_config.adc_reading_to_grams(value)
           point_count += 1
           f.write(f"{millis_in_session/1000:.3f},{g:.3f}\n")
+          f_raw.write(f"{millis_in_session},{value}\n")
       elif chan_name.startswith("THRM"):
-        f = get_output_file(f"{chan_name.lower()}", f"T[s],{chan_name}[C]", )
+        f = get_output_file(f"{chan_name}", f"T[s],{chan_name}[C]")
+        f_raw = get_output_file(f"{chan_name}", f"T[s],{chan_name}[C]", raw=True)
         for time, value in chan_data:
           millis_in_session = time - session_start_time_millis     
           c = value  # TODO: Convert to C
           point_count += 1
           f.write(f"{millis_in_session/1000:.3f},{c:.3f}\n")
+          f_raw.write(f"{millis_in_session},{value}\n")
       else:
         raise RuntimeError(f"Unknown channel: {chan_name}")
         
