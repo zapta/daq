@@ -2,8 +2,8 @@
 
 [channel.LC1]
 # grams = (adc_reading - offset) * scale
-offset = 12345
-scale = 0.012345
+offset = 36000
+scale = 0.008871875
 
 [channel.THRM1]
 # TBD

@@ -11,7 +11,7 @@ input_file: str = "_channel_lc1.csv"
 
 print(f"Reading file {input_file}")
 # We extract one sec of signal + 500 samples before and after for the end conditions.
-data: pd.DataFrame = pd.read_csv(input_file, nrows = 500+501+500, dtype= {"T[ms]": np.int32, "LC1[g]": np.float32})
+data: pd.DataFrame = pd.read_csv(input_file, nrows = 500+501+500, dtype= {"T[s]": np.float64, "LC1[g]": np.float64})
 print(f"File read ok")
 # print(data.count())
 print("\nData types:")
@@ -19,7 +19,7 @@ print(data.dtypes)
 print("\nData:")
 print(data)
 
-t = (data[["T[ms]"]] / 1000) - 1.0
+t = data[["T[s]"]] 
 t = np.array(t)
 
 s = data[["LC1[g]"]]

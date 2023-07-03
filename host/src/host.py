@@ -8,7 +8,7 @@ from __future__ import annotations
 import sys
 import os
 import atexit
-from typing import List
+from typing import List, Dict, Any
 from statistics import mean
 import math
 import pyformulas as pf
@@ -19,7 +19,9 @@ import asyncio
 import logging
 from typing import Tuple, Optional
 import scipy
+import tomllib
 from log_parser import LogPacketsParser, ChannelData, ParsedLogPacket
+from sys_config import SysConfig, LoadCellChannelConfig
 
 # For using the local version of serial_packet. Comment out if
 # using serial_packets package installed by pip.
@@ -32,8 +34,11 @@ from serial_packets.packets import PacketStatus, PacketsEvent, PacketData
 # https://matplotlib.org/stable/api/pyplot_summary.html
 
 
-ADC_TICKS_ZERO_OFFSET = 36000
-GRAMS_PER_ADC_TICK = 0.008871875
+# ADC_TICKS_ZERO_OFFSET = 36000
+# GRAMS_PER_ADC_TICK = 0.008871875
+
+# Initialized by main.
+sys_config: SysConfig = None
 
 logging.basicConfig(
     level=logging.INFO,
@@ -54,8 +59,8 @@ canvas = None
 screen = None
 
 
-def grams(adc_ticks: int) -> int:
-    return adc_ticks * GRAMS_PER_ADC_TICK
+# def grams(adc_ticks: int) -> int:
+#     return adc_ticks * GRAMS_PER_ADC_TICK
 
 
 async def command_async_callback(endpoint: int, data: PacketData) -> Tuple[int, PacketData]:
@@ -92,11 +97,16 @@ DISPLAY_NUM_POINTS = 501
 display_points_grams = [0 for v in range(0, DISPLAY_NUM_POINTS)]
 
 
-def process_new_points(new_points_ticks: List[int]) -> None:
-    global ADC_TICKS_ZERO_OFFSET, display_points_grams
-    m = mean(new_points_ticks)
+def process_new_load_cell_points(chan_name: str, new_points_ticks: List[int]) -> None:
+    global display_points_grams
+    lc_chan_config = sys_config.get_load_cell_config(chan_name)
+    # print(f"lc chan config: {lc_chan_config}", flush=True)
+    # offset = lc_chan_config['offset']
+    # scale = lc_chan_config['scale']
+    # print(f"offset: {lc_chan_config.offset()}, scale: {lc_chan_config.scale()}", flush=True)
+    # xxx = mean(new_points_ticks)
     # logger.info(f"*** mean adc tick: {m}")
-    new_points_grams = [grams(v - ADC_TICKS_ZERO_OFFSET) for v in new_points_ticks]
+    new_points_grams = [lc_chan_config.adc_reading_to_grams(v) for v in new_points_ticks]
     # logger.info(f"Grams: {new_points_grams[0]}")
     display_points_grams.extend(new_points_grams)
     display_points_grams = display_points_grams[-DISPLAY_NUM_POINTS:]
@@ -203,14 +213,22 @@ def handle_log_message(data: PacketData):
     # if data.read_error() or len(points) != points_expected:
     #     logger.error("Error while processing an incoming adc report message.")
     # else:
-    process_new_points(points)
+    process_new_load_cell_points(load_cell_cata.chan_name(), points)
 
 
 async def async_main():
+    global sys_config
     # Supress slow loop warnings for loops that are less than 0.5sec.
     # See https://stackoverflow.com/a/76521656/15038713
     asyncio.get_event_loop().slow_callback_duration = 0.5
     logger.info("Started.")
+    sys_config = SysConfig()
+    sys_config.load_from_file("sys_config.toml")
+    #   sys_config = tomllib.load(f)
+    # print(f"Sys config:\n{sys_config}", flush=True)
+    # print(f"offset: {sys_config['channel']['LC1']['offset']}", flush=True)
+    # print(f"type(offset): {type(sys_config['channel']['LC1']['offset'])}", flush=True)
+
     assert args.port is not None
     client = SerialPacketsClient(args.port, command_async_callback, message_async_callback,
                                  event_async_callback, baudrate=576000)
