@@ -29,7 +29,7 @@ namespace cdc_serial {
 // A circual buffer of pending bytes.
 // static constexpr uint16_t kBufferSize = 1000;
 // static uint8_t buffer[kBufferSize];
-static CircularBuffer<uint8_t, 1000> circular_buffer;
+static CircularBuffer<uint8_t, 5000> circular_buffer;
 
 // Semaphore to protect access to the buffer.
 // static SemaphoreHandle_t semaphore_handle = nullptr;

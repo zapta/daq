@@ -22,14 +22,8 @@
 #include "time_util.h"
 
 extern DMA_HandleTypeDef hdma_spi1_tx;
-// extern DMA_HandleTypeDef hdma_spi1_rx;
 
 using host_link::HostPorts;
-
-// enum TransferMode {
-//   SINGLE_COMMAND,
-//   CONTINIOUS_READING
-// };
 
 namespace adc {
 
@@ -45,12 +39,14 @@ namespace adc {
 //   a point of the respective thermistor channel. This pattern is optimized
 //   for high load cell rate and low thermistor rate.
 
-constexpr uint32_t kNumThermistorChans = 3;
-constexpr uint32_t kNumPointsPerCycle = 2 * kNumThermistorChans;
 constexpr uint32_t kDmaBytesPerPoint = 13;
-// constexpr uint32_t kDmaBytesPerCycle = kNumPointsPerCycle * kDmaBytesPerPoint;
+constexpr uint32_t kDmaNumThermistorChans = 3;
+constexpr uint32_t kDmaNumPointsPerCycle = 2 * kDmaNumThermistorChans;
+constexpr uint32_t kDmaBytesPerCycle =
+    kDmaNumPointsPerCycle * kDmaBytesPerPoint;
 constexpr uint32_t kDmaCyclesPerHalf = 40;
-constexpr uint32_t kDmaPointsPerHalf = kNumPointsPerCycle * kDmaCyclesPerHalf;
+constexpr uint32_t kDmaPointsPerHalf =
+    kDmaNumPointsPerCycle * kDmaCyclesPerHalf;
 constexpr uint32_t kDmaBytesPerHalf = kDmaPointsPerHalf * kDmaBytesPerPoint;
 
 // The offset of the 3 bytes conversion data within the
@@ -72,9 +68,6 @@ static SerialPacketsData packet_data;
 SerialPacketsEncoder packet_encoder;
 StuffedPacketBuffer stuffed_packet;
 
-// static uint8_t queue_items_static_mem[5] = {};
-// static StaticQueue_t queue_static_mem;
-// static QueueHandle_t queue_handle;
 enum IrqEventId {
   EVENT_HALF_COMPLETE = 1,
   EVENT_FULL_COMPLETE = 2,
@@ -252,33 +245,6 @@ void cmd_start_conversion() {
   spi_send_one_shot(cmd, sizeof(cmd));
 }
 
-// struct AdcRegs {
-//   uint8_t r0;
-//   uint8_t r1;
-//   uint8_t r2;
-//   uint8_t r3;
-// };
-
-// void cmd_read_registers(AdcRegs *regs) {
-//   static const uint8_t cmd[] = {0x23, 0, 0, 0, 0};
-//   // Initializaing with a visible sentinel.
-//   // memset(rx_buffer, 0x99, sizeof(rx_buffer));
-//   send_command(cmd, sizeof(cmd));
-//   regs->r0 = rx_buffer[1];
-//   regs->r1 = rx_buffer[2];
-//   regs->r2 = rx_buffer[3];
-//   regs->r3 = rx_buffer[4];
-// }
-
-// static void cmd_write_registers(const AdcRegs &regs) {
-//   uint8_t cmd[] = {0x43, 0, 0, 0, 0};
-//   cmd[1] = regs.r0;
-//   cmd[2] = regs.r1;
-//   cmd[3] = regs.r2;
-//   cmd[4] = regs.r3;
-//   send_command(cmd, sizeof(cmd));
-// }
-
 // Bfr3 points to three bytes with ADC value.
 int32_t decode_int24(const uint8_t *bfr3) {
   const uint32_t sign_extension = (bfr3[0] & 0x80) ? 0xff000000 : 0x00000000;
@@ -293,18 +259,11 @@ void start_continuos_DMA() {
     Error_Handler();
   }
 
-  // Send a command to start the first conversion.
-  //
-  // TODO: This relys on the register settings in setup() which
-  // are set seperatly from the setting in this function.
-  // This is unclean. Consolidate somehow.
-  // cmd_start_conversion();
-
   // Confirm the assumptions of the code below.
-  static_assert(kNumThermistorChans == 3);
+  static_assert(kDmaNumThermistorChans == 3);
   static_assert(kDmaBytesPerPoint == 13);
   static_assert(kRxDataOffsetInPoint == 2);
-  static_assert(kDmaCyclesPerHalf * kNumPointsPerCycle * kDmaBytesPerPoint ==
+  static_assert(kDmaCyclesPerHalf * kDmaNumPointsPerCycle * kDmaBytesPerPoint ==
                 kDmaBytesPerHalf);
   static_assert(2 * kDmaBytesPerHalf == sizeof(tx_buffer));
   static_assert(sizeof(tx_buffer) == sizeof(rx_buffer));
@@ -313,13 +272,13 @@ void start_continuos_DMA() {
   // for (uint32_t h = 0; h < 2; h++) {
   // Populate the first half of the TX buffer.
   for (uint32_t cycle = 0; cycle < kDmaCyclesPerHalf; cycle++) {
-    for (uint32_t pt = 0; pt < kNumPointsPerCycle; pt++) {
+    for (uint32_t pt = 0; pt < kDmaNumPointsPerCycle; pt++) {
       // Since we set the ADC for convertion that we will
       // read on next SPI transaction, we use the next point.
       // Next point index:
       // 0, 2, 4 -> load cell.
       // 1, 3, 5 -> thermistor 1, 2, 3, respectivly.
-      const uint32_t next_pt = (pt + 1) % kNumPointsPerCycle;
+      const uint32_t next_pt = (pt + 1) % kDmaNumPointsPerCycle;
       const bool next_is_loadcell = ((next_pt & 0x01) == 0);
 
       // Reference selection.
@@ -364,11 +323,6 @@ void start_continuos_DMA() {
       *p++ = 0x00;  // Dummy byte.
     }
     // }
-
-    // const uint32_t expected_offset = (h == 0) ? kDmaBytesPerHalf :
-    // sizeof(tx_buffer); if (p != (tx_buffer + expected_offset)) {
-    //   Error_Handler();
-    // }
   }
 
   // We expect to be here exactly past the first half.
@@ -378,23 +332,6 @@ void start_continuos_DMA() {
 
   // Copy the first half to second half.
   memcpy(&tx_buffer[kDmaBytesPerHalf], tx_buffer, kDmaBytesPerHalf);
-
-  // tx_buffer[i + 0] = 0x12;  // Command: read data.
-  // tx_buffer[i + 1] = 0x00;  // Dummy.
-  // tx_buffer[i + 2] = 0x00;  // Read data byte 1 (MSB)
-  // tx_buffer[i + 3] = 0x00;  // Read data byte 2
-  // tx_buffer[i + 4] = 0x00;  // Read data byte 3 (LSB)
-  // tx_buffer[i + 5] = 0x08;  // Command: start conversion.
-  // tx_buffer[i + 6] = 0x00;  // Dummy.
-
-  // const uint32_t j = i % 3;
-  // // Every third byte is start comment, for next reading.
-  // tx_buffer[i] = (j == 0) ? 0x08 : 00;
-  // }
-
-  // if (i != sizeof(tx_buffer)) {
-  //   Error_Handler();
-  // }
 
   // Issue the last command in the TX buffer to start
   // the first conversion.
@@ -466,7 +403,6 @@ static void setup() {
   cmd_write_register(0x10, 0x07);  // PGA = x128
   cmd_write_register(0x11, 0x34);  // Ain1 = positive, Ain0 = Negative.
 
-  
   start_continuos_DMA();
 }
 
@@ -492,60 +428,60 @@ void dump_state() {
               _event_full_count, _irq_error_count);
 }
 
-
-// Returns time in millis between the time of the first point in the half
-// to the point of given index. Always rounded down (floor).
-inline uint32_t point_time_millis_in_half(uint32_t point_index) {
-  return (1000 * kDmaPointsPerSec) / kDmaPointsPerSec;
-
-}
 void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
   // const bool reports_enabled = controller::is_adc_report_enabled();
   packet_data.clear();
-  packet_data.write_uint8(1);  // version
+  packet_data.write_uint8(1);  // packet version
   // NOTE: In case of a millis wrap around, it's ok if this wraps back. All
   // timestamps are mod 2^32.
   const uint32_t packet_base_millis =
-      isr_millis - point_time_millis_in_half(kDmaPointsPerHalf - 1);
+      isr_millis - ((1000 * (kDmaPointsPerHalf - 1)) / kDmaPointsPerSec);
   packet_data.write_uint32(packet_base_millis);
   // Write the load cell channel data.
   {
-    packet_data.write_uint8(0x11);  // Group id:  Load cell chan 1.
-    packet_data.write_uint8(0);  // First value time offset in packet.
+    // Chan id. Load cell 1.
+    packet_data.write_uint8(0x11);
+    // Offset of first value relative to packet start time.
+    packet_data.write_uint16(0);
+    // Num of load cell points in this packet.
+    static_assert(kDmaPointsPerHalf % 2 == 0);
+    packet_data.write_uint16(kDmaPointsPerHalf / 2);
+    // Millis between values. We don't allow truncation.
+    static_assert(kDmaPointsPerHalf / 2 > 1);
     static_assert(kDmaPointsPerSec % 2 == 0);
-    // Millis between values. Every second point in the half is 
-    // a load cell point. Must divide evenly.
-    static_assert((2000/kDmaPointsPerSec)*kDmaPointsPerSec == 2000);
-    packet_data.write_uint8((2*1000)/kDmaPointsPerSec);    
-    // Num of load cell points in this packet. 
-    static_assert(kDmaPointsPerHalf % 2 == 0); 
-    packet_data.write_uint8(kDmaPointsPerHalf/2);  
-    // Write kPointsPerGroup 24 bit values.
-    // NOTE: The ADC returns value in big endian format which is
-    // the same as our packet_data.write_x() format so we just
-    // copy directly the three bytes per value.
+    static_assert((2 * 1000) % kDmaPointsPerSec == 0);
+    packet_data.write_uint16((2 * 1000) / kDmaPointsPerSec);
+    // Write the values. They are already in big endian order.
     for (uint32_t i = 0; i < kDmaPointsPerHalf; i += 2) {
-      // ADC data is already in big endian order.
-      packet_data.write_bytes(&bfr[(i * kDmaBytesPerPoint) + kRxDataOffsetInPoint], 3);
+      packet_data.write_bytes(
+          &bfr[(i * kDmaBytesPerPoint) + kRxDataOffsetInPoint], 3);
     }
   }
-  // Write the data of the thermistor channels respectivly.
-  // For each channel we pick the first value.
 
-  // TODO: Consider to average all the values and use packet half time
-  // the data time.
-  for (int i = 0; i < kNumThermistorChans; i++) {
-    packet_data.write_uint8(0x21 + i);  // Group id:  Thermistor [1, 3]
-    // Since thermistors are slow, we ignore a few millis delay
-    // from packet start.
-    packet_data.write_uint8(
-        0);  // First value time offset from start of packet.
-    packet_data.write_uint8((1000 * kNumThermistorChans * 2) / kDmaPointsPerSec);
-    packet_data.write_uint8(1);  // Num of points to follow
-    const uint32_t pt_index = 1 + 2*i;
-    const uint8_t *pt_start = &bfr[pt_index * kDmaBytesPerPoint];
-    // ADC data is already in big endian order.
-    packet_data.write_bytes(&pt_start[kRxDataOffsetInPoint], 3);
+  // Output each of the thermistor channels. Each channel has a single point
+  // in each cycle of points.
+  for (uint32_t i = 0; i < kDmaNumThermistorChans; i++) {
+    // Thermistor channel id.
+    packet_data.write_uint8(0x21 + i);
+    // First item offset in ms from packet base time. Truncation of
+    // a fraction of a ms is ok.
+    const uint32_t first_point_index = 1 + 2 * i;
+    packet_data.write_uint16((1000 * first_point_index) / kDmaPointsPerSec);
+    // Number of points in this channel report. Each thermistor channel
+    // has a single point in each cycle.
+    packet_data.write_uint16(kDmaCyclesPerHalf);
+    // Millis between values. We don't allow truncation.
+    static_assert(kDmaCyclesPerHalf > 1);
+    static_assert((1000 * kDmaNumPointsPerCycle) % kDmaPointsPerSec == 0);
+    packet_data.write_uint16((1000 * kDmaNumPointsPerCycle) / kDmaPointsPerSec);
+    // Write the values. They are already in big endian order.
+    const uint32_t data_offset_in_cycle =
+        (first_point_index * kDmaBytesPerPoint) + kRxDataOffsetInPoint;
+    for (uint32_t cycle = 0; cycle < kDmaCyclesPerHalf; cycle++) {
+      const uint32_t data_offset_in_bfr =
+          (cycle * kDmaBytesPerCycle) + data_offset_in_cycle;
+      packet_data.write_bytes(&bfr[data_offset_in_bfr], 3);
+    }
   }
 
   // Verify writing was OK.

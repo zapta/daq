@@ -12,16 +12,18 @@ import time
 import sys
 import os
 import glob
-from log_parser import  LogPacketsParser, ParsedLogPacket
+from log_parser import LogPacketsParser, ParsedLogPacket, ChannelData
 from sys_config import SysConfig, LoadCellChannelConfig
 
 # For using the local version of serial_packet. Comment out if
 # using serial_packets package installed by pip.
 # sys.path.insert(0, "../../../../serial_packets_py/repo/src")
 
+# print(f"sys.path: {sys.path}", flush=True)
+
 from serial_packets.client import SerialPacketsClient
 from serial_packets.packets import PacketStatus, PacketsEvent, PacketData
-from serial_packets.packet_decoder import PacketDecoder,  DecodedLogPacket
+from serial_packets.packet_decoder import PacketDecoder, DecodedLogPacket
 
 # ADC_TICKS_ZERO_OFFSET = 37127
 # GRAMS_PER_ADC_TICK = 0.008871875
@@ -47,7 +49,6 @@ parser.add_argument("--output_dir",
 
 args = parser.parse_args()
 
-
 # def grams(adc_ticks: int) -> float:
 #     """Converts ADC ticks to grams"""
 #     return (adc_ticks - ADC_TICKS_ZERO_OFFSET) * GRAMS_PER_ADC_TICK
@@ -71,60 +72,61 @@ log_packets_parser = LogPacketsParser()
 
 output_files_dict = {}
 
+
 def get_output_file(chan_name: str, header: str, raw=False):
-   """Header is used only first call per file"""
-   if (chan_name, raw) in output_files_dict:
-     return output_files_dict[(chan_name, raw)]
-   raw_suffix = "_raw" if raw else ""
-   path = os.path.join(args.output_dir, f"_channel_{chan_name.lower()}{raw_suffix}.csv")
-   logger.info(f"Creating output file: {path}")
-   f = open(path , "w")
-   f.write(header + "\n")
-   output_files_dict[(chan_name, raw)] = f
-   return f
-     
+    """Header is used only first call per file"""
+    if (chan_name, raw) in output_files_dict:
+        return output_files_dict[(chan_name, raw)]
+    raw_suffix = "_raw" if raw else ""
+    path = os.path.join(args.output_dir, f"_channel_{chan_name.lower()}{raw_suffix}.csv")
+    logger.info(f"Creating output file: {path}")
+    f = open(path, "w")
+    f.write(header + "\n")
+    output_files_dict[(chan_name, raw)] = f
+    return f
+
 
 def process_packet(packet: DecodedLogPacket):
     global log_packets_parser, session_start_time_millis, point_count, chan_data_count
     assert isinstance(packet, DecodedLogPacket), f"Unexpected packet type: {type(packet)}"
     parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(packet.data)
     if session_start_time_millis is None:
-      session_start_time_millis = parsed_log_packet.time_interval_millis()[0]
-    for chan_data in parsed_log_packet.channels().values():
-      chan_data_count += 1
-      # For now we have only one kind of group.
-      # assert isinstance(group, LoadCellGroup)
-      # chan_index = group.chan()
-      chan_name = chan_data.chan_name()
-      # logger.info(f"chan_name = {chan_name}")
-      if chan_name.startswith("LC"):
-        f = get_output_file(f"{chan_name}", f"T[s],{chan_name}[g]")
-        f_raw = get_output_file(f"{chan_name}", f"T[ms],{chan_name}[tick]", raw=True )
-        load_cell_chan_config = sys_config.get_load_cell_config(chan_name)
-        for time, value in chan_data:
-          millis_in_session = time - session_start_time_millis     
-          g = load_cell_chan_config.adc_reading_to_grams(value)
-          point_count += 1
-          f.write(f"{millis_in_session/1000:.3f},{g:.3f}\n")
-          f_raw.write(f"{millis_in_session},{value}\n")
-      elif chan_name.startswith("THRM"):
-        f = get_output_file(f"{chan_name}", f"T[s],{chan_name}[C]")
-        f_raw = get_output_file(f"{chan_name}", f"T[s],{chan_name}[C]", raw=True)
-        for time, value in chan_data:
-          millis_in_session = time - session_start_time_millis     
-          c = value  # TODO: Convert to C
-          point_count += 1
-          f.write(f"{millis_in_session/1000:.3f},{c:.3f}\n")
-          f_raw.write(f"{millis_in_session},{value}\n")
-      else:
-        raise RuntimeError(f"Unknown channel: {chan_name}")
-        
-
+        session_start_time_millis = parsed_log_packet.start_time_millis()
+    for chan_data in parsed_log_packet.channels():
+        chan_data_count += 1
+        # For now we have only one kind of group.
+        # assert isinstance(group, LoadCellGroup)
+        # chan_index = group.chan()
+        chan_name = chan_data.chan_name()
+        # logger.info(f"chan_name = {chan_name}")
+        if chan_name.startswith("LC"):
+            f = get_output_file(f"{chan_name}", f"T[s],{chan_name}[g]")
+            f_raw = get_output_file(f"{chan_name}", f"T[ms],{chan_name}[tick]", raw=True)
+            load_cell_chan_config = sys_config.get_load_cell_config(chan_name)
+            for time, value in chan_data.timed_values():
+                millis_in_session = time - session_start_time_millis
+                g = load_cell_chan_config.adc_reading_to_grams(value)
+                point_count += 1
+                f.write(f"{millis_in_session/1000:.3f},{g:.3f}\n")
+                f_raw.write(f"{millis_in_session},{value}\n")
+        elif chan_name.startswith("THRM"):
+            f = get_output_file(f"{chan_name}", f"T[s],{chan_name}[C]")
+            f_raw = get_output_file(f"{chan_name}", f"T[s],{chan_name}[C]", raw=True)
+            for time, value in chan_data.timed_values():
+                millis_in_session = time - session_start_time_millis
+                c = value  # TODO: Convert to C
+                point_count += 1
+                f.write(f"{millis_in_session/1000:.3f},{c:.3f}\n")
+                f_raw.write(f"{millis_in_session},{value}\n")
+        else:
+            raise RuntimeError(f"Unknown channel: {chan_name}")
 
 
 def report_status():
     global byte_count, packet_count, chan_data_count, point_count
-    logger.info(f"Bytes: {byte_count:,}, packets: {packet_count:,}, chan_datas: {chan_data_count}, values: {point_count:,}")
+    logger.info(
+        f"Bytes: {byte_count:,}, packets: {packet_count:,}, chan_datas: {chan_data_count}, values: {point_count:,}"
+    )
 
 
 def main():
@@ -159,8 +161,8 @@ def main():
     in_f.close()
     report_status()
     for chan_id, file in output_files_dict.items():
-      logger.info(f"Closing output file: {file.name}")
-      file.close()
+        logger.info(f"Closing output file: {file.name}")
+        file.close()
     logger.info(f"All done.")
 
 

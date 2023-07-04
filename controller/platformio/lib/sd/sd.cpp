@@ -11,12 +11,35 @@
 
 namespace sd {
 
+
+
 // All vars are protected by the mutex.
-static uint8_t rtext[_MAX_SS];
+// static uint8_t rtext[_MAX_SS*8];
+
 static int init_level = 0;
 static uint8_t buffer[serial_packets_consts::MAX_STUFFED_PACKET_LEN];
 
+static uint32_t records_written = 0;
+
+static constexpr uint32_t kMaxRecordsToWrite = 100;
+
 StaticMutex mutex;
+
+// Grab mutex before calling this
+// TODO: Change mutexs to be recursive.
+static void internal_close_log_file() {
+  // MutexScope scope(mutex);
+
+  if (init_level == 2) {
+    f_close(&SDFile);
+    init_level--;
+  }
+
+  if (init_level == 1) {
+    f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
+    init_level--;
+  }
+}
 
 bool open_log_file(const char* name) {
   MutexScope scope(mutex);
@@ -33,19 +56,19 @@ bool open_log_file(const char* name) {
   }
   init_level = 1;
 
-  status = f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext));
-  if (status != FRESULT::FR_OK) {
-    logger.error("SD f_mkfs failed, status=%d", status);
-    return false;
-  }
-  init_level = 2;
+  // status = f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext));
+  // if (status != FRESULT::FR_OK) {
+  //   logger.error("SD f_mkfs failed, status=%d", status);
+  //   return false;
+  // }
+  // init_level = 2;
 
   status = f_open(&SDFile, name, FA_CREATE_ALWAYS | FA_WRITE);
   if (status != FRESULT::FR_OK) {
     logger.error("SD f_open failed, status=%d", status);
     return false;
   }
-  init_level = 3;
+  init_level = 2;
 
   return true;
 }
@@ -53,29 +76,37 @@ bool open_log_file(const char* name) {
 void close_log_file() {
   MutexScope scope(mutex);
 
-  if (init_level == 3) {
-    f_close(&SDFile);
-    init_level = 2;
-  }
+  internal_close_log_file();
 
-  if (init_level > 0) {
-    f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
-    init_level = 0;
-  }
+  // if (init_level == 3) {
+  //   f_close(&SDFile);
+  //   init_level = 2;
+  // }
+
+  // if (init_level > 0) {
+  //   f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
+  //   init_level = 0;
+  // }
 }
 
 bool append_to_log_file(const StuffedPacketBuffer& packet) {
   MutexScope scope(mutex);
 
+  if (records_written >= kMaxRecordsToWrite) {
+    logger.info("Aleady writtne %lu records", kMaxRecordsToWrite);
+    return false;
+  }
+
   // Check state.
-  if (init_level != 3) {
+  if (init_level != 2) {
     logger.error("Can't write log file, status=%d", init_level);
     return false;
   }
 
   // Determine packet size.
   const uint16_t n = packet.size();
-  if (!n) {
+  if (n == 0) {
+    logger.warning("Requested to write 0 bytes to SD.");
     return true;
   }
   if (n > sizeof(buffer)) {
@@ -99,7 +130,7 @@ bool append_to_log_file(const StuffedPacketBuffer& packet) {
     return false;
   }
   if (bytes_written != n) {
-    logger.error("Requested to write to SD %hu bytes, %u written", n,
+    logger.error("Requested to write to SD %hu bytes, %hu written", n,
                  bytes_written);
     return false;
   }
@@ -109,13 +140,28 @@ bool append_to_log_file(const StuffedPacketBuffer& packet) {
     return false;
   }
 
+  records_written++;
+  logger.info("Wrote SD record %lu, size=%hu", records_written, n);
+  
+  // printf("\n");
+  // for (uint32_t i = 0; i < n; i++) {
+  //   printf("%02hx ", buffer[i]);
+  // }
+  // printf("\n\n");
+
+  if (records_written == kMaxRecordsToWrite) {
+    logger.info("Closing SD log file");
+    internal_close_log_file();
+  }
+
+
   // All done ok.
   return true;
 }
 
 bool is_log_file_open_ok() {
   MutexScope scope(mutex);
-  return init_level == 3;
+  return init_level == 2;
 }
 
 //-----

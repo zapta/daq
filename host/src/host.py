@@ -94,11 +94,13 @@ def init_graph():
 
 DISPLAY_NUM_POINTS = 501
 
-display_points_grams = [0 for v in range(0, DISPLAY_NUM_POINTS)]
+display_points_grams = []
+display_times_millis = []
 
 
-def process_new_load_cell_points(chan_name: str, new_points_ticks: List[int]) -> None:
-    global display_points_grams
+def process_new_loadcell_points(chan_name: str, times_millis: List[int], adc_values: List[int]) -> None:
+    global display_points_grams, display_times_millis
+    assert len(times_millis) == len(adc_values)
     lc_chan_config = sys_config.get_load_cell_config(chan_name)
     # print(f"lc chan config: {lc_chan_config}", flush=True)
     # offset = lc_chan_config['offset']
@@ -106,92 +108,112 @@ def process_new_load_cell_points(chan_name: str, new_points_ticks: List[int]) ->
     # print(f"offset: {lc_chan_config.offset()}, scale: {lc_chan_config.scale()}", flush=True)
     # xxx = mean(new_points_ticks)
     # logger.info(f"*** mean adc tick: {m}")
-    new_points_grams = [lc_chan_config.adc_reading_to_grams(v) for v in new_points_ticks]
+    values_g = [lc_chan_config.adc_reading_to_grams(v) for v in adc_values]
+    
+    display_times_millis.extend(times_millis)
+    display_times_millis = display_times_millis[-DISPLAY_NUM_POINTS:]
+    # t0 = display_times_millis[0]
+    # display_times_millis = [v - t0 for v in display_times_millis]
+    
     # logger.info(f"Grams: {new_points_grams[0]}")
-    display_points_grams.extend(new_points_grams)
+    display_points_grams.extend(values_g)
     display_points_grams = display_points_grams[-DISPLAY_NUM_POINTS:]
-    update_graph(display_points_grams)
-
+    
+    # If we accomulated enough points then display the data.
+    if len(display_points_grams) >= DISPLAY_NUM_POINTS:
+      update_display( display_times_millis, display_points_grams)
 
 fft_last_yf = None
 slot = 0
 
 
-def update_graph(gram_points: List[int]):
+def update_display(times_millis: List[int], values_grams: List[int]):
     global slot, fft_last_yf
     # Increment slot number
     slot += 1
     if slot > 10:
         slot = 1
-
+        
     plt.subplots_adjust(left=0.1, bottom=0.1, right=0.95, top=0.95, wspace=0.4, hspace=0.4)
 
-    # Force graph.
+    # print(f"*** {times_millis[0]}, {times_millis[100]}", flush=True)
+    # Update force graph.
     ax = plt.subplot(311)
     ax.clear()
-    y = gram_points
-    x = [v * 2 for v in range(0, len(gram_points))]
+    # x = times_millis / 1000
+    t0 = times_millis[0]
+    x = [(v -t0)/ 1000 for v in times_millis]
+    y = values_grams
+    # x = [v * 2 for v in range(0, len(gram_points))]
     plt.xlabel('Time [ms]')
     plt.ylabel('Force [g]')
     plt.xlim(min(x), max(x))
     plt.ylim(-100, 3000)
     plt.plot(x, y, color='blue')
 
-    # Noise graph
-    if slot in [3, 6, 9]:
-        m = mean(gram_points)
-        normalized = [v - m for v in gram_points]
-        ax = plt.subplot(312)
-        ax.clear()
-        y = normalized
-        sum_squars = 0
-        for v in normalized:
-            sum_squars += v * v
-        rms = math.sqrt(sum_squars / len(normalized))
-        plt.text(10, -9, f"RMS: {rms:.2f},  p2p: {max(normalized) - min(normalized):.2f} ")
-        x = [v * 2 for v in range(0, len(gram_points))]
-        plt.xlabel('Time [ms]')
-        plt.ylabel('AC Force [g]')
-        plt.xlim(min(x), max(x))
-        plt.ylim(-10, 10)
-        plt.plot(x, y, color='red')
+    # Update noise graph
+    # if slot in [3, 6, 9]:
+    #     m = mean(values_grams)
+    #     normalized = [v - m for v in values_grams]
+    #     ax = plt.subplot(312)
+    #     ax.clear()
+    #     y = normalized
+    #     sum_squars = 0
+    #     for v in normalized:
+    #         sum_squars += v * v
+    #     rms = math.sqrt(sum_squars / len(normalized))
+    #     plt.text(10, -9, f"RMS: {rms:.2f},  p2p: {max(normalized) - min(normalized):.2f} ")
+    #     # x = [v * 2 for v in range(0, len(gram_points))]
+    #     # x = times_millis / 1000
+    #     plt.xlabel('Time [ms]')
+    #     plt.ylabel('AC Force [g]')
+    #     plt.xlim(min(x), max(x))
+    #     plt.ylim(-10, 10)
+    #     plt.plot(x, y, color='red')
 
-    # Noise FFT graph
-    if fft_last_yf is None or slot == 1:
-        m = mean(gram_points)
-        normalized = [v - m for v in gram_points]
-        ax = plt.subplot(313)
-        ax.clear()
-        # logger.info("*** Computing fft")
-        # Number of samplepoints
-        N = len(normalized)
-        # sample interval
-        T = 1.0 / 500.0
-        # Signal in.
-        x = np.linspace(0.0, N * T, N)
-        y = np.asarray(normalized)
-        # FFT values
-        fft_last_yf = scipy.fftpack.fft(y)
+    # # Noise FFT graph
+    # if fft_last_yf is None or slot == 1:
+    #     m = mean(values_grams)
+    #     normalized = [v - m for v in values_grams]
+    #     ax = plt.subplot(313)
+    #     ax.clear()
+    #     # logger.info("*** Computing fft")
+    #     # Number of samplepoints
+    #     N = len(normalized)
+    #     # sample interval secs
+    #     T = 1.0 / 500.0
+    #     T = ((times_millis[-1] - times_millis[0]) / (len(times_millis) - 1)) / 1000
+    #     # Signal in.
+    #     x = np.linspace(0.0, N * T, N)
+    #     y = np.asarray(normalized)
+    #     # FFT values
+    #     fft_last_yf = scipy.fftpack.fft(y)
 
-        yf = fft_last_yf
-        xf = np.linspace(0.0, 1.0 / (2.0 * T), N // 2)
-        plt.xlabel('Frequency [Hz]')
-        plt.ylabel('Rel level')
-        plt.ylim(0, 2)
-        plt.plot(xf, 2.0 / N * np.abs(yf[:N // 2]))
+    #     yf = fft_last_yf
+    #     xf = np.linspace(0.0, 1.0 / (2.0 * T), N // 2)
+    #     plt.xlabel('Frequency [Hz]')
+    #     plt.ylabel('Rel level')
+    #     plt.ylim(0, 2)
+    #     plt.plot(xf, 2.0 / N * np.abs(yf[:N // 2]))
 
     fig.canvas.draw()
     image = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
     image = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
     screen.update(image)
 
+last_packet_base_time_millis = None
 
 def handle_log_message(data: PacketData):
+    global last_packet_base_time_millis
     parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(data)
     # We are expecting a single LC channel + three thermistor 
+    if last_packet_base_time_millis is not None:
+      logger.info(f"Packet time diff: {parsed_log_packet.base_time_millis() - last_packet_base_time_millis}")
+    
+    last_packet_base_time_millis = parsed_log_packet.base_time_millis()
     # channels.
-    assert parsed_log_packet.size() == 4
-    load_cell_cata = parsed_log_packet.channel("LC1")
+    assert parsed_log_packet.num_channels() == 4
+    load_cell_cata: ChannelData = parsed_log_packet.channel("LC1")
     # assert isinstance(load_cell_group, LoadCellGroup)
     # Get message metadata
     # data.reset_read_location()
@@ -200,20 +222,26 @@ def handle_log_message(data: PacketData):
     # isr_millis = data.read_uint32()
     # points_expected = data.read_uint16()
     # Write data to file.
-    points = []
+    times_millis = []
+    adc_values = []
     #output_file.write(f"--- Packet {points_expected}, {isr_millis}\n")
-    for _, val in load_cell_cata:
+    # i = 0
+    for time_millis, value in load_cell_cata.timed_values():
+        # i += 1
+        # if i <= 10:
+        #   print(f"** {i}: {time_millis, value}")
         # val = data.read_int24()
         # if data.read_error():
         #     break
         # #output_file.write(f"{val}\n")
-        points.append(val)
+        times_millis.append(time_millis)
+        adc_values.append(value)
     # logger.info(f"points: {points[0]}, {points[1]}")
     # Report errors.
     # if data.read_error() or len(points) != points_expected:
     #     logger.error("Error while processing an incoming adc report message.")
     # else:
-    process_new_load_cell_points(load_cell_cata.chan_name(), points)
+    process_new_loadcell_points(load_cell_cata.chan_name(), times_millis, adc_values)
 
 
 async def async_main():

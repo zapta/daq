@@ -1,99 +1,188 @@
 from typing import Optional, List, Tuple, Literal, Any, Dict
 import sys
+from collections import OrderedDict
+
 
 # For using the local version of serial_packet. Comment out if
 # using serial_packets package installed by pip.
+
 # sys.path.insert(0, "../../../../serial_packets_py/repo/src")
 
 from serial_packets.packets import PacketData
 
-# from pandas import Interval
-
-# class BaseGroup:
-
-#     def time_interval_millis(self) -> tuple[int, int]:
-#         raise NotImplementedError(
-#             f"Subclass {type(self).__name__}  should implement time_interval_millis().")
 
 
+
+# class ValueSequence:
+
+#     def __init__(self, start_time: int, step_time_millis: Optional[int], values: List[Any]):
+#         # print(f"*** len(values) = {len(values)}", flush=True)
+#         assert len(values) >= 1
+#         assert (step_time_millis is None) == (len(values) <= 1)
+#         self.__start_time_millis: int = start_time
+#         self.__step_time_millis: Optional[int] = step_time_millis
+#         self.__values: List[int] = values
+
+#     def __str__(self) -> str:
+#         return f"{self.size()} values, {self.time_range_millis()}/{self.__step_time_millis}, {self.size()} points"
+
+#     def chan_name(self) -> str:
+#         return self.__chan_name
+
+#     def size(self) -> int:
+#         return len(self.__values)
+
+#     def start_time_millis(self)-> int:
+#         return self.__start_time_millis
+      
+#     def end_time_millis(self) -> int: 
+#       if self.size() < 2:
+#         return self.__start_time_millis
+#       else:
+#         return self.__start_time_millis + (self.size() * self.__step_time_millis)
+
+#     def __iter__(self):
+#         return ValueSequence.__Iter(self.__start_time_millis, self.__step_time_millis, self.__values)
+
+#     class __Iter:
+#         """Iterator class (time, value) of ValueSequence"""
+#         def __init__(self, start_time_millis, step_time_millis, values):
+#             self.__start_time_millis = start_time_millis
+#             self.__step_time_millis = step_time_millis
+#             self.__values = values
+#             self.__size = len(values)
+#             self.__next_index: int = 0
+
+#         def __next__(self) -> Tuple[int, Any]:
+#             if self.__next_index >= self.__size:
+#                 raise StopIteration
+#             value = self.__values[self.__next_index]
+#             if self.__next_index == 0:
+#               # Special case since __step_time_millis may be None in case this
+#               # is the only value.
+#               time_millis = self.__start_time_millis
+#             else:
+#               time_millis = self.__start_time_millis + (self.__next_index * self.__step_time_millis)
+#             self.__next_index += 1
+#             return (time_millis, value)
 
 class ChannelData:
 
-    def __init__(self, chan_name: str, start_time: int, __step_time_millis: int, values: List[Any]):
-        """Constructor."""
+    def __init__(self, chan_name: str):
         self.__chan_name = chan_name
-        self.__start_time_millis: int = start_time
-        self.__step_time_millis: int = __step_time_millis
-        self.__values: List[int] = values
+        # List of (time_millis, value)
+        self.__timed_values: List[Tuple[int, Any]] = []
 
-    def __str__(self):
-        return f"Chan {self.__chan_name}: {self.time_interval_millis()}/{self.__step_time_millis}, {self.size()} points"
+    def __str__(self)-> str:
+        return f"Chan {self.__chan_name}: {self.size()} values"
+      
+    def chan_name(self) -> str:
+      return self.__chan_name
+      
+    def timed_values(self)->Tuple[int, Any]:
+      return self.__timed_values
+    # def num_sequences(self) -> int:
+    #   return len(self.__sequences)
+    
+    def size(self) -> int:
+      return len(self.__timed_values)
+    
+    def is_empty(self) -> int:
+      return len(self.__timed_values) < 1
+  
+    def start_time_millis(self) -> Optional[int]:
+      if self.is_empty():
+        return None
+      return self.__timed_values[0][0]
+    
+    def end_time_millis(self) -> Optional[int]:
+      if self.is_empty():
+        return None
+      return self.__timed_values[-1][0]
+      
+    def append_timed_values(self, time_values: Tuple[int, any])-> None:
+      assert len(time_values) > 0
+      if not self.is_empty():
+        # print(f"*** {type(time_values)}, {time_values}", flush=True)
+        # print(f"*** {type(time_values[1])}, {time_values[-1]}", flush=True)
+        # print(f"*** {type(time_values[1][0])}, {time_values[-1][0]}", flush=True)
+        assert time_values[-1][0] >= self.end_time_millis()
+      self.__timed_values.extend(time_values)
+      
+    # def __iter__(self):
+    #     return ChannelData.__Iter(self.__sequences)
 
-    def chan_name(self):
-        return self.__chan_name
+    # class __Iter:
+    #     """Iterator class (time, value) of ChannelData"""
+    #     def __init__(self, sequences):
+    #         self.__sequence_iterator = iter(sequences)
+    #         self.__value_iterator = None
 
-    def size(self):
-        return len(self.__values)
-
-    def time_interval_millis(self) -> Optional[tuple[int, int]]:
-        if not self.__values:
-            return None
-        return (self.__start_time_millis,
-                self.__start_time_millis + (self.size() * self.__step_time_millis))
-
-    def __iter__(self):
-        return ChannelData.__Iter(self.__start_time_millis, self.__step_time_millis, self.__values)
-
-    class __Iter:
-        """Iterator class for load cell group (time_millis:int, value:int)"""
-
-        def __init__(self, start_time_millis, step_time_millis, values):
-            self.__start_time_millis = start_time_millis
-            self.__step_time_millis = step_time_millis
-            self.__values = values
-            self.__size = len(values)
-            self.__next_index: int = 0
-
-        def __next__(self) -> Tuple[int, Any]:
-            if self.__next_index >= self.__size:
-                raise StopIteration
-            value = self.__values[self.__next_index]
-            time_millis = self.__start_time_millis + (self.__next_index * self.__step_time_millis)
-            self.__next_index += 1
-            return (time_millis, value)
-
+    #     def __next__(self) -> Tuple[int, Any]:
+    #       while True:
+    #         if self.__value_iterator is None:
+    #           # Advance to next sequence
+    #           next_sequence = next(self.__sequence_iterator, None)
+    #           if not next_sequence:
+    #             raise StopIteration
+    #           self.__value_iterator = iter(next_sequence)
+    #         next_value = next(self.__value_iterator, None)
+    #         if next_value:
+    #           return next_value
+    #         self.__value_iterator = None
 
 class ParsedLogPacket:
 
-    def __init__(self, channels: Dict[str, ChannelData]):
+    def __init__(self, packet_base_time_millis):
         """Constructor."""
-        self.__channels = channels
+        self.__packet_base_time_millis: int = packet_base_time_millis
+        self.__channels: Dict[str, ChannelData] = OrderedDict()
 
+    def base_time_millis(self)-> int:
+      return self.__packet_base_time_millis
+    
+    # def channels(self) -> Dict[str, ChannelData]:
+    #     return self.__channels
     def channels(self) -> Dict[str, ChannelData]:
-        return self.__channels
-      
+      return self.__channels.values()
+    
     def channel(self, chan_name: str) -> Optional[ChannelData]:
         return self.__channels.get(chan_name, None)
 
-    def size(self):
+    def num_channels(self):
         return len(self.__channels)
+      
+    def start_time_millis(self) -> Optional[int]:
+      result = None
+      for chan in self.__channels.values():
+        chan_start = chan.start_time_millis()
+        if (result is None) or result > chan_start:
+          result = chan_start
+      return result
 
     def is_empty(self):
         return not self.__channels
+      
+    def append_timed_values(self, chan_name: str, timed_values: List[Tuple[int, Any]]) -> None:
+      # print(f"@@@ {type(timed_values)},  {chan_name}",flush=True)
+      if not chan_name in self.__channels:
+        self.__channels[chan_name] = ChannelData(chan_name)
+      self.__channels[chan_name].append_timed_values(timed_values)
+      # print(f"Appending: {chan_name}, {timed_values[0]}, {timed_values[1]}, {timed_values[2]}...", flush=True)
 
-    def time_interval_millis(self) -> Optional[Tuple[int, int]]:
-        """Time interval in millis of all data points from all channels."""
-        if self.is_empty():
-            return None
-        start = None
-        end = None
-        for channelData in self.__channels.values():
-            next_start, next_end = channelData.time_interval_millis()
-            if (start is None) or next_start < start:
-                start = next_start
-            if (end is None) or next_end > end:
-                end = next_end
-        return (start, end)
+    # def time_span_millis(self) -> Optional[Tuple[int, int]]:
+    #     """Time interval in millis of all data points from all channels."""
+    #     if self.is_empty():
+    #         return None
+    #     start = None
+    #     end = None
+    #     for channelData in self.__channels.values():
+    #         next_start, next_end = channelData.time_range_millis()
+    #         if (start is None) or next_start < start:
+    #             start = next_start
+    #         if (end is None) or next_end > end:
+    #             end = next_end
+    #     return (start, end)
 
 
 class LogPacketsParser:
@@ -102,19 +191,26 @@ class LogPacketsParser:
         """Constructor."""
         pass
 
-    def _parse_int24_channel(self, chan_name: str, packet_start_time_millis: int,
-                             data: PacketData) -> ChannelData:
-        rel_start_time = data.read_uint8()
-        step_interval = data.read_uint8()
-        num_values = data.read_uint8()
+    def _parse_int24_sequence(self, packet_start_time_millis: int,
+                             data: PacketData) -> Tuple[int, Any]:
+        """Returns a list of time values (time_millis, value)"""
+        first_value_rel_time = data.read_uint16()
+        # print(f"*** Rel start time: {first_value_rel_time}", flush=True)
+        num_values = data.read_uint16()
+        # print(f"*** Num values: {num_values}", flush=True)
+        step_interval_millis = data.read_uint16()
+        # print(f"*** Step interval: {step_interval_millis}", flush=True)
+
         assert not data.read_error()
-        values = []
+        timed_values = []
+        t_millis = packet_start_time_millis + first_value_rel_time
         for i in range(num_values):
-            values.append(data.read_int24())
+            timed_values.append((t_millis, data.read_int24()))
+            t_millis += step_interval_millis
         assert not data.read_error()
-        result = ChannelData(chan_name, packet_start_time_millis + rel_start_time, step_interval,
-                             values)
-        return result
+        return timed_values
+      
+    
 
     # def _parse_thermistor_group(self, packet_start_time_millis: int, therm_chan: int,
     #                             data: PacketData) -> LoadCellGroup:
@@ -135,24 +231,23 @@ class LogPacketsParser:
         version = data.read_uint8()
         assert version == 1, f"Unexpected log packet version: {version}"
         packet_start_sys_time_millis = data.read_uint32()
-        channels_data = {}
+        # print(f"### {packet_start_sys_time_millis:07d}", flush=True)
+        result: ParsedLogPacket = ParsedLogPacket(packet_start_sys_time_millis)
         while not data.read_error() and not data.all_read():
             chan_id = data.read_uint8()
             assert not data.read_error()
             if chan_id >= 0x11 and chan_id <= 0x14:
                 chan_name = f"LC{chan_id - 0x11 + 1}"
-                channel_data = self._parse_int24_channel(chan_name, packet_start_sys_time_millis, data)
-                assert(not chan_name in channels_data)
-                channels_data[chan_name] = channel_data
+                timed_values = self._parse_int24_sequence(packet_start_sys_time_millis, data)
+                # print(f"+++1 {chan_name}, {type(timed_values)}")
+                result.append_timed_values(chan_name, timed_values)
             elif chan_id >= 0x21 and chan_id <= 0x26:
                 chan_name = f"THRM{chan_id - 0x21 + 1}"
-                channel_data = self._parse_int24_channel(chan_name, packet_start_sys_time_millis, data)
-                assert(not chan_name in channels_data)
-                channels_data[chan_name] = channel_data
+                timed_values = self._parse_int24_sequence(packet_start_sys_time_millis, data)
+                result.append_timed_values(chan_name, timed_values)
             else:
                 raise ValueError("Unexpected log group id: {group_id}")
         assert data.all_read_ok()
-        result = ParsedLogPacket(channels_data)
         return result
 
 

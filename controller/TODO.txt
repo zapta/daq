@@ -9,8 +9,7 @@ Convert thermistors to C.
 
 add controller commands to start a and end a session, given a name.
 
-
-
+Change static mutex to use recursive mutexs.
 
 
 ---

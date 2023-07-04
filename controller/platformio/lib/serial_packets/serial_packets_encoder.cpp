@@ -6,10 +6,9 @@ using serial_packets_consts::PACKET_END_FLAG;
 using serial_packets_consts::PACKET_ESC;
 using serial_packets_consts::PACKET_START_FLAG;
 using serial_packets_consts::TYPE_COMMAND;
-using serial_packets_consts::TYPE_RESPONSE;
-using serial_packets_consts::TYPE_MESSAGE;
 using serial_packets_consts::TYPE_LOG;
-
+using serial_packets_consts::TYPE_MESSAGE;
+using serial_packets_consts::TYPE_RESPONSE;
 
 bool SerialPacketsEncoder::byte_stuffing(const EncodedPacketBuffer& in,
                                          StuffedPacketBuffer* out) {
