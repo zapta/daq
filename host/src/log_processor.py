@@ -59,7 +59,8 @@ ZERO_OFFSET = 16925
 # TODO: Add sampling interval information to the packet.
 # SAMPLING_INTERVAL_MILLIS = 2
 
-session_start_time_millis = None
+first_packet_start_time = None
+last_packet_end_time_millis = None
 
 byte_count = 0
 packet_count = 0
@@ -71,6 +72,12 @@ last_point_rel_time = None
 log_packets_parser = LogPacketsParser()
 
 output_files_dict = {}
+
+
+def session_span_secs() -> float:
+    if first_packet_start_time is None or last_packet_end_time_millis is None:
+        return 0
+    return (last_packet_end_time_millis - first_packet_start_time) / 1000
 
 
 def get_output_file(chan_name: str, header: str, raw=False):
@@ -87,11 +94,13 @@ def get_output_file(chan_name: str, header: str, raw=False):
 
 
 def process_packet(packet: DecodedLogPacket):
-    global log_packets_parser, session_start_time_millis, point_count, chan_data_count
+    global log_packets_parser, first_packet_start_time, last_packet_end_time_millis
+    global point_count, chan_data_count
     assert isinstance(packet, DecodedLogPacket), f"Unexpected packet type: {type(packet)}"
     parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(packet.data)
-    if session_start_time_millis is None:
-        session_start_time_millis = parsed_log_packet.start_time_millis()
+    if first_packet_start_time is None:
+        first_packet_start_time = parsed_log_packet.start_time_millis()
+    last_packet_end_time_millis = parsed_log_packet.end_time_millis()
     for chan_data in parsed_log_packet.channels():
         chan_data_count += 1
         # For now we have only one kind of group.
@@ -104,7 +113,7 @@ def process_packet(packet: DecodedLogPacket):
             f_raw = get_output_file(f"{chan_name}", f"T[ms],{chan_name}[tick]", raw=True)
             load_cell_chan_config = sys_config.get_load_cell_config(chan_name)
             for time, value in chan_data.timed_values():
-                millis_in_session = time - session_start_time_millis
+                millis_in_session = time - first_packet_start_time
                 g = load_cell_chan_config.adc_reading_to_grams(value)
                 point_count += 1
                 f.write(f"{millis_in_session/1000:.3f},{g:.3f}\n")
@@ -113,7 +122,7 @@ def process_packet(packet: DecodedLogPacket):
             f = get_output_file(f"{chan_name}", f"T[s],{chan_name}[C]")
             f_raw = get_output_file(f"{chan_name}", f"T[s],{chan_name}[C]", raw=True)
             for time, value in chan_data.timed_values():
-                millis_in_session = time - session_start_time_millis
+                millis_in_session = time - first_packet_start_time
                 c = value  # TODO: Convert to C
                 point_count += 1
                 f.write(f"{millis_in_session/1000:.3f},{c:.3f}\n")
@@ -125,7 +134,7 @@ def process_packet(packet: DecodedLogPacket):
 def report_status():
     global byte_count, packet_count, chan_data_count, point_count
     logger.info(
-        f"Bytes: {byte_count:,}, packets: {packet_count:,}, chan_datas: {chan_data_count}, values: {point_count:,}"
+        f"Bytes: {byte_count:,}, packets: {packet_count:,}, chan_datas: {chan_data_count}, values: {point_count:,}, {session_span_secs():.3f} secs"
     )
 
 
@@ -163,6 +172,7 @@ def main():
     for chan_id, file in output_files_dict.items():
         logger.info(f"Closing output file: {file.name}")
         file.close()
+    logger.info(f"Time span: {session_span_secs():.3f} secs")
     logger.info(f"All done.")
 
 

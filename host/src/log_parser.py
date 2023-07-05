@@ -159,6 +159,14 @@ class ParsedLogPacket:
         if (result is None) or result > chan_start:
           result = chan_start
       return result
+    
+    def end_time_millis(self) -> Optional[int]:
+      result = None
+      for chan in self.__channels.values():
+        chan_end = chan.end_time_millis()
+        if (result is None) or result < chan_end:
+          result = chan_end
+      return result
 
     def is_empty(self):
         return not self.__channels
