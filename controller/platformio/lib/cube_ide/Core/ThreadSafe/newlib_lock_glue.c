@@ -219,7 +219,8 @@ void __retarget_lock_release_recursive(_LOCK_T lock)
 }
 
 #else
-#warning This makes malloc, env, and TZ calls thread-safe, not the entire newlib
+// ### Auto patched.
+// ### #warning This makes malloc, env, and TZ calls thread-safe, not the entire newlib
 
 /* Includes ------------------------------------------------------------------*/
 #include <reent.h>

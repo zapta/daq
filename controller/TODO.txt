@@ -1,15 +1,12 @@
 
-Increase serial ports baud rate.
+add controller commands to start a and end a session, given a name.
 
-Report all thermistor adc points.
-
-Add TOML config file
 
 Convert thermistors to C.
 
-add controller commands to start a and end a session, given a name.
 
 Change static mutex to use recursive mutexs.
+
 
 
 ---
@@ -22,8 +19,6 @@ Write script to fix openocd.
 ----------
 Firmware
 
-Verify the project build on Mac and Linux
-
 revisit the issue of heap allocation policy, consider static allocation and type 1.
 
 Revisit the error handling in the serial and CDC logger drivers. Should we send to a trap?
@@ -33,7 +28,7 @@ Consider to switch the serial driver to use DMA instead of interrupts.
 ----------
 Hardware
 
-Consider to have damper resistors to the bus signals.
+Consider to have damper resistors to the bus signals on the controller board.
 
 
 

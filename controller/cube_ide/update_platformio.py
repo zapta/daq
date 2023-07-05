@@ -47,6 +47,15 @@ def patch_file(file, expected_count, line_text, repl_lines):
         outfile.write("\n")
     return count
 
+def patch_newlib_lock_glue(file):
+    print(f"Patching newlib_lock_glue.c at {file}.")
+    count = 0
+    count += patch_file(file, 1, "#warning This makes malloc, env, and TZ calls thread-safe, not the entire newlib", [
+        "// ### Auto patched.",
+        "// ### #warning This makes malloc, env, and TZ calls thread-safe, not the entire newlib",
+    ])
+    print(f"{count} patches made to {file}")
+
 
 def patch_main_c(file):
     print(f"Patching main.c at {file}.")
@@ -91,6 +100,7 @@ copy_and_overwrite_file("STM32H750VBTX_FLASH.ld", f"{DST}/STM32H750VBTX_FLASH.ld
 copy_and_overwrite_file("cube_ide.pdf", "../docs/cube_ide_report.pdf")
 
 # Patch files.
+patch_newlib_lock_glue(f"{DST_LIB}/Core/ThreadSafe/newlib_lock_glue.c")
 patch_main_c(f"{DST_LIB}/Core/Src/main.c")
 
 print("\nAll done ok.\n")

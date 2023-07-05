@@ -45,7 +45,7 @@
 /   2: f_opendir(), f_readdir() and f_closedir() are removed in addition to 1.
 /   3: f_lseek() function is removed in addition to 2. */
 
-#define _USE_STRFUNC         1      /* 0:Disable or 1-2:Enable */
+#define _USE_STRFUNC         0      /* 0:Disable or 1-2:Enable */
 /* This option switches string functions, f_gets(), f_putc(), f_puts() and
 /  f_printf().
 /
@@ -57,10 +57,10 @@
 /* This option switches filtered directory read functions, f_findfirst() and
 /  f_findnext(). (0:Disable, 1:Enable 2:Enable with matching altname[] too) */
 
-#define _USE_MKFS            1
+#define _USE_MKFS            0
 /* This option switches f_mkfs() function. (0:Disable or 1:Enable) */
 
-#define _USE_FASTSEEK        1
+#define _USE_FASTSEEK        0
 /* This option switches fast seek feature. (0:Disable or 1:Enable) */
 
 #define	_USE_EXPAND		0
@@ -131,7 +131,7 @@
 /  To use Unicode string for the path name, enable LFN and set _LFN_UNICODE = 1.
 /  This option also affects behavior of string I/O functions. */
 
-#define _STRF_ENCODE    3
+#define _STRF_ENCODE    0
 /* When _LFN_UNICODE == 1, this option selects the character encoding ON THE FILE to
 /  be read/written via string I/O functions, f_gets(), f_putc(), f_puts and f_printf().
 /

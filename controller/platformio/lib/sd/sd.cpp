@@ -91,9 +91,9 @@ bool open_log_file(const char* name) {
   }
   init_level = 1;
 
-   status = f_open(&SDFile, name, FA_CREATE_ALWAYS | FA_WRITE);
+  status = f_open(&SDFile, name, FA_CREATE_ALWAYS | FA_WRITE);
   if (status != FRESULT::FR_OK) {
-    logger.error("SD f_open failed, status=%d", status);
+    logger.error("SD f_open failed, SD FRESULT=%d", status);
     return false;
   }
   init_level = 2;
@@ -176,8 +176,7 @@ void append_to_log_file(const StuffedPacketBuffer& packet) {
   }
 
   records_written++;
-  logger.info("Wrote SD record %lu, size=%hu", records_written,
-   packet_size);
+  logger.info("Wrote SD record %lu, size=%hu", records_written, packet_size);
 
   // printf("\n");
   // for (uint32_t i = 0; i < n; i++) {

@@ -19,7 +19,7 @@
 #include "usart.h"
 #include "usbd_cdc_if.h"
 
-static SerialPacketsData data;
+// static SerialPacketsData data;
 
 StaticTask<2000> host_link_rx_task(host_link::rx_task_body, "Host RX", 8);
 StaticTask<2000> adc_task(adc::adc_task_body, "ADC", 7);
@@ -34,7 +34,9 @@ void app_main() {
   __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_1, 400);
   HAL_TIM_Base_Start_IT(&htim12);
 
-  sd::open_log_file("log_file.bin");
+  if (!sd::open_log_file("log_file.bin")) {
+    logger.error("Failed to open log file.");
+  }
 
   host_link::setup(serial::serial1);
   if (!host_link_rx_task.start()) {
@@ -48,11 +50,11 @@ void app_main() {
     // adc::dump_state();
     io::LED.toggle();
     // Send a periodic test command.
-    data.clear();
-    data.write_uint32(0x12345678);
-    const PacketStatus status = host_link::client.sendCommand(0x20, data);
-    logger.info("%04d: Recieced command respond, status = %d, size=%hu", i, status,
-                data.size());
+    // data.clear();
+    // data.write_uint32(0x12345678);
+    // const PacketStatus status = host_link::client.sendCommand(0x20, data);
+    // logger.info("%04d: Recieced command respond, status = %d, size=%hu", i, status,
+    //             data.size());
     if (!sd::is_log_file_open_ok()) {
       logger.error("SD log file not opened()");
     }
