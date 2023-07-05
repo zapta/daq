@@ -8,7 +8,7 @@ namespace sd {
 
 bool open_log_file(const char* name);
 
-bool append_to_log_file(const StuffedPacketBuffer& packet);
+void append_to_log_file(const StuffedPacketBuffer& packet);
 
 void close_log_file();
 
