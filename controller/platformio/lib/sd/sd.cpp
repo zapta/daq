@@ -26,9 +26,10 @@ static uint8_t
 // Number of active pending bytes at the begining of write_buffer.
 static uint32_t pending_bytes = 0;
 
-// Temp, for testing.
+// Stats for diagnostics
 static uint32_t records_written = 0;
-static constexpr uint32_t kMaxRecordsToWrite = 1000;
+
+// static constexpr uint32_t kMaxRecordsToWrite = 1000;
 
 StaticMutex mutex;
 
@@ -114,10 +115,10 @@ void append_to_log_file(const StuffedPacketBuffer& packet) {
     return;
   }
 
-  if (records_written >= kMaxRecordsToWrite) {
-    logger.info("Aleady writen %lu records", kMaxRecordsToWrite);
-    return;
-  }
+  // if (records_written >= kMaxRecordsToWrite) {
+  //   logger.info("Aleady writen %lu records", kMaxRecordsToWrite);
+  //   return;
+  // }
 
   // Check state.
   if (init_level != 2) {
@@ -175,8 +176,8 @@ void append_to_log_file(const StuffedPacketBuffer& packet) {
   }
 
   records_written++;
-  logger.info("Wrote SD record %lu/%lu, size=%hu", records_written,
-              kMaxRecordsToWrite, packet_size);
+  logger.info("Wrote SD record %lu, size=%hu", records_written,
+   packet_size);
 
   // printf("\n");
   // for (uint32_t i = 0; i < n; i++) {
@@ -184,10 +185,10 @@ void append_to_log_file(const StuffedPacketBuffer& packet) {
   // }
   // printf("\n\n");
 
-  if (records_written == kMaxRecordsToWrite) {
-    logger.info("Closing SD log file");
-    internal_close_log_file();
-  }
+  // if (records_written == kMaxRecordsToWrite) {
+  //   logger.info("Closing SD log file");
+  //   internal_close_log_file();
+  // }
 }
 
 bool is_log_file_open_ok() {

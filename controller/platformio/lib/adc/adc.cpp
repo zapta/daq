@@ -505,7 +505,7 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
               decode_int24(&bfr[kRxDataOffsetInPoint + 6 * kDmaBytesPerPoint]),
               decode_int24(&bfr[kRxDataOffsetInPoint + 8 * kDmaBytesPerPoint]));
 
-  logger.info("Processed in %lu ms", time_util::millis() - isr_millis);
+  logger.info("ADC processed in %lu ms", time_util::millis() - isr_millis);
 }
 
 void adc_task_body(void *argument) {
