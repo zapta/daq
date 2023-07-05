@@ -136,6 +136,7 @@ def update_display(times_millis: List[int], values_grams: List[int]):
         
     plt.subplots_adjust(left=0.1, bottom=0.1, right=0.95, top=0.95, wspace=0.4, hspace=0.4)
 
+    # logger.info("Updating display")
     # print(f"*** {times_millis[0]}, {times_millis[100]}", flush=True)
     # Update force graph.
     ax = plt.subplot(311)
@@ -152,49 +153,49 @@ def update_display(times_millis: List[int], values_grams: List[int]):
     plt.plot(x, y, color='blue')
 
     # Update noise graph
-    # if slot in [3, 6, 9]:
-    #     m = mean(values_grams)
-    #     normalized = [v - m for v in values_grams]
-    #     ax = plt.subplot(312)
-    #     ax.clear()
-    #     y = normalized
-    #     sum_squars = 0
-    #     for v in normalized:
-    #         sum_squars += v * v
-    #     rms = math.sqrt(sum_squars / len(normalized))
-    #     plt.text(10, -9, f"RMS: {rms:.2f},  p2p: {max(normalized) - min(normalized):.2f} ")
-    #     # x = [v * 2 for v in range(0, len(gram_points))]
-    #     # x = times_millis / 1000
-    #     plt.xlabel('Time [ms]')
-    #     plt.ylabel('AC Force [g]')
-    #     plt.xlim(min(x), max(x))
-    #     plt.ylim(-10, 10)
-    #     plt.plot(x, y, color='red')
+    if slot in [3, 6, 9]:
+        m = mean(values_grams)
+        normalized = [v - m for v in values_grams]
+        ax = plt.subplot(312)
+        ax.clear()
+        y = normalized
+        sum_squars = 0
+        for v in normalized:
+            sum_squars += v * v
+        rms = math.sqrt(sum_squars / len(normalized))
+        plt.text(0.01, -9, f"RMS: {rms:.2f},  p2p: {max(normalized) - min(normalized):.2f} ")
+        # x = [v * 2 for v in range(0, len(gram_points))]
+        # x = times_millis / 1000
+        plt.xlabel('Time [ms]')
+        plt.ylabel('AC Force [g]')
+        plt.xlim(min(x), max(x))
+        plt.ylim(-10, 10)
+        plt.plot(x, y, color='red')
 
-    # # Noise FFT graph
-    # if fft_last_yf is None or slot == 1:
-    #     m = mean(values_grams)
-    #     normalized = [v - m for v in values_grams]
-    #     ax = plt.subplot(313)
-    #     ax.clear()
-    #     # logger.info("*** Computing fft")
-    #     # Number of samplepoints
-    #     N = len(normalized)
-    #     # sample interval secs
-    #     T = 1.0 / 500.0
-    #     T = ((times_millis[-1] - times_millis[0]) / (len(times_millis) - 1)) / 1000
-    #     # Signal in.
-    #     x = np.linspace(0.0, N * T, N)
-    #     y = np.asarray(normalized)
-    #     # FFT values
-    #     fft_last_yf = scipy.fftpack.fft(y)
+    # Noise FFT graph
+    if fft_last_yf is None or slot == 1:
+        m = mean(values_grams)
+        normalized = [v - m for v in values_grams]
+        ax = plt.subplot(313)
+        ax.clear()
+        # logger.info("*** Computing fft")
+        # Number of samplepoints
+        N = len(normalized)
+        # sample interval secs
+        T = 1.0 / 500.0
+        T = ((times_millis[-1] - times_millis[0]) / (len(times_millis) - 1)) / 1000
+        # Signal in.
+        x = np.linspace(0.0, N * T, N)
+        y = np.asarray(normalized)
+        # FFT values
+        fft_last_yf = scipy.fftpack.fft(y)
 
-    #     yf = fft_last_yf
-    #     xf = np.linspace(0.0, 1.0 / (2.0 * T), N // 2)
-    #     plt.xlabel('Frequency [Hz]')
-    #     plt.ylabel('Rel level')
-    #     plt.ylim(0, 2)
-    #     plt.plot(xf, 2.0 / N * np.abs(yf[:N // 2]))
+        yf = fft_last_yf
+        xf = np.linspace(0.0, 1.0 / (2.0 * T), N // 2)
+        plt.xlabel('Frequency [Hz]')
+        plt.ylabel('Rel level')
+        plt.ylim(0, 2)
+        plt.plot(xf, 2.0 / N * np.abs(yf[:N // 2]))
 
     fig.canvas.draw()
     image = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
@@ -207,8 +208,8 @@ def handle_log_message(data: PacketData):
     global last_packet_base_time_millis
     parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(data)
     # We are expecting a single LC channel + three thermistor 
-    if last_packet_base_time_millis is not None:
-      logger.info(f"Packet time diff: {parsed_log_packet.base_time_millis() - last_packet_base_time_millis}")
+    # if last_packet_base_time_millis is not None:
+    #   logger.info(f"Packet time diff: {parsed_log_packet.base_time_millis() - last_packet_base_time_millis}")
     
     last_packet_base_time_millis = parsed_log_packet.base_time_millis()
     # channels.
