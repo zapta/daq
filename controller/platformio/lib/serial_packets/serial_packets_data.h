@@ -102,6 +102,19 @@ class SerialPacketsBuffer {
     _size += num_bytes;
   }
 
+  // Encode <len_byte><bytes...>
+  // TODO: Add unit tests.
+  void write_str(const char* str) {
+    const uint32_t n = strlen(str);
+    if (_had_write_errors || n > 255 || (1 + n) > free_bytes()) {
+      _had_write_errors = true;
+      return;
+    }
+    _buffer[_size++] = (uint8_t)n;
+    memcpy(&_buffer[_size], str, n);
+    _size += n;
+  }
+
   uint8_t read_uint8() const {
     if (_had_read_errors || 1 > unread_bytes()) {
       _had_read_errors = true;
@@ -140,6 +153,40 @@ class SerialPacketsBuffer {
     }
     memcpy(bytes_buffer, &_buffer[_bytes_read], bytes_to_read);
     _bytes_read += bytes_to_read;
+  }
+
+  // TODO: Add unit tests.
+  void read_str(char* buffer, uint32_t buffer_size) const {
+    // Pre conditions for reading the length byte.
+    if (_had_read_errors || unread_bytes() < 1) {
+      if (buffer_size >= 1) {
+        buffer[0] = 0;
+      }
+      _had_read_errors = true;
+      return;
+    }
+
+    // Read length byte and check preconditions for reading
+    // the string bytes.
+    const uint16_t n = (uint16_t)_buffer[_bytes_read++];
+    if (n > unread_bytes() || n >= buffer_size) {
+      if (buffer_size >= 1) {
+        buffer[0] = 0;
+      }
+      _had_read_errors = true;
+      return;
+    }
+
+    // Read the string bytes and append a terminator.
+    memcpy(buffer, &_buffer[_bytes_read], n);
+    buffer[n] = 0;
+    _bytes_read += n;
+    // memset(bytes_buffer, 0, bytes_to_read);
+    //   _had_read_errors = true;
+    //   return;
+    // }
+    // memcpy(bytes_buffer, &_buffer[_bytes_read], bytes_to_read);
+    // _bytes_read += bytes_to_read;
   }
 
   void skip_bytes(uint32_t bytes_to_skip) const {
