@@ -2,13 +2,14 @@
 
 #include <cstring>
 
-#include "cdc_serial.h"
 #include "fatfs.h"
 #include "logger.h"
-#include "sdmmc.h"
 #include "static_mutex.h"
 
 // extern SD_HandleTypeDef hsd1;
+
+// Workaround per https://github.com/artlukm/STM32_FATFS_SDcard_remount
+// extern Disk_drvTypeDef  disk;
 
 namespace sd {
 
@@ -19,12 +20,12 @@ enum State {
   // Session off
   STATE_IDLE,
   // Session should be on
-  STATE_SESSION,
+  // STATE_SESSION,
   STATE_MOUNTED,
   STATE_OPENED
 };
 
-static State state  = STATE_IDLE;
+static State state = STATE_IDLE;
 
 // [July 2023] - Writing packets of arbitrary size resulted in
 // occaionaly corrupted file with a few bytes added or missings
@@ -43,7 +44,7 @@ static uint32_t records_written = 0;
 StaticMutex mutex;
 
 // Assumes levle == STATE_OPENED and mutex is grabbed.
-// Tries to write pending bytes to SD. 
+// Tries to write pending bytes to SD.
 // Always clears pending_bytes upon return.
 static void internal_write_pending_bytes() {
   if (pending_bytes == 0) {
@@ -56,7 +57,7 @@ static void internal_write_pending_bytes() {
 
   // This number should be a multipe of _MAX_SS.
   logger.info("Writing to SD %lu bytes", n);
-   unsigned int bytes_written;
+  unsigned int bytes_written;
   FRESULT status = f_write(&SDFile, write_buffer, n, &bytes_written);
   if (status != FRESULT::FR_OK) {
     logger.error("Error writing to SD log file, status=%d", status);
@@ -84,6 +85,9 @@ static void internal_close_log_file() {
   }
 
   if (state == STATE_MOUNTED) {
+    // Workaround per https://github.com/artlukm/STM32_FATFS_SDcard_remount
+    // disk.is_initialized[SDFatFS.drv] = 0;
+
     // The 'NULL' cause to unmount.
     f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
   }
@@ -104,19 +108,22 @@ bool open_log_file(const char* name) {
   pending_bytes = 0;
   records_written = 0;
 
-  state = STATE_SESSION;
+  //
+  // state = STATE_MOUNTED;
 
   FRESULT status = f_mount(&SDFatFS, (TCHAR const*)SDPath, 0);
   if (status != FRESULT::FR_OK) {
     logger.error("SD f_mount failed, status=%d", status);
+    internal_close_log_file();
     return false;
   }
-  
+
   state = STATE_MOUNTED;
 
   status = f_open(&SDFile, name, FA_CREATE_ALWAYS | FA_WRITE);
   if (status != FRESULT::FR_OK) {
     logger.error("SD f_open failed, SD FRESULT=%d", status);
+    internal_close_log_file();
     return false;
   }
   state = STATE_OPENED;
@@ -144,7 +151,7 @@ void append_to_log_file(const StuffedPacketBuffer& packet) {
   //   return;
   // }
 
-  if ( state == STATE_IDLE) {
+  if (state == STATE_IDLE) {
     // Not in session. Ignore silently.
     return;
   }

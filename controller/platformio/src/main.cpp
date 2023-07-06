@@ -34,9 +34,9 @@ void app_main() {
   __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_1, 400);
   HAL_TIM_Base_Start_IT(&htim12);
 
-  if (!sd::open_log_file("default.log")) {
-    logger.error("Failed to open default log file.");
-  }
+  // if (!sd::open_log_file("default.log")) {
+  //   logger.error("Failed to open default log file.");
+  // }
 
   host_link::setup(serial::serial1);
   if (!host_link_rx_task.start()) {
