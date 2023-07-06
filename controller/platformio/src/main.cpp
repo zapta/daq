@@ -55,9 +55,10 @@ void app_main() {
     // const PacketStatus status = host_link::client.sendCommand(0x20, data);
     // logger.info("%04d: Recieced command respond, status = %d, size=%hu", i, status,
     //             data.size());
-    if (!sd::is_log_file_idle() && !sd::is_log_file_open_ok()) {
+    if (!sd::is_session_log_idle() && !sd::is_session_log_open_ok()) {
       logger.error("SD log file not opened.");
     }
+    // logger.info("SD %s.", sd::is_disk_inserted()? "INSERTED" : "NOT INSERTED");
     time_util::delay_millis(500);
   }
 }

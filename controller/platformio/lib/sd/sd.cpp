@@ -1,20 +1,25 @@
 #include "sd.h"
 
+// #include <wchar.h>
+// #include <array>
+
 #include <cstring>
 
 #include "fatfs.h"
+#include "io.h"
 #include "logger.h"
 #include "static_mutex.h"
+#include "time_util.h"
 
 // extern SD_HandleTypeDef hsd1;
 
 // Workaround per https://github.com/artlukm/STM32_FATFS_SDcard_remount
-// extern Disk_drvTypeDef  disk;
+extern Disk_drvTypeDef disk;
 
 namespace sd {
 
 // All vars are protected by the mutex.
-// static uint8_t rtext[_MAX_SS*8];
+StaticMutex mutex;
 
 enum State {
   // Session off
@@ -39,9 +44,21 @@ static uint32_t pending_bytes = 0;
 // Stats for diagnostics
 static uint32_t records_written = 0;
 
-// static constexpr uint32_t kMaxRecordsToWrite = 1000;
+// Session name + ".log" suffix.
+constexpr uint32_t kMaxFileNameLen = kMaxSessionNameLen + 4;
 
-StaticMutex mutex;
+// Extra char for the terminator.
+static char temp_log_file_name[kMaxFileNameLen + 1];
+
+// // Grab mutex before calling this
+// static bool is_disk_inserted() {
+//   const DSTATUS dstatus = disk_status(SDFatFS.drv);
+
+//   // See http://elm-chan.org/fsw/ff/doc/dstat.html
+//   return (dstatus & (STA_NODISK)) == 0;
+// }
+
+// bool is_disk_inserted() { return io::SD_SWITCH.read(); }
 
 // Assumes levle == STATE_OPENED and mutex is grabbed.
 // Tries to write pending bytes to SD.
@@ -78,6 +95,9 @@ static void internal_write_pending_bytes() {
 // Grab mutex before calling this
 // TODO: Change mutexs to be recursive.
 static void internal_close_log_file() {
+  // if (!is_disk_inserted()) {
+  //   logger.error("No SD disk inserted.");
+  // } else {
   if (state == STATE_OPENED) {
     internal_write_pending_bytes();
     f_close(&SDFile);
@@ -97,11 +117,18 @@ static void internal_close_log_file() {
   records_written = 0;
 }
 
-bool open_log_file(const char* name) {
+bool start_session_log(const char* session_name) {
   MutexScope scope(mutex);
 
   if (state != STATE_IDLE) {
-    logger.error("Log file open, state=%d", state);
+    logger.error("Log session already open, state=%d", state);
+    return false;
+  }
+
+  const size_t n = strlen(session_name);
+  // Allow for '.log' extension.
+  if (n + 4 > kMaxFileNameLen) {
+    logger.error("Session name too long. Can't start.");
     return false;
   }
 
@@ -113,16 +140,25 @@ bool open_log_file(const char* name) {
 
   FRESULT status = f_mount(&SDFatFS, (TCHAR const*)SDPath, 0);
   if (status != FRESULT::FR_OK) {
-    logger.error("SD f_mount failed, status=%d", status);
+    logger.error("SD f_mount failed. (FRESULT=%d)", status);
     internal_close_log_file();
     return false;
   }
 
   state = STATE_MOUNTED;
+  // time_util::delay_millis(500);
 
-  status = f_open(&SDFile, name, FA_CREATE_ALWAYS | FA_WRITE);
+  // static_assert(sizeof(temp_log_file_wname[0]) == 2U);
+  // static_assert(sizeof(temp_log_file_wname[0]) == sizeof(TCHAR));
+
+  // We already verified sizes.
+  strcpy(temp_log_file_name, session_name);
+  strcat(temp_log_file_name, ".log");
+
+  // status = f_open(&SDFile, temp_log_file_name, FA_CREATE_ALWAYS | FA_WRITE);
+  status = f_open(&SDFile, temp_log_file_name, FA_CREATE_ALWAYS | FA_WRITE);
   if (status != FRESULT::FR_OK) {
-    logger.error("SD f_open failed, SD FRESULT=%d", status);
+    logger.error("SD f_open failed. (FRESULT=%d)", status);
     internal_close_log_file();
     return false;
   }
@@ -132,13 +168,13 @@ bool open_log_file(const char* name) {
 }
 
 // Does nothing if already closed.
-void close_log_file() {
+void stop_session_log() {
   MutexScope scope(mutex);
 
   internal_close_log_file();
 }
 
-void append_to_log_file(const StuffedPacketBuffer& packet) {
+void append_to_session_log(const StuffedPacketBuffer& packet) {
   MutexScope scope(mutex);
 
   if (packet.had_write_errors()) {
@@ -158,7 +194,7 @@ void append_to_log_file(const StuffedPacketBuffer& packet) {
 
   // Check state.
   if (state != STATE_OPENED) {
-    logger.error("Can't write log file, state=%d", state);
+    logger.error("Can't write log file, (state=%d)", state);
     return;
   }
 
@@ -226,12 +262,12 @@ void append_to_log_file(const StuffedPacketBuffer& packet) {
   // }
 }
 
-bool is_log_file_open_ok() {
+bool is_session_log_open_ok() {
   MutexScope scope(mutex);
-  return state == STATE_OPENED;
+  return (state == STATE_OPENED);
 }
 
-bool is_log_file_idle() {
+bool is_session_log_idle() {
   MutexScope scope(mutex);
   return state == STATE_IDLE;
 }

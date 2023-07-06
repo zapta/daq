@@ -1,11 +1,18 @@
 
-add controller commands to start a and end a session, given a name.
+Remember session name in sd.cpp and report session name on stop.
+
+Report periodically session name and its accomulating time.
+
+why sometimes need to reset the controller to have the ADC working.
 
 
 Convert thermistors to C.
 
 
 Change static mutex to use recursive mutexs.
+
+
+why defining PD4 as pullup instead of pulldown causes sd file open to fail?
 
 
 

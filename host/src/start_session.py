@@ -6,9 +6,7 @@ import sys
 import argparse
 import asyncio
 import logging
-
-import tomllib
-#from log_parser import LogPacketsParser, ChannelData, ParsedLogPacket
+import time
 from sys_config import SysConfig, LoadCellChannelConfig
 
 # For using the local version of serial_packet. Comment out if
@@ -59,15 +57,18 @@ async def async_main():
     logger.info(f"Connected: {client.is_connected()}")
 
     # Send command and get response
-    session_id = "session"
-    session_id_bytes = session_id.encode()
+    #session_name = time.strftime("session-%Y%m%d-%H%M%S")
+    session_name = time.strftime("%d%H%M%S")
+    #session_name = time.strftime("xyz")
+    logger.info(f"Session name: {session_name}")
+    session_name_bytes = session_name.encode()
     # TODO: Support longer names in SD file system.
-    assert len(session_id_bytes) <= 8
+    assert len(session_name_bytes) <= 30
     cmd = PacketData()
     cmd.add_uint8(0x02)  # Start command
-    cmd.add_uint8(len(session_id_bytes))  # str len
-    cmd.add_bytes(session_id_bytes)
-    logger.info(f"Command: {cmd.hex_str(max_bytes=20)}")
+    cmd.add_uint8(len(session_name_bytes))  # str len
+    cmd.add_bytes(session_name_bytes)
+    logger.info(f"Command: {cmd.hex_str(max_bytes=5)}")
     status, response = await client.send_command_blocking(CONTROL_ENDPOINT, cmd)
     logger.info(f"Response status: {status}")
     logger.info(f"Response data: {response.hex_str(max_bytes=20)}")
@@ -82,7 +83,7 @@ async def async_main():
       logger.info("Previous session stopped.")
     else:
       logger.info("No previous running session.")
-    logger.info(f"Session {session_id} started OK.")
+    logger.info(f"{session_name} started OK.")
 
 
 asyncio.run(async_main(), debug=True)

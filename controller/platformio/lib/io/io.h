@@ -59,10 +59,11 @@ namespace io {
 
 extern OutputPin LED;
 extern OutputPin TEST1;
-// extern OutputPin TEST2;
-// extern OutputPin TEST3;
-// extern OutputPin ADC_CS;
 
-extern InputPin SWITCH;
+// High when pressed.
+extern InputPin USER_SWITCH;
+
+// High when SD card is inserted.
+// extern InputPin SD_SWITCH;
 
 }  // namespace io.

@@ -8,21 +8,16 @@
 namespace controller {
 
 // TODO: Allow longer file name in SD module.
-constexpr uint8_t kMaxSessionIdLen = 8;
+// constexpr uint8_t kMaxSessionIdLen = 30;
 
-// Protect access to prot_vars.
+// Protects access to the variables below.
 static StaticMutex mutex;
 
-struct ProtVars {
-  char tmp_session_id[kMaxSessionIdLen + 1] = {0};
-};
+// Session id + terminator.
+char tmp_session_name[sd::kMaxSessionNameLen + 1] = {0};
+// 16 bit chars. <session_id>".log"<terminator>
+// wchar_t tmp_log_file_name[kMaxSessionIdLen + 4 + 1] = {0};
 
-static ProtVars prot_vars;
-
-// bool is_adc_report_enabled() {
-//   MutexScope scope(mutex);
-//   return prot_vars.adc_report_enabled;
-// }
 
 PacketStatus handle_control_command(const SerialPacketsData& command_data,
                                     SerialPacketsData& response_data) {
@@ -46,30 +41,23 @@ PacketStatus handle_control_command(const SerialPacketsData& command_data,
     case 0x02: {
       MutexScope scope(mutex);
       // Get session id string.
-      const uint8_t session_id_len = command_data.read_uint8();
-      if (session_id_len == 0 || session_id_len > kMaxSessionIdLen) {
-        logger.error("START command: Invalid session id length: %hu.",
-                     session_id_len);
-        return PacketStatus::LENGTH_ERROR;
-      }
-      command_data.read_bytes((uint8_t*)&prot_vars.tmp_session_id,
-                              session_id_len);
+      command_data.read_str(tmp_session_name, sizeof(tmp_session_name));
       if (!command_data.all_read_ok()) {
         logger.error("START command: Invalid command data.");
         return PacketStatus::INVALID_ARGUMENT;
       }
-      const bool had_session = !sd::is_log_file_idle();
-      prot_vars.tmp_session_id[session_id_len] = 0;
+      const bool had_session = !sd::is_session_log_idle();
+
       // Does nothing if not opened.
-      sd::close_log_file();
-      const bool opened_ok = sd::open_log_file(prot_vars.tmp_session_id);
+      sd::stop_session_log();
+      const bool opened_ok = sd::start_session_log(tmp_session_name);
       if (!opened_ok) {
-        logger.error("START command: failed to create a SD log file %s",
-                     prot_vars.tmp_session_id);
+        logger.error("START command: failed to create a SD log file [%s]",
+                     tmp_session_name);
         return PacketStatus::GENERAL_ERROR;
       }
       response_data.write_uint8(had_session? 1 : 0);
-      logger.info("START command: Started a new session: %s", prot_vars.tmp_session_id);
+      logger.info("START command: Started a new session: [%s]", tmp_session_name);
       return PacketStatus::OK;
     } break;
 
@@ -89,10 +77,10 @@ PacketStatus handle_control_command(const SerialPacketsData& command_data,
         logger.error("STOP command: Invalid command data.");
         return PacketStatus::INVALID_ARGUMENT;
       }
-      const bool had_session = !sd::is_log_file_idle();
+      const bool had_session = !sd::is_session_log_idle();
       // prot_vars.tmp_session_id[session_id_len] = 0;
       // Does nothing if not opened.
-      sd::close_log_file();
+      sd::stop_session_log();
       // const bool opened_ok = sd::open_log_file(prot_vars.tmp_session_id);
       // if (!opened_ok) {
       //   logger.error("Failed to create a SD log file %s",

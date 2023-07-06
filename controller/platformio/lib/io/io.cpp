@@ -11,7 +11,8 @@ namespace io {
 
 
   // Inputs
-   InputPin SWITCH(SWITCH_GPIO_Port, SWITCH_Pin);
+   InputPin USER_SWITCH(USER_SWITCH_GPIO_Port, USER_SWITCH_Pin);
+  //  InputPin SD_SWITCH(SD_SWITCH_GPIO_Port, SD_SWITCH_Pin);
 
   
 }  // namespace io.

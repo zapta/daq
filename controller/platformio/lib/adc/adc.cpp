@@ -495,7 +495,7 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
   // Store data on SD card.
   // io::TEST1.high();
   packet_encoder.encode_log_packet(packet_data, &stuffed_packet);
-  sd::append_to_log_file(stuffed_packet);
+  sd::append_to_session_log(stuffed_packet);
 
   // Debugging info.
   logger.info("ADC %d: %lx, %lx, %lx, %lx, %lx", id,
