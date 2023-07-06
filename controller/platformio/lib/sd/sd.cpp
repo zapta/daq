@@ -47,8 +47,9 @@ static uint32_t records_written = 0;
 // Session name + ".log" suffix.
 constexpr uint32_t kMaxFileNameLen = kMaxSessionNameLen + 4;
 
-// Extra char for the terminator.
-static char temp_log_file_name[kMaxFileNameLen + 1];
+// Extra char for the terminator. This is a utf16 buffer
+// as required for the long name feature of FATFS.
+static TCHAR temp_log_file_wname[kMaxFileNameLen + 1];
 
 // // Grab mutex before calling this
 // static bool is_disk_inserted() {
@@ -148,15 +149,27 @@ bool start_session_log(const char* session_name) {
   state = STATE_MOUNTED;
   // time_util::delay_millis(500);
 
-  // static_assert(sizeof(temp_log_file_wname[0]) == 2U);
-  // static_assert(sizeof(temp_log_file_wname[0]) == sizeof(TCHAR));
+  static_assert(sizeof(temp_log_file_wname[0]) == 2U);
+  static_assert(sizeof(temp_log_file_wname[0]) == sizeof(TCHAR));
 
-  // We already verified sizes.
-  strcpy(temp_log_file_name, session_name);
-  strcat(temp_log_file_name, ".log");
+  unsigned int i;
+  for (i = 0; i < n; i++) {
+    // Casting utf8 to utf16.
+    temp_log_file_wname[i] = session_name[i];
+  }
+  temp_log_file_wname[i++] = '.';
+  temp_log_file_wname[i++] = 'l';
+  temp_log_file_wname[i++] = 'o';
+  temp_log_file_wname[i++] = 'g';
+  temp_log_file_wname[i++] = 0;
 
-  // status = f_open(&SDFile, temp_log_file_name, FA_CREATE_ALWAYS | FA_WRITE);
-  status = f_open(&SDFile, temp_log_file_name, FA_CREATE_ALWAYS | FA_WRITE);
+  // Not expecting buffer overflow since we checked the sizes
+  // above, but just in case.
+  if (i > (sizeof(temp_log_file_wname) / sizeof(temp_log_file_wname[0]))) {
+    Error_Handler();
+  }
+
+  status = f_open(&SDFile, temp_log_file_wname, FA_CREATE_ALWAYS | FA_WRITE);
   if (status != FRESULT::FR_OK) {
     logger.error("SD f_open failed. (FRESULT=%d)", status);
     internal_close_log_file();

@@ -4,8 +4,7 @@
 
 namespace sd {
 
-// FATFS without LFN is limited to 8.3 file names.
-constexpr uint8_t kMaxSessionNameLen = 8;
+constexpr uint8_t kMaxSessionNameLen = 30;
 
 bool start_session_log(const char* session_name);
 

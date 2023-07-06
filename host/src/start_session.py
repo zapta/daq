@@ -57,9 +57,7 @@ async def async_main():
     logger.info(f"Connected: {client.is_connected()}")
 
     # Send command and get response
-    #session_name = time.strftime("session-%Y%m%d-%H%M%S")
-    session_name = time.strftime("%d%H%M%S")
-    #session_name = time.strftime("xyz")
+    session_name = time.strftime("session-%Y%m%d-%H%M%S")
     logger.info(f"Session name: {session_name}")
     session_name_bytes = session_name.encode()
     # TODO: Support longer names in SD file system.
