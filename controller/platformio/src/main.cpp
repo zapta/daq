@@ -34,8 +34,8 @@ void app_main() {
   __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_1, 400);
   HAL_TIM_Base_Start_IT(&htim12);
 
-  if (!sd::open_log_file("log_file.bin")) {
-    logger.error("Failed to open log file.");
+  if (!sd::open_log_file("default.log")) {
+    logger.error("Failed to open default log file.");
   }
 
   host_link::setup(serial::serial1);
@@ -55,8 +55,8 @@ void app_main() {
     // const PacketStatus status = host_link::client.sendCommand(0x20, data);
     // logger.info("%04d: Recieced command respond, status = %d, size=%hu", i, status,
     //             data.size());
-    if (!sd::is_log_file_open_ok()) {
-      logger.error("SD log file not opened()");
+    if (!sd::is_log_file_idle() && !sd::is_log_file_open_ok()) {
+      logger.error("SD log file not opened.");
     }
     time_util::delay_millis(500);
   }

@@ -15,7 +15,16 @@ namespace sd {
 // All vars are protected by the mutex.
 // static uint8_t rtext[_MAX_SS*8];
 
-static int init_level = 0;
+enum State {
+  // Session off
+  STATE_IDLE,
+  // Session should be on
+  STATE_SESSION,
+  STATE_MOUNTED,
+  STATE_OPENED
+};
+
+static State state  = STATE_IDLE;
 
 // [July 2023] - Writing packets of arbitrary size resulted in
 // occaionaly corrupted file with a few bytes added or missings
@@ -33,15 +42,21 @@ static uint32_t records_written = 0;
 
 StaticMutex mutex;
 
-// Grab mutex before calling this one.
-// Tries to write pending bytes to SD. Always
-// clear number of pending bytes.
+// Assumes levle == STATE_OPENED and mutex is grabbed.
+// Tries to write pending bytes to SD. 
+// Always clears pending_bytes upon return.
 static void internal_write_pending_bytes() {
+  if (pending_bytes == 0) {
+    // Nothing to do.
+    return;
+  }
+
   const uint32_t n = pending_bytes;
   pending_bytes = 0;
-  unsigned int bytes_written;
+
   // This number should be a multipe of _MAX_SS.
   logger.info("Writing to SD %lu bytes", n);
+   unsigned int bytes_written;
   FRESULT status = f_write(&SDFile, write_buffer, n, &bytes_written);
   if (status != FRESULT::FR_OK) {
     logger.error("Error writing to SD log file, status=%d", status);
@@ -62,45 +77,54 @@ static void internal_write_pending_bytes() {
 // Grab mutex before calling this
 // TODO: Change mutexs to be recursive.
 static void internal_close_log_file() {
-  if (init_level == 2) {
+  if (state == STATE_OPENED) {
     internal_write_pending_bytes();
     f_close(&SDFile);
-    init_level--;
+    state = STATE_MOUNTED;
   }
 
-  if (init_level == 1) {
+  if (state == STATE_MOUNTED) {
+    // The 'NULL' cause to unmount.
     f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
-    init_level--;
   }
+
+  state = STATE_IDLE;
+  pending_bytes = 0;
+  records_written = 0;
 }
 
 bool open_log_file(const char* name) {
   MutexScope scope(mutex);
 
-  if (init_level != 0) {
-    logger.error("Log file open, init_level=%d", init_level);
+  if (state != STATE_IDLE) {
+    logger.error("Log file open, state=%d", state);
     return false;
   }
 
   pending_bytes = 0;
+  records_written = 0;
+
+  state = STATE_SESSION;
 
   FRESULT status = f_mount(&SDFatFS, (TCHAR const*)SDPath, 0);
   if (status != FRESULT::FR_OK) {
     logger.error("SD f_mount failed, status=%d", status);
     return false;
   }
-  init_level = 1;
+  
+  state = STATE_MOUNTED;
 
   status = f_open(&SDFile, name, FA_CREATE_ALWAYS | FA_WRITE);
   if (status != FRESULT::FR_OK) {
     logger.error("SD f_open failed, SD FRESULT=%d", status);
     return false;
   }
-  init_level = 2;
+  state = STATE_OPENED;
 
   return true;
 }
 
+// Does nothing if already closed.
 void close_log_file() {
   MutexScope scope(mutex);
 
@@ -120,9 +144,14 @@ void append_to_log_file(const StuffedPacketBuffer& packet) {
   //   return;
   // }
 
+  if ( state == STATE_IDLE) {
+    // Not in session. Ignore silently.
+    return;
+  }
+
   // Check state.
-  if (init_level != 2) {
-    logger.error("Can't write log file, status=%d", init_level);
+  if (state != STATE_OPENED) {
+    logger.error("Can't write log file, state=%d", state);
     return;
   }
 
@@ -192,7 +221,12 @@ void append_to_log_file(const StuffedPacketBuffer& packet) {
 
 bool is_log_file_open_ok() {
   MutexScope scope(mutex);
-  return init_level == 2;
+  return state == STATE_OPENED;
+}
+
+bool is_log_file_idle() {
+  MutexScope scope(mutex);
+  return state == STATE_IDLE;
 }
 
 }  // namespace sd

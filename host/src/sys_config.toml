@@ -1,5 +1,8 @@
 # System configuration file
 
+[data_link]
+port = "COM9"
+
 [channel.LC1]
 # grams = (adc_reading - offset) * scale
 offset = 36000

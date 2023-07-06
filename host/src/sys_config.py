@@ -39,3 +39,6 @@ class SysConfig:
         offset = channel["offset"]
         scale = channel["scale"]
         return LoadCellChannelConfig(chan_name, offset, scale)
+      
+    def get_data_link_port(self) -> str:
+      return self.__toml_dict["data_link"]["port"]

@@ -49,7 +49,10 @@ logger = logging.getLogger("main")
 log_packets_parser = LogPacketsParser()
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--port", dest="port", default="COM21", help="Serial port to use.")
+parser.add_argument("--sys_config",
+                    dest="sys_config",
+                    default="sys_config.toml",
+                    help="Path to system configuration file.")
 args = parser.parse_args()
 
 # Graphing example from https://stackoverflow.com/a/49594258/15038713
@@ -252,14 +255,16 @@ async def async_main():
     asyncio.get_event_loop().slow_callback_duration = 0.5
     logger.info("Started.")
     sys_config = SysConfig()
-    sys_config.load_from_file("sys_config.toml")
+    assert args.sys_config is not None
+    sys_config.load_from_file(args.sys_config)
     #   sys_config = tomllib.load(f)
     # print(f"Sys config:\n{sys_config}", flush=True)
     # print(f"offset: {sys_config['channel']['LC1']['offset']}", flush=True)
     # print(f"type(offset): {type(sys_config['channel']['LC1']['offset'])}", flush=True)
 
-    assert args.port is not None
-    client = SerialPacketsClient(args.port, command_async_callback, message_async_callback,
+    # assert args.port is not None
+    port = sys_config.get_data_link_port()
+    client = SerialPacketsClient(port, command_async_callback, message_async_callback,
                                  event_async_callback, baudrate=576000)
 
     init_graph()
