@@ -3335,6 +3335,11 @@
     (effects (font (size 3 3) (thickness 0.6) bold) (justify left bottom))
     (uuid 07c3d975-2a8e-4852-bd51-a375ecf4c8b0)
   )
+  (text "TODO: Run the auxilary USB port from the 5V of\nthe bus power rather than the USB power."
+    (at 140.335 180.975 0)
+    (effects (font (size 2.54 2.54) (thickness 0.508) bold (color 255 0 0 1)) (justify left bottom))
+    (uuid 31b42bab-872a-44e9-a3fd-a37e87aeb49b)
+  )
   (text "TODO: Extend the pads of electrolitic caps and protection diodes"
     (at 138.43 139.065 0)
     (effects (font (size 2.54 2.54) (thickness 0.508) bold (color 255 0 0 1)) (justify left bottom))
@@ -3368,6 +3373,11 @@
   (text "POWER" (at 170.18 106.68 0)
     (effects (font (size 3 3) (thickness 0.6) bold) (justify left bottom))
     (uuid c2e595b8-88c9-411e-bcf5-c579a1eb9cdf)
+  )
+  (text "MCU Module modifications:\n* Remove diode D10. This is the diode adjacent\n  to the red LED near the USB connector."
+    (at 134.62 45.085 0)
+    (effects (font (size 2.54 2.54)) (justify left bottom))
+    (uuid d08c5410-1063-44f2-a3f3-6b57ad0c08c0)
   )
   (text "TODO: route reset switch at card edge" (at 139.065 159.385 0)
     (effects (font (size 2.54 2.54) (thickness 0.508) bold (color 255 0 0 1)) (justify left bottom))
