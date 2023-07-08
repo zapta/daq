@@ -7,12 +7,12 @@
 #include <cstring>
 
 #include "controller.h"
+#include "data_recorder.h"
 #include "dma.h"
 #include "host_link.h"
 #include "io.h"
 #include "logger.h"
 #include "main.h"
-#include "data_recorder.h"
 #include "serial_packets_client.h"
 #include "spi.h"
 #include "static_queue.h"
@@ -506,7 +506,9 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
         decode_int24(&bfr[kRxDataOffsetInPoint + 4 * kDmaBytesPerPoint]),
         decode_int24(&bfr[kRxDataOffsetInPoint + 6 * kDmaBytesPerPoint]),
         decode_int24(&bfr[kRxDataOffsetInPoint + 8 * kDmaBytesPerPoint]));
+  }
 
+  if (false) {
     logger.info("ADC processed in %lu ms", time_util::millis() - isr_millis);
   }
 }

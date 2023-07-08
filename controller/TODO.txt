@@ -1,8 +1,7 @@
 
-Resoved the CP2102 version and TX/RX leds.
+Resolve the CP2102 version and TX/RX leds.
 
 
-Change static mutex to use recursive mutexs.
 
 
 
@@ -10,10 +9,7 @@ Change static mutex to use recursive mutexs.
 -------
 
 
-Convert thermistors to C.
-
-
-
+Convert thermistors to resistance and degrees.
 
 
 why defining PD4 as pullup instead of pulldown causes sd file open to fail?
@@ -25,16 +21,15 @@ Write script to fix openocd.
 ----------
 Firmware
 
-revisit the issue of heap allocation policy, consider static allocation and type 1.
 
 Revisit the error handling in the serial and CDC logger drivers. Should we send to a trap?
+
 
 Consider to switch the serial driver to use DMA instead of interrupts.
 
 ----------
 Hardware
 
-Consider to have damper resistors to the bus signals on the controller board.
 
 
 
