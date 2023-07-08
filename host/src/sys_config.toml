@@ -9,7 +9,9 @@ offset = 36000
 scale = 0.008871875
 
 [channel.THRM1]
-# TBD
+low  = 0x000000  # ADC reading, thermistor shorted
+high = 0xffffff  # ADC reading, thermistor disconnected.
+r_series = 2000  # Sum of series resistors, in ohms
 
 [channel.THRM2]
 # TBD

@@ -6,8 +6,11 @@ Resolve the CP2102 version and TX/RX leds.
 
 
 
+
+
 -------
 
+add start/stop buttons to the monitor's gui.
 
 Convert thermistors to resistance and degrees.
 
