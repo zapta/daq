@@ -11,10 +11,12 @@ import sys
 import os
 import time
 import pyqtgraph
-from numpy import histogram
+import numpy as np
 #from pyqtgraph.Qt import QtWidgets
 # import pyqtgraph.Qt as Qt
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
+from typing import Tuple, Optional
+
 # from pyqtgraph.Qt.QtCore import AlignmentFlag
 # import QtCore
 # from pyqtgraph import QtCore
@@ -35,20 +37,27 @@ from serial_packets.packets import PacketStatus, PacketsEvent, PacketData
 
 # NOTE: Color names list here https://matplotlib.org/stable/gallery/color/named_colors.html
 
-# We use a single event loop for all asyncio operatios.
-main_event_loop = asyncio.new_event_loop()
-
-# Initialized by main.
-sys_config: SysConfig = None
-
-# Init by main
-client: SerialPacketsClient = None
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(relativeCreated)07d %(levelname)-7s %(filename)-10s: %(message)s",
 )
 logger = logging.getLogger("main")
+
+
+# We use a single event loop for all asyncio operatios.
+main_event_loop = asyncio.get_event_loop()
+
+# Initialized later.
+sys_config: SysConfig = None
+port: str = None
+client: SerialPacketsClient = None
+
+
+# Initialized by main.
+# sys_config: SysConfig = None
+
+
+
 
 log_packets_parser = LogPacketsParser()
 
@@ -60,6 +69,39 @@ parser.add_argument("--sys_config",
                     default="sys_config.toml",
                     help="Path to system configuration file.")
 args = parser.parse_args()
+
+
+async def command_async_callback(endpoint: int, data: PacketData) -> Tuple[int, PacketData]:
+    logger.info(f"Received command: [%d] %s", endpoint, data.hex_str(max_bytes=10))
+    # In this example we don't expect incoming commands at the master side.
+    return (PacketStatus.UNHANDLED.value, PacketData())
+
+
+async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, PacketData]:
+    logger.info(f"Received message: [%d] %s", endpoint, data.hex_str(max_bytes=10))
+    if endpoint == 10:
+        logger.info("Recieved a message on port 10")
+        # handle_log_message(data)
+        return
+
+
+async def event_async_callback(event: PacketsEvent) -> None:
+    logger.info("%s event", event)
+
+
+async def init_client()->None:
+  global sys_config, port, client
+  sys_config = SysConfig()
+  assert args.sys_config is not None
+  sys_config.load_from_file(args.sys_config)
+  port = sys_config.get_data_link_port()
+  client = SerialPacketsClient(port, command_async_callback, message_async_callback,
+                                event_async_callback, baudrate=576000)
+  connected = await client.connect()
+  assert connected, f"Could open port {port}"
+  
+main_event_loop.run_until_complete(init_client())
+
 
 
 # Set latter when we connect to the device.
@@ -224,37 +266,40 @@ win.ci.layout.setColumnPreferredWidth(2, 180)
 win.ci.layout.setColumnPreferredWidth(3, 180)
 win.ci.layout.setColumnPreferredWidth(4, 180)
 
-win.ci.layout.setColumnStretchFactor(0, 1)
-win.ci.layout.setColumnStretchFactor(1, 1)
-win.ci.layout.setColumnStretchFactor(2, 1)
-win.ci.layout.setColumnStretchFactor(3, 1)
-win.ci.layout.setColumnStretchFactor(4, 1)
+# win.ci.layout.setColumnStretchFactor(0, 1)
+# win.ci.layout.setColumnStretchFactor(1, 1)
+# win.ci.layout.setColumnStretchFactor(2, 1)
+# win.ci.layout.setColumnStretchFactor(3, 1)
+# win.ci.layout.setColumnStretchFactor(4, 1)
 
 # Graph 1 - Force vs time.
-plot: pyqtgraph.PlotItem = win.addPlot(name="Plot1",  colspan=5)
-plot.setLabel('left', 'Force', "g")
+plot1: pyqtgraph.PlotItem = win.addPlot(name="Plot1",  colspan=5)
+plot1.setLabel('left', 'Force', "g")
 # plot.setXRange(-10, 0)
-plot.showGrid(False, True, 0.7)
+plot1.showGrid(False, True, 0.7)
+x = np.random.normal(size=1000)
+y = np.random.normal(size=1000)
+plot1.plot(x, y, pen=None, symbol='o')
 # plot.setAutoPan(x=True)
 # graph1 = Chart(plot, pyqtgraph.mkPen('yellow'))
 
 # Graph 2 - Force noise
 win.nextRow()
-plot = win.addPlot(name="Plot2", colspan=5)
-plot.setLabel('left', 'Force AC', "g")
+plot2: pyqtgraph.PlotItem = win.addPlot(name="Plot2", colspan=5)
+plot2.setLabel('left', 'Force AC', "g")
 # plot.setXRange(-10, 0)
-plot.showGrid(False, True, 0.7)
+plot2.showGrid(False, True, 0.7)
 # plot.setAutoPan(x=True)
 # plot.setXLink('Plot1')  # synchronize time axis
 # graph2 = Chart(plot, pyqtgraph.mkPen('orange'))
 
 # Graph 3 - Noise fft.
 win.nextRow()
-plot = win.addPlot(name="Plot3", colspan=5)
-plot.setLabel('left', 'Rel Magnitude')
+plot3: pyqtgraph.PlotItem = win.addPlot(name="Plot3", colspan=5)
+plot3.setLabel('left', 'Rel Magnitude')
 # plot.setXRange(-10, 0)
 # plot.setYRange(0, 2)
-plot.showGrid(False, True, 0.7)
+plot3.showGrid(False, True, 0.7)
 # plot.setAutoPan(x=True)
 # plot.setXLink('Plot1')  # synchronize time axis
 # graph3 = Chart(plot, pyqtgraph.mkPen('green'))
