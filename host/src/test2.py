@@ -1,6 +1,3 @@
-# Moving graph.
-# From https://stackoverflow.com/a/49594258/15038713
-
 import pyformulas as pf
 import matplotlib.pyplot as plt
 import numpy as np
@@ -28,4 +25,4 @@ while True:
     image = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
 
     screen.update(image)
-    time.sleep(0.2)
+
