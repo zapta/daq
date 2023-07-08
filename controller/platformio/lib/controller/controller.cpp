@@ -1,7 +1,7 @@
 #include "controller.h"
 
 #include "host_link.h"
-#include "sd.h"
+#include "data_recorder.h"
 #include "serial_packets_client.h"
 #include "static_mutex.h"
 
@@ -14,10 +14,12 @@ namespace controller {
 static StaticMutex mutex;
 
 // Session id + terminator.
-char tmp_session_name[sd::kMaxSessionNameLen + 1] = {0};
+// char tmp_session_name[data_recorder::kMaxSessionNameLen + 1] = {0};
+static data_recorder::RecordingName tmp_new_log_session_name;
+// static data_recorder::SessionName tmp_old_log_session_name;
+
 // 16 bit chars. <session_id>".log"<terminator>
 // wchar_t tmp_log_file_name[kMaxSessionIdLen + 4 + 1] = {0};
-
 
 PacketStatus handle_control_command(const SerialPacketsData& command_data,
                                     SerialPacketsData& response_data) {
@@ -41,24 +43,31 @@ PacketStatus handle_control_command(const SerialPacketsData& command_data,
     case 0x02: {
       MutexScope scope(mutex);
       // Get session id string.
-      command_data.read_str(tmp_session_name, sizeof(tmp_session_name));
+      command_data.read_str(&tmp_new_log_session_name);
       if (!command_data.all_read_ok()) {
         logger.error("START command: Invalid command data.");
         return PacketStatus::INVALID_ARGUMENT;
       }
-      const bool had_session = !sd::is_session_log_idle();
+
+      const bool had_old_session = data_recorder::is_recording_active();
+      // data_recorder::get_log_session_name(&tmp_old_log_session_name);
 
       // Does nothing if not opened.
-      sd::stop_session_log();
-      const bool opened_ok = sd::start_session_log(tmp_session_name);
+      // data_recorder::stop_session_log();
+      const bool opened_ok = data_recorder::start_recording(tmp_new_log_session_name);
+      // if (had_old_session) {
+      //   logger.info("START command: stopped log session [%s]",
+      //               tmp_old_log_session_name.c_str());
+      // }
       if (!opened_ok) {
-        logger.error("START command: failed to create a SD log file [%s]",
-                     tmp_session_name);
+        logger.error("START command: failed to create recording file for session [%s]",
+                     tmp_new_log_session_name.c_str());
         return PacketStatus::GENERAL_ERROR;
       }
-      response_data.write_uint8(had_session? 1 : 0);
-      logger.info("START command: Started a new session: [%s]", tmp_session_name);
-      return PacketStatus::OK;
+      response_data.write_uint8(had_old_session ? 1 : 0);
+      // logger.info("START command: Started a new session: [%s]",
+      //             tmp_new_log_session_name.c_str());
+       return PacketStatus::OK;
     } break;
 
     // Command 0x03 - Stop currently running session. If nay..
@@ -77,18 +86,30 @@ PacketStatus handle_control_command(const SerialPacketsData& command_data,
         logger.error("STOP command: Invalid command data.");
         return PacketStatus::INVALID_ARGUMENT;
       }
-      const bool had_session = !sd::is_session_log_idle();
-      // prot_vars.tmp_session_id[session_id_len] = 0;
-      // Does nothing if not opened.
-      sd::stop_session_log();
-      // const bool opened_ok = sd::open_log_file(prot_vars.tmp_session_id);
+      // const bool had_session = data_recorder::is_log_session_open();
+      const bool had_old_session = data_recorder::is_recording_active();
+      // data_recorder::get_log_session_name(&tmp_old_log_session_name);
+      // Passing an empty session name to indicate to just
+      // close the existing one.
+      // tmp_session_name.clear();
+      // data_recorder::start_log_session(tmp_session_name);
+      data_recorder::stop_recording_session();
+      // const bool opened_ok = data_recorder::open_log_file(prot_vars.tmp_session_id);
       // if (!opened_ok) {
       //   logger.error("Failed to create a SD log file %s",
       //                prot_vars.tmp_session_id);
       //   return PacketStatus::GENERAL_ERROR;
       // }
-      response_data.write_uint8(had_session? 1 : 0);
-      logger.info(had_session? "STOP command: Session stopped." : "STOP command: No session to stop");
+      response_data.write_uint8(had_old_session? 1 : 0);
+      // if (!had_old_session) {
+      //   logger.info("STOP command: stopped session [%s]",
+      //               tmp_old_log_session_name.c_str());
+      //   response_data.write_uint8(1);
+
+      // } else {
+      //   logger.info("STOP command: No session to stop");
+      //   response_data.write_uint8(0);
+      // }
       return PacketStatus::OK;
     } break;
 

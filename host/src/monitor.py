@@ -146,7 +146,7 @@ def update_display(times_millis: List[int], values_grams: List[int]):
     ax.clear()
     # x = times_millis / 1000
     t0 = times_millis[0]
-    x = [(v -t0)/ 1000 for v in times_millis]
+    x = [(v - t0)/ 1000 for v in times_millis]
     y = values_grams
     # x = [v * 2 for v in range(0, len(gram_points))]
     plt.xlabel('Time [ms]')

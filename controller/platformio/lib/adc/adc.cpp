@@ -12,7 +12,7 @@
 #include "io.h"
 #include "logger.h"
 #include "main.h"
-#include "sd.h"
+#include "data_recorder.h"
 #include "serial_packets_client.h"
 #include "spi.h"
 #include "static_queue.h"
@@ -206,7 +206,7 @@ static void spi_send_one_shot(const uint8_t *cmd, uint16_t num_bytes) {
     Error_Handler();
   }
 
-  logger.info("IRQ event: %d", event.id);
+  // logger.info("IRQ event: %d", event.id);
   if (event.id != IrqEventId::EVENT_FULL_COMPLETE) {
     Error_Handler();
   }
@@ -240,10 +240,10 @@ void cmd_write_register(uint8_t reg_index, uint8_t val) {
   spi_send_one_shot(cmd, sizeof(cmd));
 }
 
-void cmd_start_conversion() {
-  static const uint8_t cmd[] = {0x08, 0x00};
-  spi_send_one_shot(cmd, sizeof(cmd));
-}
+// oid cmd_start_conversion() {
+//   static const uint8_t cmd[] = {0x08, 0x00};
+//   spi_send_one_shot(cmd, sizeof(cmd));
+// }v
 
 // Bfr3 points to three bytes with ADC value.
 int32_t decode_int24(const uint8_t *bfr3) {
@@ -360,7 +360,7 @@ void start_continuos_DMA() {
     Error_Handler();
   }
 
-  logger.info("ADC continuos dma started.");
+  logger.info("ADC: continuos DMA started.");
 }
 
 static void setup() {
@@ -495,17 +495,20 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
   // Store data on SD card.
   // io::TEST1.high();
   packet_encoder.encode_log_packet(packet_data, &stuffed_packet);
-  sd::append_to_session_log(stuffed_packet);
+  data_recorder::append_if_recording(stuffed_packet);
 
   // Debugging info.
-  logger.info("ADC %d: %lx, %lx, %lx, %lx, %lx", id,
-              decode_int24(&bfr[kRxDataOffsetInPoint]),
-              decode_int24(&bfr[kRxDataOffsetInPoint + 2 * kDmaBytesPerPoint]),
-              decode_int24(&bfr[kRxDataOffsetInPoint + 4 * kDmaBytesPerPoint]),
-              decode_int24(&bfr[kRxDataOffsetInPoint + 6 * kDmaBytesPerPoint]),
-              decode_int24(&bfr[kRxDataOffsetInPoint + 8 * kDmaBytesPerPoint]));
+  if (true) {
+    logger.info(
+        "ADC %d: %lx, %lx, %lx, %lx, %lx", id,
+        decode_int24(&bfr[kRxDataOffsetInPoint]),
+        decode_int24(&bfr[kRxDataOffsetInPoint + 2 * kDmaBytesPerPoint]),
+        decode_int24(&bfr[kRxDataOffsetInPoint + 4 * kDmaBytesPerPoint]),
+        decode_int24(&bfr[kRxDataOffsetInPoint + 6 * kDmaBytesPerPoint]),
+        decode_int24(&bfr[kRxDataOffsetInPoint + 8 * kDmaBytesPerPoint]));
 
-  logger.info("ADC processed in %lu ms", time_util::millis() - isr_millis);
+    logger.info("ADC processed in %lu ms", time_util::millis() - isr_millis);
+  }
 }
 
 void adc_task_body(void *argument) {

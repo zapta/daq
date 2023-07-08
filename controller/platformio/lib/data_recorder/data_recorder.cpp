@@ -1,4 +1,4 @@
-#include "sd.h"
+#include "data_recorder.h"
 
 // #include <wchar.h>
 // #include <array>
@@ -16,7 +16,7 @@
 // Workaround per https://github.com/artlukm/STM32_FATFS_SDcard_remount
 extern Disk_drvTypeDef disk;
 
-namespace sd {
+namespace data_recorder {
 
 // All vars are protected by the mutex.
 StaticMutex mutex;
@@ -45,21 +45,13 @@ static uint32_t pending_bytes = 0;
 static uint32_t records_written = 0;
 
 // Session name + ".log" suffix.
-constexpr uint32_t kMaxFileNameLen = kMaxSessionNameLen + 4;
+constexpr uint32_t kMaxFileNameLen = RecordingName::kMaxLen + 4;
 
-// Extra char for the terminator. This is a utf16 buffer
-// as required for the long name feature of FATFS.
-static TCHAR temp_log_file_wname[kMaxFileNameLen + 1];
+// Extra char for the terminators. Valid when state
+// is not IDLE.
+// static char current_session_name[kMaxSessionNameLen + 1] = {0};
 
-// // Grab mutex before calling this
-// static bool is_disk_inserted() {
-//   const DSTATUS dstatus = disk_status(SDFatFS.drv);
-
-//   // See http://elm-chan.org/fsw/ff/doc/dstat.html
-//   return (dstatus & (STA_NODISK)) == 0;
-// }
-
-// bool is_disk_inserted() { return io::SD_SWITCH.read(); }
+static RecordingName current_session_name;
 
 // Assumes levle == STATE_OPENED and mutex is grabbed.
 // Tries to write pending bytes to SD.
@@ -74,11 +66,10 @@ static void internal_write_pending_bytes() {
   pending_bytes = 0;
 
   // This number should be a multipe of _MAX_SS.
-  logger.info("Writing to SD %lu bytes", n);
   unsigned int bytes_written;
   FRESULT status = f_write(&SDFile, write_buffer, n, &bytes_written);
   if (status != FRESULT::FR_OK) {
-    logger.error("Error writing to SD log file, status=%d", status);
+    logger.error("Error writing to SD recording file, status=%d", status);
     return;
   }
   if (bytes_written != n) {
@@ -95,17 +86,13 @@ static void internal_write_pending_bytes() {
 
 // Grab mutex before calling this
 // TODO: Change mutexs to be recursive.
-static void internal_close_log_file() {
-  // if (!is_disk_inserted()) {
-  //   logger.error("No SD disk inserted.");
-  // } else {
-  if (state == STATE_OPENED) {
+static void internal_stop_recording() {
+  if (state >= STATE_OPENED) {
     internal_write_pending_bytes();
     f_close(&SDFile);
-    state = STATE_MOUNTED;
   }
 
-  if (state == STATE_MOUNTED) {
+  if (state >= STATE_MOUNTED) {
     // Workaround per https://github.com/artlukm/STM32_FATFS_SDcard_remount
     // disk.is_initialized[SDFatFS.drv] = 0;
 
@@ -113,28 +100,64 @@ static void internal_close_log_file() {
     f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
   }
 
+  if (state == STATE_OPENED) {
+    logger.info("Stopped recording [%s]", current_session_name.c_str());
+  }
+
   state = STATE_IDLE;
   pending_bytes = 0;
   records_written = 0;
+  current_session_name.clear();
 }
 
-bool start_session_log(const char* session_name) {
+void stop_recording_session() {
   MutexScope scope(mutex);
 
-  if (state != STATE_IDLE) {
-    logger.error("Log session already open, state=%d", state);
-    return false;
+  if (state == STATE_IDLE) {
+    logger.info("No session to stop.");
   }
 
-  const size_t n = strlen(session_name);
-  // Allow for '.log' extension.
-  if (n + 4 > kMaxFileNameLen) {
-    logger.error("Session name too long. Can't start.");
-    return false;
-  }
+  // We call the internal stop anyway to make sure all
+  // variables are clear.
+  internal_stop_recording();
+}
 
-  pending_bytes = 0;
-  records_written = 0;
+// Stops the current session, if any, and if new_session_name is not
+// nullptr, tries to start a new session with given name.
+bool start_recording(const RecordingName& new_session_name) {
+  MutexScope scope(mutex);
+
+  internal_stop_recording();
+
+  // if (new_session_name.is_empty()) {
+  //   return true;
+  // }
+
+  // const size_t n = strlen(new_session_name);
+  // if (n > kMaxSessionNameLen) {
+  //   logger.error("Session name too long (%u). Can't start.", n);
+  //   return false;
+  // }
+
+  // static_assert(kMaxSessionNameLen + 1 >= sizeof(current_session_name));
+  // static_assert(current_session_name.kMaxLen >=  kMaxSessionNameLen);
+  if (!current_session_name.set_c_str(new_session_name.c_str())) {
+    // Should not happen since we verified the size.
+    Error_Handler();
+  }
+  // strcpy(current_session_name, new_session_name);
+  // if (!current_session_name.set())
+
+  // // Constuct the UTF16 file name. Allow for '.log' extension.
+  // if (n + 4 > kMaxFileNameLen) {
+  //   logger.error("Session name too long. Can't start. (2).");
+  //   return false;
+  // }
+  // static_assert(sizeof(tmp_log_file_wname)/sizeof(tmp_log_file_wname[0]) >=
+  // kMaxFileNameLen);
+
+  // pending_bytes = 0;
+  // records_written = 0;
 
   //
   // state = STATE_MOUNTED;
@@ -142,56 +165,64 @@ bool start_session_log(const char* session_name) {
   FRESULT status = f_mount(&SDFatFS, (TCHAR const*)SDPath, 0);
   if (status != FRESULT::FR_OK) {
     logger.error("SD f_mount failed. (FRESULT=%d)", status);
-    internal_close_log_file();
+    internal_stop_recording();
     return false;
   }
 
   state = STATE_MOUNTED;
-  // time_util::delay_millis(500);
 
-  static_assert(sizeof(temp_log_file_wname[0]) == 2U);
-  static_assert(sizeof(temp_log_file_wname[0]) == sizeof(TCHAR));
+  // UTF16. Extra char for terminator. Temporary buffer for
+  // opening the session recording file.
+  static TCHAR recording_file_wname[kMaxFileNameLen + 1];
 
+  static_assert(sizeof(recording_file_wname[0]) == 2U);
+  static_assert(sizeof(recording_file_wname[0]) == sizeof(TCHAR));
+  static_assert((sizeof(recording_file_wname) / sizeof(recording_file_wname[0])) >=
+                (RecordingName::kMaxLen + 5));
+
+  const size_t n = new_session_name.len();
+  const char* c_str = new_session_name.c_str();
   unsigned int i;
   for (i = 0; i < n; i++) {
     // Casting utf8 to utf16.
-    temp_log_file_wname[i] = session_name[i];
+    recording_file_wname[i] = c_str[i];
   }
-  temp_log_file_wname[i++] = '.';
-  temp_log_file_wname[i++] = 'l';
-  temp_log_file_wname[i++] = 'o';
-  temp_log_file_wname[i++] = 'g';
-  temp_log_file_wname[i++] = 0;
+  recording_file_wname[i++] = '.';
+  recording_file_wname[i++] = 'l';
+  recording_file_wname[i++] = 'o';
+  recording_file_wname[i++] = 'g';
+  recording_file_wname[i++] = 0;
 
-  // Not expecting buffer overflow since we checked the sizes
+  // Not expecting buffer here overflow since we checked the sizes
   // above, but just in case.
-  if (i > (sizeof(temp_log_file_wname) / sizeof(temp_log_file_wname[0]))) {
+  if (i > (sizeof(recording_file_wname) / sizeof(recording_file_wname[0]))) {
     Error_Handler();
   }
 
-  status = f_open(&SDFile, temp_log_file_wname, FA_CREATE_ALWAYS | FA_WRITE);
+  status = f_open(&SDFile, recording_file_wname, FA_CREATE_ALWAYS | FA_WRITE);
   if (status != FRESULT::FR_OK) {
     logger.error("SD f_open failed. (FRESULT=%d)", status);
-    internal_close_log_file();
+    internal_stop_recording();
     return false;
   }
   state = STATE_OPENED;
+  logger.info("Started recording [%s]", current_session_name.c_str());
 
   return true;
 }
 
 // Does nothing if already closed.
-void stop_session_log() {
-  MutexScope scope(mutex);
+// void stop_session_log() {
+//   MutexScope scope(mutex);
 
-  internal_close_log_file();
-}
+//   internal_close_log_file();
+// }
 
-void append_to_session_log(const StuffedPacketBuffer& packet) {
+void append_if_recording(const StuffedPacketBuffer& packet) {
   MutexScope scope(mutex);
 
   if (packet.had_write_errors()) {
-    logger.error("SD a log packet has write errors");
+    logger.error("Trying to record a log record with write errors");
     return;
   }
 
@@ -207,7 +238,7 @@ void append_to_session_log(const StuffedPacketBuffer& packet) {
 
   // Check state.
   if (state != STATE_OPENED) {
-    logger.error("Can't write log file, (state=%d)", state);
+    logger.error("Can't write to recorder file, (state=%d)", state);
     return;
   }
 
@@ -261,7 +292,7 @@ void append_to_session_log(const StuffedPacketBuffer& packet) {
   }
 
   records_written++;
-  logger.info("Wrote SD record %lu, size=%hu", records_written, packet_size);
+  // logger.info("Wrote SD record %lu, size=%hu", records_written, packet_size);
 
   // printf("\n");
   // for (uint32_t i = 0; i < n; i++) {
@@ -275,14 +306,30 @@ void append_to_session_log(const StuffedPacketBuffer& packet) {
   // }
 }
 
-bool is_session_log_open_ok() {
+bool is_recording_active() {
   MutexScope scope(mutex);
   return (state == STATE_OPENED);
 }
 
-bool is_session_log_idle() {
-  MutexScope scope(mutex);
-  return state == STATE_IDLE;
+void get_current_recording_name(RecordingName* name) {
+  name->set_c_str(current_session_name.c_str());
 }
 
-}  // namespace sd
+void dump_summary() {
+  MutexScope scope(mutex);
+
+  if (state == STATE_IDLE) {
+    logger.info("Data Recorder is off.");
+    return;
+  }
+
+  logger.info("Recording [%s] has %lu records.",
+              current_session_name.c_str(), records_written);
+}
+
+// bool is_session_log_idle() {
+//   MutexScope scope(mutex);
+//   return state == STATE_IDLE;
+// }
+
+}  // namespace data_recorder

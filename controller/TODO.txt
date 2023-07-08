@@ -1,23 +1,22 @@
 
-Remember session name in sd.cpp and report session name on stop.
-
-Report periodically session name and its accomulating time.
-
-why sometimes need to reset the controller to have the ADC working.
-
-
-Convert thermistors to C.
+Resoved the CP2102 version and TX/RX leds.
 
 
 Change static mutex to use recursive mutexs.
 
 
+
+
+-------
+
+
+Convert thermistors to C.
+
+
+
+
+
 why defining PD4 as pullup instead of pulldown causes sd file open to fail?
-
-
-
----
-
 
 Write script to fix openocd.
 

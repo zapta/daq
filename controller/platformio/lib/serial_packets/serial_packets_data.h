@@ -9,6 +9,7 @@
 #include "logger.h"
 #include "serial_packets_consts.h"
 #include "serial_packets_crc.h"
+#include "static_string.h"
 
 template <uint16_t N>
 class SerialPacketsBuffer {
@@ -156,12 +157,14 @@ class SerialPacketsBuffer {
   }
 
   // TODO: Add unit tests.
-  void read_str(char* buffer, uint32_t buffer_size) const {
+  void read_str(AbstractStaticString* str) const {
+    str->clear();
+
     // Pre conditions for reading the length byte.
     if (_had_read_errors || unread_bytes() < 1) {
-      if (buffer_size >= 1) {
-        buffer[0] = 0;
-      }
+      // if (buffer_size >= 1) {
+      //   buffer[0] = 0;
+      // }
       _had_read_errors = true;
       return;
     }
@@ -169,17 +172,19 @@ class SerialPacketsBuffer {
     // Read length byte and check preconditions for reading
     // the string bytes.
     const uint16_t n = (uint16_t)_buffer[_bytes_read++];
-    if (n > unread_bytes() || n >= buffer_size) {
-      if (buffer_size >= 1) {
-        buffer[0] = 0;
-      }
+    // const uint16_t dst_size = str->max_len();
+    if (n > unread_bytes() || n > str->max_len()) {
+      // if (buffer_size >= 1) {
+      //   buffer[0] = 0;
+      // }
       _had_read_errors = true;
       return;
     }
 
     // Read the string bytes and append a terminator.
-    memcpy(buffer, &_buffer[_bytes_read], n);
-    buffer[n] = 0;
+    // memcpy(buffer, &_buffer[_bytes_read], n);
+    str->set((char*)&_buffer[_bytes_read], n);
+    // buffer[n] = 0;
     _bytes_read += n;
     // memset(bytes_buffer, 0, bytes_to_read);
     //   _had_read_errors = true;

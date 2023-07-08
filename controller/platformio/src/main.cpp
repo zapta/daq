@@ -11,7 +11,7 @@
 #include "host_link.h"
 #include "io.h"
 #include "logger.h"
-#include "sd.h"
+#include "data_recorder.h"
 #include "serial.h"
 #include "spi.h"
 #include "static_task.h"
@@ -34,7 +34,7 @@ void app_main() {
   __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_1, 400);
   HAL_TIM_Base_Start_IT(&htim12);
 
-  // if (!sd::open_log_file("default.log")) {
+  // if (!data_recorder::open_log_file("default.log")) {
   //   logger.error("Failed to open default log file.");
   // }
 
@@ -46,19 +46,19 @@ void app_main() {
     Error_Handler();
   }
 
-  for (int i = 1;; i++) {
-    // adc::dump_state();
-    io::LED.toggle();
-    // Send a periodic test command.
-    // data.clear();
-    // data.write_uint32(0x12345678);
-    // const PacketStatus status = host_link::client.sendCommand(0x20, data);
-    // logger.info("%04d: Recieced command respond, status = %d, size=%hu", i, status,
-    //             data.size());
-    if (!sd::is_session_log_idle() && !sd::is_session_log_open_ok()) {
-      logger.error("SD log file not opened.");
+  Elappsed report_timer;
+
+  for (uint32_t i = 0;; i++) {
+    const bool is_logging = data_recorder::is_recording_active();
+    const bool blink = is_logging ? i & 0x01 : i & 0x04;
+    io::LED.set(blink);
+
+    if (report_timer.elapsed_millis() >= 5000) {
+      report_timer.reset();
+      data_recorder::dump_summary();
     }
-    // logger.info("SD %s.", sd::is_disk_inserted()? "INSERTED" : "NOT INSERTED");
-    time_util::delay_millis(500);
+
+ 
+    time_util::delay_millis(100);
   }
 }
