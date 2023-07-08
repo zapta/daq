@@ -1,6 +1,0 @@
-
-Add verification of time interval between ADC reporting message (detecting missing data)
-
-Add to the host program flags to control if noise and fft are displayed.
-
-

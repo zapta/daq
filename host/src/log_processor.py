@@ -80,16 +80,15 @@ def session_span_secs() -> float:
     return (last_packet_end_time_millis - first_packet_start_time) / 1000
 
 
-def get_output_file(chan_name: str, header: str, raw=False):
+def get_output_file(chan_name: str, header: str):
     """Header is used only first call per file"""
-    if (chan_name, raw) in output_files_dict:
-        return output_files_dict[(chan_name, raw)]
-    raw_suffix = "_raw" if raw else ""
-    path = os.path.join(args.output_dir, f"_channel_{chan_name.lower()}{raw_suffix}.csv")
-    logger.info(f"Creating output file: {path}")
+    if chan_name in output_files_dict:
+        return output_files_dict[chan_name]
+    path = os.path.join(args.output_dir, f"_channel_{chan_name.lower()}.csv")
+    # logger.info(f"Creating output file: {path}")
     f = open(path, "w")
     f.write(header + "\n")
-    output_files_dict[(chan_name, raw)] = f
+    output_files_dict[chan_name] = f
     return f
 
 
@@ -100,6 +99,7 @@ def process_packet(packet: DecodedLogPacket):
     parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(packet.data)
     if first_packet_start_time is None:
         first_packet_start_time = parsed_log_packet.start_time_millis()
+        logger.info(f"Session base time millis: {first_packet_start_time}")
     last_packet_end_time_millis = parsed_log_packet.end_time_millis()
     for chan_data in parsed_log_packet.channels():
         chan_data_count += 1
@@ -109,24 +109,26 @@ def process_packet(packet: DecodedLogPacket):
         chan_name = chan_data.chan_name()
         # logger.info(f"chan_name = {chan_name}")
         if chan_name.startswith("LC"):
-            f = get_output_file(f"{chan_name}", f"T[s],{chan_name}[g]")
-            f_raw = get_output_file(f"{chan_name}", f"T[ms],{chan_name}[tick]", raw=True)
+            f = get_output_file(f"{chan_name}", f"T[s],{chan_name}[adc],{chan_name}[g]")
+            # f_raw = get_output_file(f"{chan_name}", f"T[ms],{chan_name}[tick]", raw=True)
             load_cell_chan_config = sys_config.get_load_cell_config(chan_name)
             for time, value in chan_data.timed_values():
                 millis_in_session = time - first_packet_start_time
                 g = load_cell_chan_config.adc_reading_to_grams(value)
                 point_count += 1
-                f.write(f"{millis_in_session/1000:.3f},{g:.3f}\n")
-                f_raw.write(f"{millis_in_session},{value}\n")
+                f.write(f"{millis_in_session/1000:.3f},{value},{g:.3f}\n")
+                # f_raw.write(f"{millis_in_session},{value}\n")
         elif chan_name.startswith("THRM"):
-            f = get_output_file(f"{chan_name}", f"T[s],{chan_name}[C]")
-            f_raw = get_output_file(f"{chan_name}", f"T[s],{chan_name}[C]", raw=True)
+            f = get_output_file(f"{chan_name}", f"T[s],{chan_name}[adc],{chan_name}[R],{chan_name}[C]")
+            # f_raw = get_output_file(f"{chan_name}", f"T[s],{chan_name}[C]", raw=True)
+            thermistor_chan_config = sys_config.get_thermistor_config(chan_name)
             for time, value in chan_data.timed_values():
                 millis_in_session = time - first_packet_start_time
+                r = thermistor_chan_config.adc_reading_to_ohms(value)
                 c = value  # TODO: Convert to C
                 point_count += 1
-                f.write(f"{millis_in_session/1000:.3f},{c:.3f}\n")
-                f_raw.write(f"{millis_in_session},{value}\n")
+                f.write(f"{millis_in_session/1000:.3f},{value},{r:.2f},{c:.3f}\n")
+                # f_raw.write(f"{millis_in_session},{value}\n")
         else:
             raise RuntimeError(f"Unknown channel: {chan_name}")
 
@@ -134,13 +136,12 @@ def process_packet(packet: DecodedLogPacket):
 def report_status():
     global byte_count, packet_count, chan_data_count, point_count
     logger.info(
-        f"Bytes: {byte_count:,}, packets: {packet_count:,}, chan_datas: {chan_data_count}, values: {point_count:,}, {session_span_secs():.3f} secs"
+        f"Bytes: {byte_count:,}, packets: {packet_count:,}, chan_datas: {chan_data_count}, values: {point_count:,}, span: {session_span_secs():.3f} secs"
     )
 
 
 def main():
     global byte_count, packet_count, point_count, sys_config
-    last_report_time = time.time()
     sys_config = SysConfig()
     sys_config.load_from_file("sys_config.toml")
     logger.info("Log processor started.")
@@ -153,9 +154,9 @@ def main():
     assert not existing_files, f"Found in output dir preexisting files with prefix 'channel_': {existing_files[0]}"
     decoder = PacketDecoder()
     in_f = open(args.input_file, "rb")
-    # out_f = open(args.output_file, "w")
-    # out_f.write("time[ms], chan, value\n")
+    last_report_time = time.time()
     while (bfr := in_f.read(1000)):
+        # Report progress every 2 secs.
         if time.time() - last_report_time > 2.0:
             last_report_time = time.time()
             report_status()

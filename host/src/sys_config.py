@@ -18,6 +18,23 @@ class LoadCellChannelConfig:
         return (adc_reading - self.__offset) * self.__scale
 
 
+class ThermistorChannelConfig:
+    """Configuration of a thermistor channel."""
+
+    def __init__(self, chan_name: str, short_reading: int, open_reading: int, r_series: float):
+        self.__chan_name = chan_name
+        self.__short_reading = short_reading
+        self.__open_reading = open_reading
+        self.__r_series = r_series
+
+    def __str__(self):
+        return f"Thermistor {self.__chan_name} config: short=0x{self.__short_reading:x}, open=0x{self.__open_reading}, r_series{self.__r_series}"
+
+    def adc_reading_to_ohms(self, adc_reading: int) -> float:
+        ratio = (adc_reading - self.__short_reading) / (self.__open_reading - self.__short_reading)
+        return (ratio * self.__r_series) / (1 - ratio)
+
+
 class SysConfig:
     """System configuration from a TOML config file."""
 
@@ -40,5 +57,12 @@ class SysConfig:
         scale = channel["scale"]
         return LoadCellChannelConfig(chan_name, offset, scale)
       
+    def get_thermistor_config(self, chan_name: str) -> ThermistorChannelConfig:
+        channel = self.__channels[chan_name]
+        short_reading = channel["short_reading"]
+        open_reading = channel["open_reading"]
+        r_series = channel["r_series"]
+        return ThermistorChannelConfig(chan_name, short_reading, open_reading, r_series)
+
     def get_data_link_port(self) -> str:
-      return self.__toml_dict["data_link"]["port"]
+        return self.__toml_dict["data_link"]["port"]
