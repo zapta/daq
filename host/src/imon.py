@@ -15,7 +15,9 @@ import numpy as np
 #from pyqtgraph.Qt import QtWidgets
 # import pyqtgraph.Qt as Qt
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
-from typing import Tuple, Optional
+from pyqtgraph import mkPen
+
+from typing import Tuple, Optional, List
 
 # from pyqtgraph.Qt.QtCore import AlignmentFlag
 # import QtCore
@@ -80,14 +82,57 @@ async def command_async_callback(endpoint: int, data: PacketData) -> Tuple[int, 
 async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, PacketData]:
     logger.info(f"Received message: [%d] %s", endpoint, data.hex_str(max_bytes=10))
     if endpoint == 10:
-        logger.info("Recieved a message on port 10")
-        # handle_log_message(data)
-        return
+        parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(data)
+        assert parsed_log_packet.num_channels() == 4
+        load_cell_data: ChannelData = parsed_log_packet.channel("LC1")
+        load_cell_chan_config = sys_config.get_load_cell_config("LC1")
+        times_secs = []
+        values_g = []
+        for time_millis, adc_value in load_cell_data.timed_values():
+            times_secs.append(time_millis/1000)
+            values_g.append(load_cell_chan_config.adc_reading_to_grams(adc_value))
+        process_new_load_cell_points(load_cell_data.chan_name(), times_secs, values_g)
 
 
 async def event_async_callback(event: PacketsEvent) -> None:
     logger.info("%s event", event)
 
+DISPLAY_NUM_POINTS = 1000
+
+# Load cell values in grams.
+display_points_grams = []
+# Load
+display_times_secs = []
+
+def process_new_load_cell_points(chan_name: str, times_secs: List[float], values_g: List[float]) -> None:
+    global display_points_grams, display_times_secs
+    assert len(times_secs) == len(values_g)
+    # load_cell_chan_config = sys_config.get_load_cell_config(chan_name)
+    # values_g = [load_cell_chan_config.adc_reading_to_grams(v) for v in adc_values]
+    # times_secs = 
+    display_times_secs.extend(times_secs)
+    display_times_secs = display_times_secs[-DISPLAY_NUM_POINTS:]
+    display_points_grams.extend(values_g)
+    display_points_grams = display_points_grams[-DISPLAY_NUM_POINTS:]
+    # If we accumulated enough points then display the data.
+    # if len(display_points_grams) >= DISPLAY_NUM_POINTS:
+    update_display()
+    
+def update_display():
+  global display_points_grams, display_times_secs, plot1
+  # plot1.plot(x, y, pen=None, symbol='o')
+  tn = display_times_secs[-1]
+  x = [(v - tn) for v in display_times_secs]
+  y = display_points_grams
+  plot1.clear()
+  # plt.xlabel('Time [ms]')
+  # plt.ylabel('Force [g]')
+  # plt.xlim(min(x), max(x))
+  # plt.ylim(-100, 3000)
+  # plot1.setLimits(yMin=0, yMax=1000)
+  logger.info(f"plot type: {type(plot1)}")
+  plot1.plot(x, y, pen=pyqtgraph.mkPen("red", width=2), antialias=True)
+  # plot1.plot(x, y, antialias=True)
 
 async def init_client()->None:
   global sys_config, port, client
@@ -99,6 +144,7 @@ async def init_client()->None:
                                 event_async_callback, baudrate=576000)
   connected = await client.connect()
   assert connected, f"Could open port {port}"
+  
   
 main_event_loop.run_until_complete(init_client())
 
@@ -277,16 +323,22 @@ plot1: pyqtgraph.PlotItem = win.addPlot(name="Plot1",  colspan=5)
 plot1.setLabel('left', 'Force', "g")
 # plot.setXRange(-10, 0)
 plot1.showGrid(False, True, 0.7)
-x = np.random.normal(size=1000)
-y = np.random.normal(size=1000)
-plot1.plot(x, y, pen=None, symbol='o')
+# plot1.setLimits(yMin=0, yMax=1000)
+plot1.setXRange(-1.8, 0)
+plot1.setYRange(-100, 6100)
+# plot1.setPen("red", width=2)
+
+
+# x = np.random.normal(size=1000)
+# y = np.random.normal(size=1000)
+# plot1.plot(x, y, pen=None, symbol='o')
 # plot.setAutoPan(x=True)
 # graph1 = Chart(plot, pyqtgraph.mkPen('yellow'))
 
 # Graph 2 - Force noise
 win.nextRow()
 plot2: pyqtgraph.PlotItem = win.addPlot(name="Plot2", colspan=5)
-plot2.setLabel('left', 'Force AC', "g")
+plot2.setLabel('left', 'Temp', "C")
 # plot.setXRange(-10, 0)
 plot2.showGrid(False, True, 0.7)
 # plot.setAutoPan(x=True)
@@ -294,12 +346,12 @@ plot2.showGrid(False, True, 0.7)
 # graph2 = Chart(plot, pyqtgraph.mkPen('orange'))
 
 # Graph 3 - Noise fft.
-win.nextRow()
-plot3: pyqtgraph.PlotItem = win.addPlot(name="Plot3", colspan=5)
-plot3.setLabel('left', 'Rel Magnitude')
-# plot.setXRange(-10, 0)
-# plot.setYRange(0, 2)
-plot3.showGrid(False, True, 0.7)
+# win.nextRow()
+# plot3: pyqtgraph.PlotItem = win.addPlot(name="Plot3", colspan=5)
+# plot3.setLabel('left', 'Rel Magnitude')
+# # plot.setXRange(-10, 0)
+# # plot.setYRange(0, 2)
+# plot3.showGrid(False, True, 0.7)
 # plot.setAutoPan(x=True)
 # plot.setXLink('Plot1')  # synchronize time axis
 # graph3 = Chart(plot, pyqtgraph.mkPen('green'))
