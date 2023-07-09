@@ -1,6 +1,6 @@
 #!python
 
-
+# A python program to monitor and control the data acquisition.
 
 import argparse
 import asyncio
@@ -10,24 +10,14 @@ import signal
 import sys
 import os
 import time
-import pyqtgraph
-import numpy as np
-#from pyqtgraph.Qt import QtWidgets
-# import pyqtgraph.Qt as Qt
-from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
-from pyqtgraph import mkPen
+import pyqtgraph as pg
 
+# from pyqtgraph.Qt.QtCore import QString
+from pyqtgraph.Qt import QtWidgets
+from pyqtgraph import mkPen, TextItem
 from typing import Tuple, Optional, List
-
-# from pyqtgraph.Qt.QtCore import AlignmentFlag
-# import QtCore
-# from pyqtgraph import QtCore
-# from pyqtgraph  import QtCore
-# from pyqtgraph.
-from collections import deque
-import atexit
 from log_parser import LogPacketsParser, ChannelData, ParsedLogPacket
-from sys_config import SysConfig, LoadCellChannelConfig
+from sys_config import SysConfig, LoadCellChannelConfig, ThermistorChannelConfig
 
 # A workaround to avoid auto formatting.
 # For using the local version of serial_packet. Comment out if
@@ -37,33 +27,8 @@ from sys_config import SysConfig, LoadCellChannelConfig
 from serial_packets.client import SerialPacketsClient
 from serial_packets.packets import PacketStatus, PacketsEvent, PacketData
 
-# NOTE: Color names list here https://matplotlib.org/stable/gallery/color/named_colors.html
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(relativeCreated)07d %(levelname)-7s %(filename)-10s: %(message)s",
-)
-logger = logging.getLogger("main")
-
-
-# We use a single event loop for all asyncio operatios.
-main_event_loop = asyncio.get_event_loop()
-
-# Initialized later.
-sys_config: SysConfig = None
-port: str = None
-client: SerialPacketsClient = None
-
-
-# Initialized by main.
-# sys_config: SysConfig = None
-
-
-
-
-log_packets_parser = LogPacketsParser()
-
-
+# Allows to stop the program by typing ctrl-c.
+signal.signal(signal.SIGINT, lambda number, frame: sys.exit())
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--sys_config",
@@ -72,177 +37,102 @@ parser.add_argument("--sys_config",
                     help="Path to system configuration file.")
 args = parser.parse_args()
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(relativeCreated)07d %(levelname)-7s %(filename)-10s: %(message)s",
+)
+logger = logging.getLogger("main")
 
-async def command_async_callback(endpoint: int, data: PacketData) -> Tuple[int, PacketData]:
-    logger.info(f"Received command: [%d] %s", endpoint, data.hex_str(max_bytes=10))
-    # In this example we don't expect incoming commands at the master side.
-    return (PacketStatus.UNHANDLED.value, PacketData())
+# We use a single event loop for all asyncio operatios.
+main_event_loop = asyncio.get_event_loop()
+
+# TODO: Move to a common place.
+CONTROL_ENDPOINT = 0x01
+
+# Initialized later.
+sys_config: SysConfig = None
+serial_port: str = None
+serial_packets_client: SerialPacketsClient = None
+
+# Two parallel lists with load cell data to display. They contains
+# up to the MAX_LOAD_CELL_DISPLAY_POINTS last points.
+MAX_LOAD_CELL_DISPLAY_POINTS = 1000
+load_cell_display_points_grams = []
+load_cell_display_times_secs = []
+
+# Indicate pending button actions.
+pending_start_button_click = False
+pending_stop_button_click = False
+
+# Used to parse the incoming data log messages from the device.
+log_packets_parser = LogPacketsParser()
+
+# Initial window size in pixels.
+initial_window_width = 700
+initial_window_height = 500
+window_title = "DAQ Monitor"
+
+plot1: pg.PlotItem = None
+plot2: pg.PlotItem = None
+button1: QtWidgets.QPushButton = None
+button2: QtWidgets.QPushButton = None
+window = None
 
 
 async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, PacketData]:
+    """Callback from the serial packets clients for incoming messages."""
     logger.info(f"Received message: [%d] %s", endpoint, data.hex_str(max_bytes=10))
     if endpoint == 10:
         parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(data)
         assert parsed_log_packet.num_channels() == 4
+        # Process the load cell channel
         load_cell_data: ChannelData = parsed_log_packet.channel("LC1")
-        load_cell_chan_config = sys_config.get_load_cell_config("LC1")
+        load_cell_chan_config: LoadCellChannelConfig = sys_config.get_load_cell_config("LC1")
         times_secs = []
         values_g = []
         for time_millis, adc_value in load_cell_data.timed_values():
-            times_secs.append(time_millis/1000)
+            times_secs.append(time_millis / 1000)
             values_g.append(load_cell_chan_config.adc_reading_to_grams(adc_value))
         process_new_load_cell_points(load_cell_data.chan_name(), times_secs, values_g)
+        update_display()
 
 
-async def event_async_callback(event: PacketsEvent) -> None:
-    logger.info("%s event", event)
-
-DISPLAY_NUM_POINTS = 1000
-
-# Load cell values in grams.
-display_points_grams = []
-# Load
-display_times_secs = []
-
-def process_new_load_cell_points(chan_name: str, times_secs: List[float], values_g: List[float]) -> None:
-    global display_points_grams, display_times_secs
+def process_new_load_cell_points(chan_name: str, times_secs: List[float],
+                                 values_g: List[float]) -> None:
+    """Called on arrival on new load cell data points."""
+    global load_cell_display_points_grams, load_cell_display_times_secs
     assert len(times_secs) == len(values_g)
-    # load_cell_chan_config = sys_config.get_load_cell_config(chan_name)
-    # values_g = [load_cell_chan_config.adc_reading_to_grams(v) for v in adc_values]
-    # times_secs = 
-    display_times_secs.extend(times_secs)
-    display_times_secs = display_times_secs[-DISPLAY_NUM_POINTS:]
-    display_points_grams.extend(values_g)
-    display_points_grams = display_points_grams[-DISPLAY_NUM_POINTS:]
-    # If we accumulated enough points then display the data.
-    # if len(display_points_grams) >= DISPLAY_NUM_POINTS:
-    update_display()
-    
+    load_cell_display_times_secs.extend(times_secs)
+    load_cell_display_points_grams.extend(values_g)
+    # Keep only the last MAX_LOAD_CELL_DISPLAY_POINTS points.
+    load_cell_display_times_secs = load_cell_display_times_secs[-MAX_LOAD_CELL_DISPLAY_POINTS:]
+    load_cell_display_points_grams = load_cell_display_points_grams[-MAX_LOAD_CELL_DISPLAY_POINTS:]
+
+
 def update_display():
-  global display_points_grams, display_times_secs, plot1
-  # plot1.plot(x, y, pen=None, symbol='o')
-  tn = display_times_secs[-1]
-  x = [(v - tn) for v in display_times_secs]
-  y = display_points_grams
-  plot1.clear()
-  # plt.xlabel('Time [ms]')
-  # plt.ylabel('Force [g]')
-  # plt.xlim(min(x), max(x))
-  # plt.ylim(-100, 3000)
-  # plot1.setLimits(yMin=0, yMax=1000)
-  logger.info(f"plot type: {type(plot1)}")
-  plot1.plot(x, y, pen=pyqtgraph.mkPen("red", width=2), antialias=True)
-  # plot1.plot(x, y, antialias=True)
+    global load_cell_display_points_grams, load_cell_display_times_secs, plot1
 
-async def init_client()->None:
-  global sys_config, port, client
-  sys_config = SysConfig()
-  assert args.sys_config is not None
-  sys_config.load_from_file(args.sys_config)
-  port = sys_config.get_data_link_port()
-  client = SerialPacketsClient(port, command_async_callback, message_async_callback,
-                                event_async_callback, baudrate=576000)
-  connected = await client.connect()
-  assert connected, f"Could open port {port}"
-  
-  
-main_event_loop.run_until_complete(init_client())
+    # Update load cell graph.
+    tn = load_cell_display_times_secs[-1]
+    x = [(v - tn) for v in load_cell_display_times_secs]
+    y = load_cell_display_points_grams
+    plot1.clear()
+    plot1.plot(x, y, pen=pg.mkPen("red", width=2), antialias=True)
 
 
-
-# Set latter when we connect to the device.
-# pro/be = None
-
-# After reset we ignore a few state notification to clear up
-# the notification pipeline.
-# states_to_drop = 0
-
-
-# def atexit_handler():
-#     global states_to_drop
-#     # Stop processing of new incoming notifications.
-#     states_to_drop = 99999
-#     connections.atexit_handler(probe, main_event_loop)
-#     # NOTE: This force exit with a fixed OK code, as a workaround for Mac OSC
-#     # zsh which prints 'zsh: trace trap  python3 analyzer.py' when exiting
-#     # the pyqtgraph GUI.This shorts-circuit any additional atexit handlers,
-#     # but should be a problem since this atexit handler is the first one registered (?)
-#     # and thus the last to be executed.
-#     os._exit(0)
-
-
-# atexit.register(atexit_handler)
-
-# Allows to stop the program by typing ctrl-c.
-signal.signal(signal.SIGINT, lambda number, frame: sys.exit())
-
-# Print environment info for debugging.
-# print(f"OS: {platform.platform()}", flush=True)
-# print(f"Platform:: {platform.uname()}", flush=True)
-# print(f"Python {sys.version}", flush=True)
-
-# Command line flags.
-# parser = argparse.ArgumentParser()
-
-# parser.add_argument('--scan',
-#                     dest="scan",
-#                     default=False,
-#                     action=argparse.BooleanOptionalAction,
-#                     help="If specified, scan for devices and exit.")
-
-# parser.add_argument("--device",
-#                     dest="device",
-#                     default=None,
-#                     help="Optional, the name or nickname of the device to connect to.")
-
-# parser.add_argument("--set-nickname",
-#                     dest="set_nickname",
-#                     default=None,
-#                     help="If true, update the device to have the given nickname and exit.'")
-
-# parser.add_argument("--max-amps",
-#                     dest="max_amps",
-#                     type=float,
-#                     default=2.0,
-#                     help="Max current display.")
-# parser.add_argument("--units", dest="units", default="steps", help="Units of movements.")
-# parser.add_argument("--steps-per-unit",
-#                     dest="steps_per_unit",
-#                     type=float,
-#                     default=1.0,
-#                     help="Steps per unit")
-# # Per https://github.com/hbldh/bleak/issues/1223 client.disconnect() may be
-# # problematic on some systems, so we provide this heuristics as a workaround,
-# parser.add_argument("--cleanup-forcing",
-#                     dest="cleanup_forcing",
-#                     default=None,
-#                     action=argparse.BooleanOptionalAction,
-#                     help="Specifies if to explicitly close the connection on program exit.")
-# args = parser.parse_args()
-
-# ProbeStates from the device which are waiting to be processed.
-# Keeping up to a large enough number to cover the display in case of
-# a very long pause.
-# pending_states = deque(maxlen=600)
-
-# Used to slightly smooth the abs current signal.
-# amps_abs_filter = Filter(0.5)
-
-pending_start = False
-
-pending_stop = False
-
-# pause_enabled = False
-
-# Indicates a pending request to toggle direction.
-# pending_direction_toggle = False
-
-# Capture divider values to toggle through. Modify as desired..
-# capture_dividers = [1, 2, 5, 10, 20]
-# The last divider that was set in the device.
-# last_set_capture_divider = None
-# # The current capture divider, with an arbitrary default.
-# capture_divider = capture_dividers[2]
+async def init_client() -> None:
+    global sys_config, serial_port, serial_packets_client
+    sys_config = SysConfig()
+    assert args.sys_config is not None
+    sys_config.load_from_file(args.sys_config)
+    serial_port = sys_config.get_data_link_port()
+    serial_packets_client = SerialPacketsClient(serial_port,
+                                                command_async_callback=None,
+                                                message_async_callback=message_async_callback,
+                                                event_async_callback=None,
+                                                baudrate=576000)
+    connected = await serial_packets_client.connect()
+    assert connected, f"Could open port {serial_port}"
 
 
 async def do_nothing():
@@ -250,484 +140,166 @@ async def do_nothing():
     None
 
 
-def on_stop_button():
-  logger.info("STOP button pressed")
-  
 def on_start_button():
-  logger.info("START button pressed")
-  
-# A special case where the user asked to just scan and exit.
-# if args.scan:
-#     asyncio.run(ble_util.scan_and_dump())
-#     print("Scanning done.", flush=True)
-#     sys.exit()
-
-# Connect to the probe.
-# logging.basicConfig(level=logging.INFO)
-# probe = main_event_loop.run_until_complete(connections.connect_to_probe(args.device))
-# if not probe:
-#     # NOTE: Error message already been printed by connect_to_probe().
-#     sys.exit()
-
-# if args.set_nickname is not None:
-#     # NOTE: Writing an empty nickname is equivalent to deleting it.
-#     if not ble_util.is_valid_nickname(args.set_nickname, empty_ok=True):
-#         print(f"Invalid --set-nickname value: [{args.set_nickname}].")
-#         sys.exit()
-#     main_event_loop.run_until_complete(
-#         probe.write_command_set_nickname(args.set_nickname, response=True))
-#     print(f"Device updated with nickname [{args.set_nickname}].")
-#     sys.exit()
-
-# An object that tracks the incremental fetch of the capture
-# signal. We don't perform all of them at once to avoid choppy
-# state chart updates.
-# capture_signal_fetcher = CaptureSignalFetcher(probe)
-
-# Here we are connected successfully to the BLE device. Start the GUI.
-
-# Desired window size.
-win_width = 700
-win_height = 500
-
-## Switch to using white background and black foreground
-pyqtgraph.setConfigOption('background', 'w')
-pyqtgraph.setConfigOption('foreground', 'k')
-
-# We set the actual size later. This is a workaround to force an
-# early compaction of the buttons row.
-win = pyqtgraph.GraphicsLayoutWidget(show=True, size=[win_width, win_height])
-# title = f"BLE Stepper Motor Analyzer [{device_address}]"
-# title = f"3D DAQ Monitor"
-# if args.device_nickname:
-# if probe.nickname():
-#     title += f" [{probe.nickname()}]"
-win.setWindowTitle("3D DAQ Monitor")
-
-# Layout class doc: https://doc.qt.io/qt-5/qgraphicsgridlayout.html
-
-win.ci.layout.setColumnPreferredWidth(0, 180)
-win.ci.layout.setColumnPreferredWidth(1, 180)
-win.ci.layout.setColumnPreferredWidth(2, 180)
-win.ci.layout.setColumnPreferredWidth(3, 180)
-win.ci.layout.setColumnPreferredWidth(4, 180)
-
-# win.ci.layout.setColumnStretchFactor(0, 1)
-# win.ci.layout.setColumnStretchFactor(1, 1)
-# win.ci.layout.setColumnStretchFactor(2, 1)
-# win.ci.layout.setColumnStretchFactor(3, 1)
-# win.ci.layout.setColumnStretchFactor(4, 1)
-
-# Graph 1 - Force vs time.
-plot1: pyqtgraph.PlotItem = win.addPlot(name="Plot1",  colspan=5)
-plot1.setLabel('left', 'Force', "g")
-# plot.setXRange(-10, 0)
-plot1.showGrid(False, True, 0.7)
-# plot1.setLimits(yMin=0, yMax=1000)
-plot1.setXRange(-1.8, 0)
-plot1.setYRange(-100, 6100)
-# plot1.setPen("red", width=2)
+    global pending_start_button_click
+    logger.info("START button pressed")
+    pending_start_button_click = True
 
 
-# x = np.random.normal(size=1000)
-# y = np.random.normal(size=1000)
-# plot1.plot(x, y, pen=None, symbol='o')
-# plot.setAutoPan(x=True)
-# graph1 = Chart(plot, pyqtgraph.mkPen('yellow'))
-
-# Graph 2 - Force noise
-win.nextRow()
-plot2: pyqtgraph.PlotItem = win.addPlot(name="Plot2", colspan=5)
-plot2.setLabel('left', 'Temp', "C")
-# plot.setXRange(-10, 0)
-plot2.showGrid(False, True, 0.7)
-# plot.setAutoPan(x=True)
-# plot.setXLink('Plot1')  # synchronize time axis
-# graph2 = Chart(plot, pyqtgraph.mkPen('orange'))
-
-# Graph 3 - Noise fft.
-# win.nextRow()
-# plot3: pyqtgraph.PlotItem = win.addPlot(name="Plot3", colspan=5)
-# plot3.setLabel('left', 'Rel Magnitude')
-# # plot.setXRange(-10, 0)
-# # plot.setYRange(0, 2)
-# plot3.showGrid(False, True, 0.7)
-# plot.setAutoPan(x=True)
-# plot.setXLink('Plot1')  # synchronize time axis
-# graph3 = Chart(plot, pyqtgraph.mkPen('green'))
-
-# NOTE: See graph configuration params here
-# https://pyqtgraph.readthedocs.io/en/latest/api_reference/graphicsItems/viewbox.html
-
-# Graph 4 - Current Histogram.
-# win.nextRow()
-# plot4 = win.addPlot(name="Plot4")
-# plot4.setLabel('left', 'Current', 'A')
-# plot4.setLabel('bottom', 'Speed', f'{args.units}/s')
-# plot4.setLimits(yMin=0)
-# plot4.setYRange(0, args.max_amps)
-# graph4 = pyqtgraph.BarGraphItem(x=[0], height=[0], width=0.3, brush='yellow')
-# plot4.addItem(graph4)
-
-# Graph 5 - Time Histogram.
-# plot5 = win.addPlot(name="Plot5")
-# plot5.setLabel('left', 'Time', '%')
-# plot5.setLabel('bottom', 'Speed', f"{args.units}/s")
-# plot5.setLimits(yMin=0, yMax=100)
-# graph5 = pyqtgraph.BarGraphItem(x=[0], height=[0], width=0.3, brush='salmon')
-# plot5.addItem(graph5)
-
-# Graph 6 - Distance Histogram.
-# plot6 = win.addPlot(name="Plot6")
-# plot6.setLabel('left', 'Distance', '%')
-# plot6.setLabel('bottom', 'Speed', f"{args.units}/s")
-# plot6.setLimits(yMin=0, yMax=100)
-# graph6 = pyqtgraph.BarGraphItem(x=[0], height=[0], width=0.3, brush='skyblue')
-# plot6.addItem(graph6)
-
-# Graph 7 - Phase Diagram.
-# plot7 = win.addPlot(name="Plot8")
-# plot7.setLabel('left', 'Coil B', 'A')
-# plot7.setLabel('bottom', 'Coil A', 'A')
-# plot7.showGrid(True, True, 0.7)
-# plot7.setXRange(-args.max_amps, args.max_amps)
-# plot7.setYRange(-args.max_amps, args.max_amps)
-
-# Graph 8 - Capture Signals.
-# plot8 = win.addPlot(name="Plot7")
-# plot8.setLabel('left', 'Current', 'A')
-# plot8.setLabel('bottom', 'Time', 's')
-# plot8.setYRange(-args.max_amps, args.max_amps)
-
-# Add a spacing row
-win.nextRow()
-buttons_layout = win.addLayout(col=4, colspan=5)
-buttons_layout.layout.setRowFixedHeight(0, 10)
+def on_stop_button():
+    global pending_stop_button_click
+    logger.info("STOP button pressed")
+    pending_stop_button_click = True
 
 
-# Add a row for the buttons
-win.nextRow()
-buttons_layout = win.addLayout(col=4, colspan=1)
-buttons_layout.setSpacing(20)
-buttons_layout.layout.setHorizontalSpacing(30)
-# buttons_layout.layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-# logger.info(f"type(buttons_layout.layout): {type(buttons_layout.layout)}")
-# logger.info(f"type(buttons_layout.layout.alignment()): {type(buttons_layout.layout.alignment())}")
+def init_display():
+    global window, plot1, plot2, button1, button2
+
+    ## Switch to using white background and black foreground
+    pg.setConfigOption('background', 'w')
+    pg.setConfigOption('foreground', 'k')
+
+    window = pg.GraphicsLayoutWidget(show=True, size=[initial_window_width, initial_window_height])
+    window.setWindowTitle(window_title)
+
+    # Layout class doc: https://doc.qt.io/qt-5/qgraphicsgridlayout.html
+
+    # We divide the window vertically into 5 equal columns
+    # to have more control in positioning the buttons.
+    #
+    # TODO: Is there a cleaner way to have the buttons on the
+    # right side?
+    window.ci.layout.setColumnPreferredWidth(0, 180)
+    window.ci.layout.setColumnPreferredWidth(1, 180)
+    window.ci.layout.setColumnPreferredWidth(2, 180)
+    window.ci.layout.setColumnPreferredWidth(3, 180)
+    window.ci.layout.setColumnPreferredWidth(4, 180)
+
+    # NOTE: See graph configuration params here
+    # https://pyqtgraph.readthedocs.io/en/latest/api_reference/graphicsItems/viewbox.html
+
+    # Graph 1 - Load cell grams vs secs.
+    plot1 = window.addPlot(name="Plot1", colspan=5)
+    plot1.setLabel('left', 'Force', "g")
+    plot1.showGrid(False, True, 0.7)
+    plot1.setXRange(-1.8, 0)
+    plot1.setYRange(-100, 6100)
+
+    # Graph 2 - Thermistor's degrees vs time.
+    window.nextRow()
+    plot2 = window.addPlot(name="Plot2", colspan=5)
+    plot2.setLabel('left', 'Temp', "C")
+    plot2.showGrid(False, True, 0.7)
+
+    # Add a spacing row before the buttons.
+    # TODO: Can we have a cleaner way to vertically align the buttons?
+    window.nextRow()
+    dummy_layout = window.addLayout(col=4, colspan=5)
+    dummy_layout.layout.setRowFixedHeight(0, 10)
+
+    # Add a row for the buttons
+    window.nextRow()
+    buttons_layout = window.addLayout(col=0, colspan=5)
+    # buttons_layout.setSpacing(20)
+    # buttons_layout.layout.setHorizontalSpacing(30)
+    # buttons_layout.layout.rowMaximumHeight(200)
+    buttons_layout.setBorder("red")
+    
+    label1 = buttons_layout.addLabel('Long Vertical Label', row=0, rowspan=1, col=0)
+    
+    # logger.info(f"{type(    buttons_layout.layout)}")
+    # logger.info(f"{type(label1)}")
+
+    # text1_proxy = QtWidgets.QGraphicsProxyWidget()
+    # text1 = QtWidgets.QGraphicsTextItem ()
+    # text1_proxy.setWidget(text1)
+    # buttons_layout.addItem(text1, row=1, col=0)
+    # text1.setPlainText("laskdf aklsef")
+
+    # text_view_box = buttons_layout.addViewBox(col=0, colspan=4)
+    # text = TextItem("xxxxxx")
+    # text_view_box.addItem(text)
+    
+    # text_plot = buttons_layout.addPlot()
+    # text_proxy = QtWidgets.QGraphicsProxyWidget()
+    # text = QtWidgets.QGraphicsTextItem(QString("aaaa"))
+    # # text = pg.TextItem(html='xyz')
+    # text_proxy.setWidget(text)
+    # buttons_layout.addItem(button1_proxy, row=0, col=1)
+
+    # Button1 - Stop.
+    button1_proxy = QtWidgets.QGraphicsProxyWidget()
+    button1 = QtWidgets.QPushButton('STOP')
+    button1_proxy.setWidget(button1)
+    buttons_layout.addItem(button1_proxy, row=0, col=3)
+    button1.clicked.connect(lambda: on_stop_button())
+
+    # Button2 - Start
+    button2_proxy = QtWidgets.QGraphicsProxyWidget()
+    button2 = QtWidgets.QPushButton('START')
+    button2_proxy.setWidget(button2)
+    buttons_layout.addItem(button2_proxy, row=0, col=4)
+    button2.clicked.connect(lambda: on_start_button())
 
 
-# Button1 - Stop.
-button1_proxy = QtWidgets.QGraphicsProxyWidget()
-button1 = QtWidgets.QPushButton('STOP')
-button1_proxy.setWidget(button1)
-# @@@ alightment= Qt.AlignCenter
-# , alignment=QtCore.Qt.AlignmentFlag.AlignCenter
-buttons_layout.addItem(button1_proxy,  row=0, col=0)
-
-# Button2 - Start
-button2_proxy = QtWidgets.QGraphicsProxyWidget()
-button2 = QtWidgets.QPushButton('START')
-button2_proxy.setWidget(button2)
-buttons_layout.addItem(button2_proxy, row=0, col=1)
-
-# Button3 - Time Scale (toggles capture divider)
-# button3_proxy = QtWidgets.QGraphicsProxyWidget()
-# button3 = QtWidgets.QPushButton(f'Time Scale X{capture_divider}')
-# button3_proxy.setWidget(button3)
-# buttons_layout.addItem(button3_proxy, row=0, col=2)
-
-# Button4 - Pause.
-# button4_proxy = QtWidgets.QGraphicsProxyWidget()
-# button4 = QtWidgets.QPushButton('Pause')
-# button4_proxy.setWidget(button4)
-# buttons_layout.addItem(button4_proxy, row=0, col=3)
-
-# We cache the last reported state so we can compute speed.
-# last_state = None
-
-
-# def add_state(state: ProbeState):
-#     """ Called when a new state notification is received from the device. """
-#     global probe, graph1, graph2, last_state, updates_counter
-
-#     # Compute speed based on change from previous state.
-#     if last_state is None:
-#         # print(f"No last state", flush=True)
-#         speed = 0
-#     else:
-#         delta_t = state.timestamp_secs - last_state.timestamp_secs
-#         # We don't expect repeating timestamp. Avoid a divide by zero.
-#         if delta_t <= 0:
-#             print(f"Duplicate notifcation TS {delta_t}", flush=True)
-#             return
-#         # Normal intervals are 0.020 sec. If it's larger, we missed
-#         # notification packets.
-#         if delta_t > 0.025:
-#             print(f"Data loss: {delta_t*1000:3.0f} ms", flush=True)
-#         speed = (state.steps - last_state.steps) / delta_t
-
-#     amps_abs_filter.add(state.amps_abs)
-
-#     # Update distance chart.
-#     graph1.add_point(state.timestamp_secs, state.steps / args.steps_per_unit)
-#     # Update speed chart.
-#     graph2.add_point(state.timestamp_secs, speed / args.steps_per_unit)
-#     # Update current chart.
-#     graph3.add_point(state.timestamp_secs, amps_abs_filter.value())
-
-#     last_state = state
-
-
-# def on_reset_button():
-#     """ Called when Reset button is clicked. """
-#     global pending_reset
-#     pending_reset = True
-
-
-# def on_pause_button():
-#     """ Called when Pause button is clicked. """
-#     global pause_enabled, button4
-#     if pause_enabled:
-#         button4.setText("Pause")
-#         pause_enabled = False
-#     else:
-#         button4.setText("Continue")
-#         pause_enabled = True
-
-
-# def on_scale_button():
-#     """ Called when Scale button is clicked. """
-#     global capture_divider, last_set_capture_divider
-#     n = len(capture_dividers)
-#     next_divider_index = 0
-#     for i in range(n):
-#         if capture_dividers[i] == capture_divider:
-#             next_divider_index = (i + 1) % n
-#     capture_divider = capture_dividers[next_divider_index]
-#     button3.setText(f"Time Scale X{capture_divider}")
-
-
-# def on_direction_button():
-#     """ Called when Direction button is clicked. """
-#     global pending_direction_toggle
-#     pending_direction_toggle = True
-
-
-# In addition to update the charts with the state reports, we
-# also need to update the other charts in the background. We spread
-# this work evenly using 'task slots'.
-
-task_index = 0
-task_start_time = time.time()
-
-task_read_current_histogram = None
-task_read_time_histogram = None
-task_read_distance_histogram = None
-task_read_capture_signal = None
-
-
-async def timer_handler_tasks(task_index: int) -> bool:
-    """ Execute next task slice, return True if completed."""
-    global probe, pause_enabled, task_read_current_histogram, task_read_time_histogram
-    global task_read_distance_histogram, task_read_capture_signal
-
-    # Send conn WDT heartbeat, keeping the connection for additional
-    # 5 secs. This is a fallback recoverey mechanism when using systems such
-    # as Linux or Windows that don't close the connection automatically when
-    # the app exits.
-    if task_index == 0:
-        await probe.write_command_conn_wdt(5)
-        return True
-
-    # All tasks below are performed only when not paused.
-    if pause_enabled:
-        return True
-
-    # Read current histogram
-    if task_index == 1:
-        # if not task_read_current_histogram:
-        #     # print("CURRENT: Creating task", flush=True)
-        #     task_read_current_histogram = asyncio.create_task(
-        #         probe.read_current_histogram(args.steps_per_unit))
-        #     return False
-        # if not task_read_current_histogram.done():
-        #     # print("CURRENT: Task not ready", flush=True)
-        #     return False
-        # # print("CURRENT: Task ready", flush=True)
-        # histogram: CurrentHistogram = task_read_current_histogram.result()
-        # task_read_current_histogram = None
-        # graph4.setOpts(x=histogram.centers(),
-        #                height=histogram.heights(),
-        #                width=0.75 * histogram.bucket_width())
-        return True
-
-    # Read time histogram
-    if task_index == 2:
-        # if not task_read_time_histogram:
-        #     # print("TIME: Creating task", flush=True)
-        #     task_read_time_histogram = asyncio.create_task(
-        #         probe.read_time_histogram(args.steps_per_unit))
-        #     return False
-        # if not task_read_time_histogram.done():
-        #     # print("TIME: Task not ready", flush=True)
-        #     return False
-        # # print("TIME: Task ready", flush=True)
-        # histogram: TimeHistogram = task_read_time_histogram.result()
-        # task_read_time_histogram = None
-        # graph5.setOpts(x=histogram.centers(),
-        #                height=histogram.heights(),
-        #                width=0.75 * histogram.bucket_width())
-        return True
-
-    # Read distance histogram.
-    if task_index == 3:
-        # if not task_read_distance_histogram:
-        #     # print("DISTANCE: Creating task", flush=True)
-        #     task_read_distance_histogram = asyncio.create_task(
-        #         probe.read_distance_histogram(args.steps_per_unit))
-        #     return False
-        # if not task_read_distance_histogram.done():
-        #     # print("DISTANCE: Task not ready", flush=True)
-        #     return False
-        # # print("DISTANCE: Task ready", flush=True)
-        # histogram: DistanceHistogram = task_read_distance_histogram.result()
-        # task_read_distance_histogram = None
-        # graph6.setOpts(x=histogram.centers(),
-        #                height=histogram.heights(),
-        #                width=0.75 * histogram.bucket_width())
-        return True
-
-    # Next chunk of fetching the capture signal.
-    if task_index == 4:
-        # if not task_read_capture_signal:
-        #     # print("CAPTURE: Creating initial task", flush=True)
-        #     capture_signal_fetcher.reset()
-        #     task_read_capture_signal = asyncio.create_task(capture_signal_fetcher.loop())
-        #     return False
-        # if not task_read_capture_signal.done():
-        #     # print("DISTANCE: Task not ready", flush=True)
-        #     return False
-        # capture_signal: CaptureSignal = task_read_capture_signal.result()
-        # if not capture_signal:
-        #     # print("CAPTURE: Creating additional task", flush=True)
-        #     task_read_capture_signal = asyncio.create_task(capture_signal_fetcher.loop())
-        #     return False
-        # task_read_capture_signal = None
-        # # print("CAPTURE: Data ready", flush=True)
-        # # A new capture available, update phase and signal plots.
-        # plot8.clear()
-        # plot8.plot(capture_signal.times_sec(), capture_signal.amps_a(), pen='yellow')
-        # plot8.plot(capture_signal.times_sec(), capture_signal.amps_b(), pen='skyblue')
-        # plot7.clear()
-        # plot7.plot(capture_signal.amps_a(), capture_signal.amps_b(), pen='greenyellow')
-        return True
+command_start_future = None
+command_stop_future = None
 
 
 def timer_handler():
-    """ Called periodically by the PyGraphQt library. """
-    # global probe, task_index, task_start_time, graph1, graph2, graph3, graph4, graph5, graph6, plot8
-    # global capture_signal_fetcher, pending_reset, pause_enabled
-    # global buttons_layout, last_state, states_to_drop
-    # global capture_divider, last_set_capture_divider, pending_direction_toggle
-    global main_event_loop
+    global main_event_loop, serial_packets_client
+    global pending_start_button_click, command_start_future
+    global pending_stop_button_click, command_stop_future
 
-    # Process any pending events from background notifications.
+    # Process any pending events of the serial packets client.
     main_event_loop.run_until_complete(do_nothing())
 
-    # if pending_reset:
-    #     print(f"Reset", flush=True)
-    #     main_event_loop.run_until_complete(probe.write_command_reset_data())
+    if pending_start_button_click:
+        session_name = time.strftime("session-%Y%m%d-%H%M%S")
+        logger.info(f"Will start a recording session named {session_name}")
+        session_name_bytes = session_name.encode()
+        cmd = PacketData()
+        cmd.add_uint8(0x02)  # Command = START
+        cmd.add_uint8(len(session_name_bytes))  # str len
+        cmd.add_bytes(session_name_bytes)
+        logger.info(f"START command: {cmd.hex_str(max_bytes=5)}")
+        command_start_future = serial_packets_client.send_command_future(CONTROL_ENDPOINT, cmd)
+        pending_start_button_click = False
 
-    #     # Drop next three states to clear the notification pipeline.
-    #     pending_states.clear()
-    #     last_state = None
-    #     states_to_drop = 3
+    if command_start_future and command_start_future.done():
+        logger.info("Got response for START command")
+        status, response_data = command_start_future.result()
+        command_start_future = None
+        logger.info(f"START command status: {status}")
 
-    #     graph1.clear()
-    #     graph2.clear()
-    #     graph3.clear()
+    if pending_stop_button_click:
+        # session_name = time.strftime("session-%Y%m%d-%H%M%S")
+        logger.info(f"Will stop recording session, if any.")
+        # session_name_bytes = session_name.encode()
+        cmd = PacketData()
+        cmd.add_uint8(0x03)  # Command = STOP
+        # cmd.add_uint8(len(session_name_bytes))  # str len
+        # cmd.add_bytes(session_name_bytes)
+        logger.info(f"STOP command: {cmd.hex_str(max_bytes=5)}")
+        command_stop_future = serial_packets_client.send_command_future(CONTROL_ENDPOINT, cmd)
+        pending_stop_button_click = False
 
-    #     graph4.setOpts(x=[0], height=[0])
-    #     graph5.setOpts(x=[0], height=[0])
-    #     graph6.setOpts(x=[0], height=[0])
-
-    #     plot8.clear()
-    #     capture_signal_fetcher.reset()
-    #     pending_reset = False
-
-    # if pending_direction_toggle:
-    #     print(f"Changing direction", flush=True)
-    #     main_event_loop.run_until_complete(probe.write_command_toggle_direction())
-    #     pending_direction_toggle = False
-
-    # if capture_divider != last_set_capture_divider:
-    #     main_event_loop.run_until_complete(probe.write_command_set_capture_divider(capture_divider))
-    #     last_set_capture_divider = capture_divider
-    #     print(f"Capture divider set to {last_set_capture_divider}", flush=True)
-
-    # Process pending states, if any. We process up to 25 states at a time
-    # to avoid event loop starvation after long pauses.
-    # if not pause_enabled:
-    #     n = 0
-    #     while pending_states and n < 25:
-    #         state = pending_states.popleft()
-    #         add_state(state)
-    #         n += 1
-
-    # Slow down by forcing minimal task slot time (in secs).
-    # time_now = time.time()
-    # if time_now - task_start_time < 0.100:
-    #     return
-
-    # Time for next task slot.
-    # task_start_time = time_now
-    # task_done = main_event_loop.run_until_complete(timer_handler_tasks(task_index))
-    # if task_done:
-    #     task_index += 1
-    #     # Currently we have tasks [0, 4]
-    #     if task_index > 4:
-    #         task_index = 0
+    if command_stop_future and command_stop_future.done():
+        logger.info("Got response for STOP command")
+        status, response_data = command_stop_future.result()
+        command_stop_future = None
+        logger.info(f"STOP command status: {status}")
 
 
-# Attached handlers to buttons.
-button1.clicked.connect(lambda: on_stop_button())
-button2.clicked.connect(lambda: on_start_button())
-# button3.clicked.connect(lambda: on_scale_button())
-# button4.clicked.connect(lambda: on_pause_button())
-
-# Number of state updates so far.
-# updates_counter = 0
-
-
-# Receives the state updates from the device.
-# def state_notification_callback_handler(probe_state: ProbeState):
-    # global pending_states, states_to_drop, updates_counter
-    # # add_state(probe_state)
-    # if states_to_drop > 0:
-    #     states_to_drop -= 1
-    #     # print(f"Dropped a state, left to drop: {states_to_drop}", flush=True)
-    #     return
-
-    # # Dump the state periodically.
-    # if updates_counter % 100 == 0:
-    #     print(f"{updates_counter:06d}: {probe_state}", flush=True)
-    # updates_counter += 1
-
-    # # print(f"PUSH {probe_state.timestamp_secs}", flush=True)
-    # pending_states.append(probe_state)
-
-
-# NOTE: The notification system keeps a reference to the  event
-# loop which is main_event_loop and uses it to post events.
-# Running the event loop periodically in the timer handler
-# below keeps these events being services.
-# main_event_loop.run_until_complete(
-#     probe.set_state_notifications(state_notification_callback_handler))
-
-timer = pyqtgraph.QtCore.QTimer()
+init_display()
+main_event_loop.run_until_complete(init_client())
+timer = pg.QtCore.QTimer()
 timer.timeout.connect(timer_handler)
-# Delay between timer calls, in milliseconds. We try to
-# keep the event loop running as tight as possible.
+
+# The argument of start() is delay in millis between timer
+# The timer period is this value + the execution time of the
+# timer handler. We try to keep the delay to a reasonable minimum.
 timer.start(1)
 
 if __name__ == '__main__':
-    pyqtgraph.exec()
+    pg.exec()
