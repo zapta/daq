@@ -41,19 +41,16 @@ static uint8_t
 // Number of active pending bytes at the begining of write_buffer.
 static uint32_t pending_bytes = 0;
 
-// Stats for diagnostics
-static uint32_t records_written = 0;
-
 // Session name + ".log" suffix.
 constexpr uint32_t kMaxFileNameLen = RecordingName::kMaxLen + 4;
 
-// Extra char for the terminators. Valid when state
-// is not IDLE.
-// static char current_session_name[kMaxSessionNameLen + 1] = {0};
+static RecordingName current_recording_name;
 
-static RecordingName current_session_name;
+// Stats for diagnostics.
+static uint32_t recording_start_time_millis = 0;
+static uint32_t records_written = 0;
 
-// Assumes levle == STATE_OPENED and mutex is grabbed.
+// Assumes level == STATE_OPENED and mutex is grabbed.
 // Tries to write pending bytes to SD.
 // Always clears pending_bytes upon return.
 static void internal_write_pending_bytes() {
@@ -101,13 +98,14 @@ static void internal_stop_recording() {
   }
 
   if (state == STATE_OPENED) {
-    logger.info("Stopped recording [%s]", current_session_name.c_str());
+    logger.info("Stopped recording [%s]", current_recording_name.c_str());
   }
 
   state = STATE_IDLE;
   pending_bytes = 0;
   records_written = 0;
-  current_session_name.clear();
+  recording_start_time_millis = 0;
+  current_recording_name.clear();
 }
 
 void stop_recording_session() {
@@ -129,38 +127,10 @@ bool start_recording(const RecordingName& new_session_name) {
 
   internal_stop_recording();
 
-  // if (new_session_name.is_empty()) {
-  //   return true;
-  // }
-
-  // const size_t n = strlen(new_session_name);
-  // if (n > kMaxSessionNameLen) {
-  //   logger.error("Session name too long (%u). Can't start.", n);
-  //   return false;
-  // }
-
-  // static_assert(kMaxSessionNameLen + 1 >= sizeof(current_session_name));
-  // static_assert(current_session_name.kMaxLen >=  kMaxSessionNameLen);
-  if (!current_session_name.set_c_str(new_session_name.c_str())) {
+  if (!current_recording_name.set_c_str(new_session_name.c_str())) {
     // Should not happen since we verified the size.
     Error_Handler();
   }
-  // strcpy(current_session_name, new_session_name);
-  // if (!current_session_name.set())
-
-  // // Constuct the UTF16 file name. Allow for '.log' extension.
-  // if (n + 4 > kMaxFileNameLen) {
-  //   logger.error("Session name too long. Can't start. (2).");
-  //   return false;
-  // }
-  // static_assert(sizeof(tmp_log_file_wname)/sizeof(tmp_log_file_wname[0]) >=
-  // kMaxFileNameLen);
-
-  // pending_bytes = 0;
-  // records_written = 0;
-
-  //
-  // state = STATE_MOUNTED;
 
   FRESULT status = f_mount(&SDFatFS, (TCHAR const*)SDPath, 0);
   if (status != FRESULT::FR_OK) {
@@ -177,8 +147,9 @@ bool start_recording(const RecordingName& new_session_name) {
 
   static_assert(sizeof(recording_file_wname[0]) == 2U);
   static_assert(sizeof(recording_file_wname[0]) == sizeof(TCHAR));
-  static_assert((sizeof(recording_file_wname) / sizeof(recording_file_wname[0])) >=
-                (RecordingName::kMaxLen + 5));
+  static_assert(
+      (sizeof(recording_file_wname) / sizeof(recording_file_wname[0])) >=
+      (RecordingName::kMaxLen + 5));
 
   const size_t n = new_session_name.len();
   const char* c_str = new_session_name.c_str();
@@ -205,18 +176,12 @@ bool start_recording(const RecordingName& new_session_name) {
     internal_stop_recording();
     return false;
   }
-  state = STATE_OPENED;
-  logger.info("Started recording [%s]", current_session_name.c_str());
 
+  state = STATE_OPENED;
+  recording_start_time_millis = time_util::millis();
+  logger.info("Started recording [%s]", current_recording_name.c_str());
   return true;
 }
-
-// Does nothing if already closed.
-// void stop_session_log() {
-//   MutexScope scope(mutex);
-
-//   internal_close_log_file();
-// }
 
 void append_if_recording(const StuffedPacketBuffer& packet) {
   MutexScope scope(mutex);
@@ -225,11 +190,6 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
     logger.error("Trying to record a log record with write errors");
     return;
   }
-
-  // if (records_written >= kMaxRecordsToWrite) {
-  //   logger.info("Aleady writen %lu records", kMaxRecordsToWrite);
-  //   return;
-  // }
 
   if (state == STATE_IDLE) {
     // Not in session. Ignore silently.
@@ -292,18 +252,6 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
   }
 
   records_written++;
-  // logger.info("Wrote SD record %lu, size=%hu", records_written, packet_size);
-
-  // printf("\n");
-  // for (uint32_t i = 0; i < n; i++) {
-  //   printf("%02hx ", buffer[i]);
-  // }
-  // printf("\n\n");
-
-  // if (records_written == kMaxRecordsToWrite) {
-  //   logger.info("Closing SD log file");
-  //   internal_close_log_file();
-  // }
 }
 
 bool is_recording_active() {
@@ -311,25 +259,36 @@ bool is_recording_active() {
   return (state == STATE_OPENED);
 }
 
-void get_current_recording_name(RecordingName* name) {
-  name->set_c_str(current_session_name.c_str());
-}
+// void get_current_recording_name(RecordingName* name) {
+//   name->set_c_str(current_recording_name.c_str());
+// }
 
-void dump_summary() {
+void get_recoding_info(RecordingInfo* info) {
   MutexScope scope(mutex);
 
-  if (state == STATE_IDLE) {
-    logger.info("Data Recorder is off.");
-    return;
+  if (state == STATE_OPENED) {
+    info->recording_active = true;
+    info->recording_name.set_c_str(current_recording_name.c_str());
+    info->recording_time_millis =
+        time_util::millis() - recording_start_time_millis;
+  } else {
+    info->recording_active = false;
+    info->recording_name.clear();
+    info->recording_time_millis = 0;
   }
-
-  logger.info("Recording [%s] has %lu records.",
-              current_session_name.c_str(), records_written);
 }
 
-// bool is_session_log_idle() {
+// void dump_summary() {
+  
 //   MutexScope scope(mutex);
-//   return state == STATE_IDLE;
+
+//   if (state == STATE_IDLE) {
+//     logger.info("Data Recorder is off.");
+//     return;
+//   }
+
+//   logger.info("Recording [%s] has %lu records.", current_session_name.c_str(),
+//               records_written);
 // }
 
 }  // namespace data_recorder

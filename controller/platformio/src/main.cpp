@@ -6,12 +6,12 @@
 #include "FreeRTOS.h"
 #include "adc.h"
 #include "cdc_serial.h"
+#include "data_recorder.h"
 #include "dma.h"
 #include "gpio.h"
 #include "host_link.h"
 #include "io.h"
 #include "logger.h"
-#include "data_recorder.h"
 #include "serial.h"
 #include "spi.h"
 #include "static_task.h"
@@ -55,10 +55,17 @@ void app_main() {
 
     if (report_timer.elapsed_millis() >= 5000) {
       report_timer.reset();
-      data_recorder::dump_summary();
+      static data_recorder::RecordingInfo recording_info;
+      data_recorder::get_recoding_info(&recording_info);
+      if (recording_info.recording_active) {
+        logger.info("Recording [%s], %lu msecs.",
+                    recording_info.recording_name.c_str(),
+                    recording_info.recording_time_millis);
+      } else {
+        logger.info("Data recorder off.");
+      }
     }
 
- 
     time_util::delay_millis(100);
   }
 }

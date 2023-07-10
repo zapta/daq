@@ -7,7 +7,11 @@ namespace data_recorder {
 
 typedef StaticString<30> RecordingName;
 
-
+struct RecordingInfo {
+  bool recording_active = false;
+  RecordingName recording_name;
+  uint32_t recording_time_millis = 0;
+};
 
 // Stop the current recording, and start a new one.
 bool start_recording(const RecordingName& new_recording_name);
@@ -24,11 +28,12 @@ bool is_recording_active();
 
 // Sets name with the current recording name or clears it 
 // if recording is off.
- void get_current_recording_name(RecordingName* name);
+//  void get_current_recording_name(RecordingName* name);
+
+ void get_recoding_info(RecordingInfo* state);
 
 // bool is_disk_inserted();
-
-void dump_summary();
+// void dump_summary();
 
 
 
