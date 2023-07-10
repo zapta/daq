@@ -12,8 +12,8 @@ import time
 import sys
 import os
 import glob
-from log_parser import LogPacketsParser, ParsedLogPacket, ChannelData
-from sys_config import SysConfig, LoadCellChannelConfig
+from lib.log_parser import LogPacketsParser, ParsedLogPacket
+from lib.sys_config import SysConfig
 
 # For using the local version of serial_packet. Comment out if
 # using serial_packets package installed by pip.

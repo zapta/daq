@@ -14,11 +14,11 @@ import pyqtgraph as pg
 import statistics
 
 from pyqtgraph.Qt import QtWidgets, QtCore, QtGui
-from pyqtgraph import mkPen, TextItem, LabelItem
+from pyqtgraph import   LabelItem
 from typing import Tuple, Optional, List
-from log_parser import LogPacketsParser, ChannelData, ParsedLogPacket
-from sys_config import SysConfig, LoadCellChannelConfig, ThermistorChannelConfig
-from display_series import DisplaySeries
+from lib.log_parser import LogPacketsParser, ChannelData, ParsedLogPacket
+from lib.sys_config import SysConfig, LoadCellChannelConfig, ThermistorChannelConfig
+from lib.display_series import DisplaySeries
 
 # A workaround to avoid auto formatting.
 # For using the local version of serial_packet. Comment out if
