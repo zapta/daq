@@ -1,6 +1,4 @@
 
-Why when reseting the controller, the monitor shows the first adc lc reading lower than the reset?
-
 Resolve the CP2102 version and TX/RX leds.
 
 Handle ERROR_HANDLER errors more gracefully, printing string and file name/line before hanging.
