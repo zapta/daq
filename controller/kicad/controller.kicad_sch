@@ -3510,8 +3510,7 @@
     (effects (font (size 2.54 2.54) (thickness 0.508) bold (color 255 0 0 1)) (justify left bottom))
     (uuid 31b42bab-872a-44e9-a3fd-a37e87aeb49b)
   )
-  (text "TODO: Extend the pads of electrolitic caps and protection diodes"
-    (at 138.43 139.065 0)
+  (text "TODO: Extend the pads of protection diodes" (at 138.43 139.065 0)
     (effects (font (size 2.54 2.54) (thickness 0.508) bold (color 255 0 0 1)) (justify left bottom))
     (uuid 4fe8c29b-de1b-4616-b5df-01c81b897d25)
   )
