@@ -11,6 +11,7 @@ import sys
 import os
 import time
 import pyqtgraph as pg
+import statistics
 
 from pyqtgraph.Qt import QtWidgets, QtCore, QtGui
 from pyqtgraph import mkPen, TextItem, LabelItem
@@ -67,7 +68,7 @@ pending_stop_button_click = False
 log_packets_parser = LogPacketsParser()
 
 # Initial window size in pixels.
-initial_window_width = 700
+initial_window_width = 800
 initial_window_height = 500
 window_title = "DAQ Monitor"
 
@@ -78,57 +79,6 @@ button2: QtWidgets.QPushButton = None
 status_label: LabelItem = None
 app = None
 app_view = None
-# layout = None
-
-
-def init_display():
-    global plot1, plot2, button1, button2, status_label, app, app_view
-
-    pg.setConfigOption('background', 'w')
-    pg.setConfigOption('foreground', 'k')
-
-    app = pg.mkQApp("DAQ Monitor")
-    app_view = pg.GraphicsView()
-    layout = pg.GraphicsLayout()
-
-    layout.layout.setColumnPreferredWidth(0, 20)
-    layout.layout.setColumnPreferredWidth(1, 20)
-    layout.layout.setColumnPreferredWidth(2, 20)
-    layout.layout.setColumnPreferredWidth(3, 20)
-    layout.layout.setColumnPreferredWidth(4, 20)
-
-    app_view.setCentralItem(layout)
-    app_view.show()
-    app_view.setWindowTitle("DAQ Monitor")
-    app_view.resize(initial_window_width, initial_window_height)
-
-    plot1 = layout.addPlot(title="Load Cell", colspan=5)
-    plot1.setLabel('left', 'Force', "g")
-    plot1.showGrid(False, True, 0.7)
-    plot1.setXRange(-1.8, 0)
-    plot1.setYRange(-100, 6100)
-
-    layout.nextRow()
-    plot2 = layout.addPlot(title="Thermistors", colspan=5)
-    plot2.setLabel('left', 'Temp', "C")
-    plot2.showGrid(False, True, 0.7)
-
-    layout.nextRow()
-    status_label = layout.addLabel("(status line)", colspan=3, justify='left')
-
-    # Button1 - STOP.
-    button1_proxy = QtWidgets.QGraphicsProxyWidget()
-    button1 = QtWidgets.QPushButton('STOP')
-    button1_proxy.setWidget(button1)
-    button1.clicked.connect(lambda: on_stop_button())
-    layout.addItem(button1_proxy, colspan=1)
-
-    # Button2 - Start
-    button2_proxy = QtWidgets.QGraphicsProxyWidget()
-    button2 = QtWidgets.QPushButton('START')
-    button2_proxy.setWidget(button2)
-    button2.clicked.connect(lambda: on_start_button())
-    layout.addItem(button2_proxy, colspan=1)
 
 
 async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, PacketData]:
@@ -163,6 +113,9 @@ def process_new_load_cell_points(chan_name: str, times_secs: List[float],
 
 def update_display():
     global load_cell_display_points_grams, load_cell_display_times_secs, plot1
+
+    m = statistics.mean(load_cell_display_points_grams)
+    logger.info(f"Mean: {m} grams")
 
     # Update load cell graph.
     tn = load_cell_display_times_secs[-1]
@@ -204,94 +157,62 @@ def on_stop_button():
     pending_stop_button_click = True
 
 
-# def init_display():
-#     global window, plot1, plot2, button1, button2
+def init_display():
+    global plot1, plot2, button1, button2, status_label, app, app_view
 
-#     ## Switch to using white background and black foreground
-#     pg.setConfigOption('background', 'w')
-#     pg.setConfigOption('foreground', 'k')
+    pg.setConfigOption('background', 'w')
+    pg.setConfigOption('foreground', 'k')
 
-#     window = pg.GraphicsLayoutWidget(show=True, size=[initial_window_width, initial_window_height])
-#     window.setWindowTitle(window_title)
+    app = pg.mkQApp("DAQ Monitor")
+    app_view = pg.GraphicsView()
+    layout = pg.GraphicsLayout()
 
-#     # Layout class doc: https://doc.qt.io/qt-5/qgraphicsgridlayout.html
+    layout.layout.setColumnPreferredWidth(0, 20)
+    layout.layout.setColumnPreferredWidth(1, 20)
+    layout.layout.setColumnPreferredWidth(2, 20)
+    layout.layout.setColumnPreferredWidth(3, 20)
+    layout.layout.setColumnPreferredWidth(4, 20)
 
-#     # We divide the window vertically into 5 equal columns
-#     # to have more control in positioning the buttons.
-#     #
-#     # TODO: Is there a cleaner way to have the buttons on the
-#     # right side?
-#     window.ci.layout.setColumnPreferredWidth(0, 180)
-#     window.ci.layout.setColumnPreferredWidth(1, 180)
-#     window.ci.layout.setColumnPreferredWidth(2, 180)
-#     window.ci.layout.setColumnPreferredWidth(3, 180)
-#     window.ci.layout.setColumnPreferredWidth(4, 180)
+    app_view.setCentralItem(layout)
+    app_view.show()
+    app_view.setWindowTitle("DAQ Monitor")
+    app_view.resize(initial_window_width, initial_window_height)
 
-#     # NOTE: See graph configuration params here
-#     # https://pyqtgraph.readthedocs.io/en/latest/api_reference/graphicsItems/viewbox.html
+    plot1 = layout.addPlot(title="Load Cell", colspan=5)
+    plot1.setLabel('left', 'Force', "g")
+    plot1.showGrid(False, True, 0.7)
+    plot1.setMouseEnabled(x=False, y=True)
+    plot1.setXRange(-1.8, 0)
+    plot1.setYRange(-100, 6100)
 
-#     # Graph 1 - Load cell grams vs secs.
-#     plot1 = window.addPlot(name="Plot1", colspan=5)
-#     plot1.setLabel('left', 'Force', "g")
-#     plot1.showGrid(False, True, 0.7)
-#     plot1.setXRange(-1.8, 0)
-#     plot1.setYRange(-100, 6100)
+    layout.nextRow()
+    plot2 = layout.addPlot(title="Thermistors", colspan=5)
+    plot2.setLabel('left', 'Temp', "C")
+    plot2.showGrid(False, True, 0.7)
+    plot1.setMouseEnabled(x=False, y=True)
 
-#     # Graph 2 - Thermistor's degrees vs time.
-#     window.nextRow()
-#     plot2 = window.addPlot(name="Plot2", colspan=5)
-#     plot2.setLabel('left', 'Temp', "C")
-#     plot2.showGrid(False, True, 0.7)
+    # Add an empty row as spacing.
+    # TODO: Is there a cleaner way to specify top margin?
+    layout.nextRow()
+    status_label = layout.addLabel("")
 
-#     # Add a spacing row before the buttons.
-#     # TODO: Can we have a cleaner way to vertically align the buttons?
-#     window.nextRow()
-#     dummy_layout = window.addLayout(col=4, colspan=5)
-#     dummy_layout.layout.setRowFixedHeight(0, 10)
+    layout.nextRow()
+    status_label = layout.addLabel("(status line)", colspan=3, justify='left')
 
-#     # Add a row for the buttons
-#     window.nextRow()
-#     buttons_layout = window.addLayout(col=0, colspan=5)
-#     # buttons_layout.setSpacing(20)
-#     # buttons_layout.layout.setHorizontalSpacing(30)
-#     # buttons_layout.layout.rowMaximumHeight(200)
-#     buttons_layout.setBorder("red")
+    # Button1 - STOP.
+    button1_proxy = QtWidgets.QGraphicsProxyWidget()
+    button1 = QtWidgets.QPushButton('STOP')
+    button1_proxy.setWidget(button1)
+    button1.clicked.connect(lambda: on_stop_button())
+    layout.addItem(button1_proxy, colspan=1)
 
-#     label1 = buttons_layout.addLabel('Long Vertical Label', row=0, rowspan=1, col=0)
+    # Button2 - Start
+    button2_proxy = QtWidgets.QGraphicsProxyWidget()
+    button2 = QtWidgets.QPushButton('START')
+    button2_proxy.setWidget(button2)
+    button2.clicked.connect(lambda: on_start_button())
+    layout.addItem(button2_proxy, colspan=1)
 
-#     # logger.info(f"{type(    buttons_layout.layout)}")
-#     # logger.info(f"{type(label1)}")
-
-#     # text1_proxy = QtWidgets.QGraphicsProxyWidget()
-#     # text1 = QtWidgets.QGraphicsTextItem ()
-#     # text1_proxy.setWidget(text1)
-#     # buttons_layout.addItem(text1, row=1, col=0)
-#     # text1.setPlainText("laskdf aklsef")
-
-#     # text_view_box = buttons_layout.addViewBox(col=0, colspan=4)
-#     # text = TextItem("xxxxxx")
-#     # text_view_box.addItem(text)
-
-#     # text_plot = buttons_layout.addPlot()
-#     # text_proxy = QtWidgets.QGraphicsProxyWidget()
-#     # text = QtWidgets.QGraphicsTextItem(QString("aaaa"))
-#     # # text = pg.TextItem(html='xyz')
-#     # text_proxy.setWidget(text)
-#     # buttons_layout.addItem(button1_proxy, row=0, col=1)
-
-#     # Button1 - Stop.
-#     button1_proxy = QtWidgets.QGraphicsProxyWidget()
-#     button1 = QtWidgets.QPushButton('STOP')
-#     button1_proxy.setWidget(button1)
-#     buttons_layout.addItem(button1_proxy, row=0, col=3)
-#     button1.clicked.connect(lambda: on_stop_button())
-
-#     # Button2 - Start
-#     button2_proxy = QtWidgets.QGraphicsProxyWidget()
-#     button2 = QtWidgets.QPushButton('START')
-#     button2_proxy.setWidget(button2)
-#     buttons_layout.addItem(button2_proxy, row=0, col=4)
-#     button2.clicked.connect(lambda: on_start_button())
 
 command_start_future = None
 command_stop_future = None
