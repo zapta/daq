@@ -98,7 +98,10 @@ async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, 
         process_new_load_cell_points(load_cell_data.chan_name(), times_secs, values_g)
         update_display()
 
-
+def set_status_line(msg: str) -> None:
+  global status_label
+  status_label.setText("  " + msg)
+  
 def process_new_load_cell_points(chan_name: str, times_secs: List[float],
                                  values_g: List[float]) -> None:
     """Called on arrival on new load cell data points."""
@@ -114,8 +117,8 @@ def process_new_load_cell_points(chan_name: str, times_secs: List[float],
 def update_display():
     global load_cell_display_points_grams, load_cell_display_times_secs, plot1
 
-    m = statistics.mean(load_cell_display_points_grams)
-    logger.info(f"Mean: {m} grams")
+    # m = statistics.mean(load_cell_display_points_grams)
+    # logger.info(f"Mean: {m} grams")
 
     # Update load cell graph.
     tn = load_cell_display_times_secs[-1]
@@ -216,25 +219,29 @@ def init_display():
 
 command_start_future = None
 command_stop_future = None
+command_status_future = None
+
+last_command_status_time = time.time() - 10
 
 
 def timer_handler():
     global main_event_loop, serial_packets_client
     global pending_start_button_click, command_start_future
     global pending_stop_button_click, command_stop_future
-    global status_label
+    global  last_command_status_time, command_status_future
 
     # Process any pending events of the serial packets client.
+    # This calls indirectly display_update when new packets arrive.
     main_event_loop.run_until_complete(do_nothing())
 
     if pending_start_button_click:
-        session_name = time.strftime("session-%Y%m%d-%H%M%S")
-        logger.info(f"Will start a recording session named {session_name}")
-        session_name_bytes = session_name.encode()
+        recording_name = time.strftime("%Y%m%d-%H%M%S")
+        logger.info(f"Will start a recording named {recording_name}")
+        recording_name_bytes = recording_name.encode()
         cmd = PacketData()
         cmd.add_uint8(0x02)  # Command = START
-        cmd.add_uint8(len(session_name_bytes))  # str len
-        cmd.add_bytes(session_name_bytes)
+        cmd.add_uint8(len(recording_name_bytes))  # str len
+        cmd.add_bytes(recording_name_bytes)
         logger.info(f"START command: {cmd.hex_str(max_bytes=5)}")
         command_start_future = serial_packets_client.send_command_future(CONTROL_ENDPOINT, cmd)
         pending_start_button_click = False
@@ -244,16 +251,12 @@ def timer_handler():
         status, response_data = command_start_future.result()
         command_start_future = None
         logger.info(f"START command status: {status}")
-        status_label.setText(f"START command status: {status}")
+        # set_status_line(f"START command status: {status}")
 
     if pending_stop_button_click:
-        # session_name = time.strftime("session-%Y%m%d-%H%M%S")
-        logger.info(f"Will stop recording session, if any.")
-        # session_name_bytes = session_name.encode()
+        logger.info(f"Will stop recording, if any.")
         cmd = PacketData()
         cmd.add_uint8(0x03)  # Command = STOP
-        # cmd.add_uint8(len(session_name_bytes))  # str len
-        # cmd.add_bytes(session_name_bytes)
         logger.info(f"STOP command: {cmd.hex_str(max_bytes=5)}")
         command_stop_future = serial_packets_client.send_command_future(CONTROL_ENDPOINT, cmd)
         pending_stop_button_click = False
@@ -263,7 +266,37 @@ def timer_handler():
         status, response_data = command_stop_future.result()
         command_stop_future = None
         logger.info(f"STOP command status: {status}")
-        status_label.setText(f"STOP command status: {status}")
+        # set_status_line(f"STOP command status: {status}")
+
+    status_elapsed_secs = time.time() - last_command_status_time
+    if (command_status_future is None) and status_elapsed_secs >= 1.0:
+        cmd = PacketData()
+        cmd.add_uint8(0x04)  # Command = STATUS
+        logger.debug(f"STATUS command: {cmd.hex_str(max_bytes=5)}")
+        command_status_future = serial_packets_client.send_command_future(CONTROL_ENDPOINT, cmd)
+        last_command_status_time = time.time()
+
+    if command_status_future and command_status_future.done():
+        logger.debug("Got response for STATUS command")
+        status, response_data = command_status_future.result()
+        command_status_future = None
+        if (status != PacketStatus.OK.value):
+          logger.error(f"STATUS command failed with status: {status}")
+          msg = f"ERROR: Device not available (status {status})"
+        else:
+          version = response_data.read_uint8()
+          recording_active = response_data.read_uint8()
+          if recording_active:
+            recording_millis = response_data.read_uint32()
+            name_len = response_data.read_uint8()
+            name_bytes = response_data.read_bytes(name_len)
+            name = name_bytes.decode("utf-8")
+            msg = f"  Recording [{name}]   {recording_millis/1000:.0f} secs"
+          else:
+            msg = "  Recording off"
+          assert response_data.all_read_ok()
+        set_status_line(msg)
+        
 
 
 init_display()
