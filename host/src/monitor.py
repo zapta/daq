@@ -317,7 +317,7 @@ def timer_handler():
                 errors_note = f" ERRORS: {write_failures}" if write_failures else ""
                 msg = f"  Recording [{name}] [{recording_millis/1000:.0f} secs] [{writes_ok} records]{errors_note}"
             else:
-                msg = "  Recording off"
+                msg = "  Recording is off"
             assert response_data.all_read_ok()
         set_display_status_line(msg)
 
