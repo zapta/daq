@@ -11,6 +11,8 @@ struct RecordingInfo {
   bool recording_active = false;
   RecordingName recording_name;
   uint32_t recording_time_millis = 0;
+  uint32_t writes_ok = 0;
+  uint32_t write_failures = 0;
 };
 
 // Stop the current recording, and start a new one.

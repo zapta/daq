@@ -81,6 +81,8 @@ PacketStatus handle_control_command(const SerialPacketsData& command_data,
         response_data.write_uint8(1);
         response_data.write_uint32(tmp_recording_info.recording_time_millis);
         response_data.write_str(tmp_recording_info.recording_name.c_str());
+        response_data.write_uint32(tmp_recording_info.writes_ok);
+        response_data.write_uint32(tmp_recording_info.write_failures);
       } else {
         response_data.write_uint8(0);
       }

@@ -1,9 +1,1 @@
-Add to the monitor program buttons to start/stop sessions. 
-
-Add to the monitor program display of current session name.
-
-Add verification of time interval between ADC reporting message (detecting missing data)
-
-Add to the monitor program flags to control if noise and fft are displayed.
-
 

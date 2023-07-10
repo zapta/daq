@@ -312,7 +312,9 @@ def timer_handler():
                 name_len = response_data.read_uint8()
                 name_bytes = response_data.read_bytes(name_len)
                 name = name_bytes.decode("utf-8")
-                msg = f"  Recording [{name}] [{recording_millis/1000:.0f} secs]"
+                writes_ok = response_data.read_uint32();
+                write_failures = response_data.read_uint32()
+                msg = f"  Recording [{name}] [{recording_millis/1000:.0f} secs] [{writes_ok}/{write_failures}]"
             else:
                 msg = "  Recording off"
             assert response_data.all_read_ok()

@@ -48,7 +48,8 @@ static RecordingName current_recording_name;
 
 // Stats for diagnostics.
 static uint32_t recording_start_time_millis = 0;
-static uint32_t records_written = 0;
+static uint32_t writes_ok = 0;
+static uint32_t write_failures = 0;
 
 // Assumes level == STATE_OPENED and mutex is grabbed.
 // Tries to write pending bytes to SD.
@@ -66,10 +67,12 @@ static void internal_write_pending_bytes() {
   unsigned int bytes_written;
   FRESULT status = f_write(&SDFile, write_buffer, n, &bytes_written);
   if (status != FRESULT::FR_OK) {
+    write_failures++;
     logger.error("Error writing to SD recording file, status=%d", status);
     return;
   }
   if (bytes_written != n) {
+    write_failures++;
     logger.error("Requested to write to SD %lu bytes, %lu written", n,
                  (uint32_t)bytes_written);
     return;
@@ -77,8 +80,11 @@ static void internal_write_pending_bytes() {
 
   status = f_sync(&SDFile);
   if (status != FRESULT::FR_OK) {
+    write_failures++;
     logger.warning("Failed to flush SD file, status=%d", status);
   }
+
+  writes_ok++;
 }
 
 // Grab mutex before calling this
@@ -103,7 +109,8 @@ static void internal_stop_recording() {
 
   state = STATE_IDLE;
   pending_bytes = 0;
-  records_written = 0;
+  writes_ok = 0;
+  write_failures = 0;
   recording_start_time_millis = 0;
   current_recording_name.clear();
 }
@@ -128,7 +135,7 @@ bool start_recording(const RecordingName& new_session_name) {
   internal_stop_recording();
 
   if (!current_recording_name.set_c_str(new_session_name.c_str())) {
-    // Should not happen since we verified the size.
+    // Should not happen since we have identical buffer sizes.
     Error_Handler();
   }
 
@@ -198,6 +205,7 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
 
   // Check state.
   if (state != STATE_OPENED) {
+    write_failures ++;
     logger.error("Can't write to recorder file, (state=%d)", state);
     return;
   }
@@ -205,6 +213,7 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
   // Determine packet size.
   const uint16_t packet_size = packet.size();
   if (packet_size == 0) {
+    write_failures ++;
     logger.warning("Requested to write 0 bytes to SD.");
     return;
   }
@@ -236,7 +245,7 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
     internal_write_pending_bytes();
   }
 
-  // Maybe append left over packet bytes to pending bytes.
+  // If there are left over bytes, store as pending bytes.
   if (packet_bytes_left_over) {
     packet.read_bytes(&write_buffer[pending_bytes], packet_bytes_left_over);
     if (packet.had_read_errors()) {
@@ -251,12 +260,12 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
     Error_Handler();
   }
 
-  records_written++;
+  // writes_ok++;
 }
 
 bool is_recording_active() {
   MutexScope scope(mutex);
-  return (state == STATE_OPENED);
+  return (state != STATE_IDLE);
 }
 
 // void get_current_recording_name(RecordingName* name) {
@@ -266,15 +275,19 @@ bool is_recording_active() {
 void get_recoding_info(RecordingInfo* info) {
   MutexScope scope(mutex);
 
-  if (state == STATE_OPENED) {
+  if (state != STATE_IDLE) {
     info->recording_active = true;
     info->recording_name.set_c_str(current_recording_name.c_str());
     info->recording_time_millis =
         time_util::millis() - recording_start_time_millis;
+    info->writes_ok = writes_ok;
+    info->write_failures = write_failures;
   } else {
     info->recording_active = false;
     info->recording_name.clear();
     info->recording_time_millis = 0;
+    info->writes_ok = 0;
+    info->write_failures = 0;
   }
 }
 
