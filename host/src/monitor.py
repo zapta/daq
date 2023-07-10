@@ -60,7 +60,7 @@ serial_reconnection_task = None
 lc1_display_series = DisplaySeries(1000)
 
 # TODO: Initialize thermistor channel from sys_config.
-thrm1_display_series = DisplaySeries(500)
+thrm1_display_series = DisplaySeries(1000)
 
 # Indicate pending button actions.
 pending_start_button_click = False

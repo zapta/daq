@@ -1,42 +1,21 @@
 
+Report to the monitor also log write errors and record count..
+
 Resolve the CP2102 version and TX/RX leds.
 
 Verify the first ADC DMA reading. Is it indeed of the loadcell channel?  (watch monitor when reseting the controller).
 
 
-
-
-
-
-
+Convert thermistors to degrees.
 
 -------
-
-add start/stop buttons to the monitor's gui.
-
-Convert thermistors to resistance and degrees.
-
 
 why defining PD4 as pullup instead of pulldown causes sd file open to fail?
 
 Write script to fix openocd.
 
-
-
-----------
-Firmware
-
-
 Revisit the error handling in the serial and CDC logger drivers. Should we send to a trap?
 
-
 Consider to switch the serial driver to use DMA instead of interrupts.
-
-----------
-Hardware
-
-
-
-
 
 
