@@ -83,7 +83,7 @@ app_view = None
 
 async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, PacketData]:
     """Callback from the serial packets clients for incoming messages."""
-    logger.info(f"Received message: [%d] %s", endpoint, data.hex_str(max_bytes=10))
+    logger.debug(f"Received message: [%d] %s", endpoint, data.hex_str(max_bytes=10))
     if endpoint == 10:
         parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(data)
         assert parsed_log_packet.num_channels() == 4
@@ -98,10 +98,12 @@ async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, 
         process_new_load_cell_points(load_cell_data.chan_name(), times_secs, values_g)
         update_display()
 
+
 def set_status_line(msg: str) -> None:
-  global status_label
-  status_label.setText("  " + msg)
-  
+    global status_label
+    status_label.setText("  " + msg)
+
+
 def process_new_load_cell_points(chan_name: str, times_secs: List[float],
                                  values_g: List[float]) -> None:
     """Called on arrival on new load cell data points."""
@@ -128,8 +130,26 @@ def update_display():
     plot1.plot(x, y, pen=pg.mkPen("red", width=2), antialias=True)
 
 
+reconnection_task = None
+
+
+async def connection_task():
+    """Continuos task that tries to reconnect if needed."""
+    global serial_packets_client
+    while True:
+        if not serial_packets_client.is_connected():
+            connected = await serial_packets_client.connect()
+            if connected:
+                logger.info("Serial port reconnected")
+            else:
+                logger.error(f"Failed to reconnect to serial port {serial_port}")
+            await asyncio.sleep(5)
+        else:
+            await asyncio.sleep(1)
+
+
 async def init_client() -> None:
-    global sys_config, serial_port, serial_packets_client
+    global sys_config, serial_port, serial_packets_client, connection_task
     sys_config = SysConfig()
     assert args.sys_config is not None
     sys_config.load_from_file(args.sys_config)
@@ -140,7 +160,10 @@ async def init_client() -> None:
                                                 event_async_callback=None,
                                                 baudrate=576000)
     connected = await serial_packets_client.connect()
-    assert connected, f"Could open port {serial_port}"
+    assert connected, f"Could not open port {serial_port}"
+    # We are good. Create a continuous task that will try to reconnect
+    # if the serial connection disconnected (e.g. USB plug is removed).
+    reconnection_task = asyncio.create_task(connection_task(), name="connection_task")
 
 
 async def do_nothing():
@@ -228,14 +251,14 @@ def timer_handler():
     global main_event_loop, serial_packets_client
     global pending_start_button_click, command_start_future
     global pending_stop_button_click, command_stop_future
-    global  last_command_status_time, command_status_future
+    global last_command_status_time, command_status_future
 
     # Process any pending events of the serial packets client.
     # This calls indirectly display_update when new packets arrive.
     main_event_loop.run_until_complete(do_nothing())
 
     if pending_start_button_click:
-        recording_name = time.strftime("%Y%m%d-%H%M%S")
+        recording_name = time.strftime("%y%m%d-%H%M%S")
         logger.info(f"Will start a recording named {recording_name}")
         recording_name_bytes = recording_name.encode()
         cmd = PacketData()
@@ -281,27 +304,27 @@ def timer_handler():
         status, response_data = command_status_future.result()
         command_status_future = None
         if (status != PacketStatus.OK.value):
-          logger.error(f"STATUS command failed with status: {status}")
-          msg = f"ERROR: Device not available (status {status})"
+            logger.error(f"STATUS command failed with status: {status}")
+            msg = f"ERROR: Device not available (status {status})"
         else:
-          version = response_data.read_uint8()
-          recording_active = response_data.read_uint8()
-          if recording_active:
-            recording_millis = response_data.read_uint32()
-            name_len = response_data.read_uint8()
-            name_bytes = response_data.read_bytes(name_len)
-            name = name_bytes.decode("utf-8")
-            msg = f"  Recording [{name}]   {recording_millis/1000:.0f} secs"
-          else:
-            msg = "  Recording off"
-          assert response_data.all_read_ok()
+            version = response_data.read_uint8()
+            recording_active = response_data.read_uint8()
+            if recording_active:
+                recording_millis = response_data.read_uint32()
+                name_len = response_data.read_uint8()
+                name_bytes = response_data.read_bytes(name_len)
+                name = name_bytes.decode("utf-8")
+                msg = f"  Recording [{name}] [{recording_millis/1000:.0f} secs]"
+            else:
+                msg = "  Recording off"
+            assert response_data.all_read_ok()
         set_status_line(msg)
-        
 
 
 init_display()
 
 main_event_loop.run_until_complete(init_client())
+
 timer = pg.QtCore.QTimer()
 timer.timeout.connect(timer_handler)
 
