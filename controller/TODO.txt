@@ -1,6 +1,8 @@
 
 Resolve the CP2102 version and TX/RX leds.
 
+Verify the first ADC DMA reading. Is it indeed of the loadcell channel?  (watch monitor when reseting the controller).
+
 
 
 

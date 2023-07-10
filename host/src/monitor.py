@@ -18,6 +18,7 @@ from pyqtgraph import mkPen, TextItem, LabelItem
 from typing import Tuple, Optional, List
 from log_parser import LogPacketsParser, ChannelData, ParsedLogPacket
 from sys_config import SysConfig, LoadCellChannelConfig, ThermistorChannelConfig
+from display_series import DisplaySeries
 
 # A workaround to avoid auto formatting.
 # For using the local version of serial_packet. Comment out if
@@ -53,12 +54,13 @@ CONTROL_ENDPOINT = 0x01
 sys_config: SysConfig = None
 serial_port: str = None
 serial_packets_client: SerialPacketsClient = None
+serial_reconnection_task = None
 
-# Two parallel lists with load cell data to display. They contains
-# up to the MAX_LOAD_CELL_DISPLAY_POINTS last points.
-MAX_LOAD_CELL_DISPLAY_POINTS = 1000
-load_cell_display_points_grams = []
-load_cell_display_times_secs = []
+# Tracks last <secs, grams> points of load cell.
+lc1_display_series = DisplaySeries(1000)
+
+# TODO: Initialize thermistor channel from sys_config.
+thrm1_display_series = DisplaySeries(500)
 
 # Indicate pending button actions.
 pending_start_button_click = False
@@ -88,49 +90,42 @@ async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, 
         parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(data)
         assert parsed_log_packet.num_channels() == 4
         # Process the load cell channel
-        load_cell_data: ChannelData = parsed_log_packet.channel("LC1")
-        load_cell_chan_config: LoadCellChannelConfig = sys_config.get_load_cell_config("LC1")
+        lc1_data: ChannelData = parsed_log_packet.channel("LC1")
+        lc1_chan_config: LoadCellChannelConfig = sys_config.get_load_cell_config("LC1")
         times_secs = []
         values_g = []
-        for time_millis, adc_value in load_cell_data.timed_values():
+        for time_millis, adc_value in lc1_data.timed_values():
             times_secs.append(time_millis / 1000)
-            values_g.append(load_cell_chan_config.adc_reading_to_grams(adc_value))
-        process_new_load_cell_points(load_cell_data.chan_name(), times_secs, values_g)
+            values_g.append(lc1_chan_config.adc_reading_to_grams(adc_value))
+        lc1_display_series.extend(times_secs, values_g)
+        # Process thermistor1
+        therm1_data: ChannelData = parsed_log_packet.channel("THRM1")
+        therm1_chan_config: ThermistorChannelConfig = sys_config.get_thermistor_config("THRM1")
+        time_millis, adc_value = therm1_data.timed_values()[0]
+        thrm1_display_series.extend([time_millis / 1000],
+                                    [therm1_chan_config.adc_reading_to_ohms(adc_value)])
+        # All done. Update the display
         update_display()
 
 
-def set_status_line(msg: str) -> None:
+def set_display_status_line(msg: str) -> None:
     global status_label
     status_label.setText("  " + msg)
 
 
-def process_new_load_cell_points(chan_name: str, times_secs: List[float],
-                                 values_g: List[float]) -> None:
-    """Called on arrival on new load cell data points."""
-    global load_cell_display_points_grams, load_cell_display_times_secs
-    assert len(times_secs) == len(values_g)
-    load_cell_display_times_secs.extend(times_secs)
-    load_cell_display_points_grams.extend(values_g)
-    # Keep only the last MAX_LOAD_CELL_DISPLAY_POINTS points.
-    load_cell_display_times_secs = load_cell_display_times_secs[-MAX_LOAD_CELL_DISPLAY_POINTS:]
-    load_cell_display_points_grams = load_cell_display_points_grams[-MAX_LOAD_CELL_DISPLAY_POINTS:]
-
-
 def update_display():
-    global load_cell_display_points_grams, load_cell_display_times_secs, plot1
-
-    # m = statistics.mean(load_cell_display_points_grams)
-    # logger.info(f"Mean: {m} grams")
-
-    # Update load cell graph.
-    tn = load_cell_display_times_secs[-1]
-    x = [(v - tn) for v in load_cell_display_times_secs]
-    y = load_cell_display_points_grams
+    global lc1_display_series, plot1
+    # Update plot 1
+    x = lc1_display_series.retro_times()
+    y = lc1_display_series.values()
     plot1.clear()
     plot1.plot(x, y, pen=pg.mkPen("red", width=2), antialias=True)
 
-
-reconnection_task = None
+    # Update plot 2
+    x = thrm1_display_series.retro_times()
+    y = thrm1_display_series.values()
+    plot2.clear()
+    plot2.plot(x, y, pen=pg.mkPen("blue", width=2), antialias=True)
 
 
 async def connection_task():
@@ -148,7 +143,7 @@ async def connection_task():
             await asyncio.sleep(1)
 
 
-async def init_client() -> None:
+async def init_serial_packets_client() -> None:
     global sys_config, serial_port, serial_packets_client, connection_task
     sys_config = SysConfig()
     assert args.sys_config is not None
@@ -215,7 +210,9 @@ def init_display():
     plot2 = layout.addPlot(title="Thermistors", colspan=5)
     plot2.setLabel('left', 'Temp', "C")
     plot2.showGrid(False, True, 0.7)
-    plot1.setMouseEnabled(x=False, y=True)
+    plot2.setMouseEnabled(x=False, y=True)
+    plot2.setXRange(-200, 0)
+    plot2.setYRange(0, 260)
 
     # Add an empty row as spacing.
     # TODO: Is there a cleaner way to specify top margin?
@@ -248,6 +245,7 @@ last_command_status_time = time.time() - 10
 
 
 def timer_handler():
+    """Called repeatedly by the pyqtgraph framework."""
     global main_event_loop, serial_packets_client
     global pending_start_button_click, command_start_future
     global pending_stop_button_click, command_stop_future
@@ -318,19 +316,16 @@ def timer_handler():
             else:
                 msg = "  Recording off"
             assert response_data.all_read_ok()
-        set_status_line(msg)
+        set_display_status_line(msg)
 
 
 init_display()
-
-main_event_loop.run_until_complete(init_client())
+main_event_loop.run_until_complete(init_serial_packets_client())
 
 timer = pg.QtCore.QTimer()
 timer.timeout.connect(timer_handler)
 
-# The argument of start() is delay in millis between timer
-# The timer period is this value + the execution time of the
-# timer handler. We try to keep the delay to a reasonable minimum.
+# NOTE: The argument 1 is delay in millis between invocations.
 timer.start(1)
 
 if __name__ == '__main__':
