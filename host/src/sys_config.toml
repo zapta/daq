@@ -5,8 +5,8 @@ port = "COM9"
 
 [channel.LC1]
 # grams = (adc_reading - offset) * scale
-offset = 36000
-scale = 0.008871875
+offset = 38254
+scale = 0.0080
 
 [channel.THRM1]
 short_reading = 0x000000   
