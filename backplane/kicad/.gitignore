@@ -6,6 +6,7 @@ backplane-backups
 _autosave-backplane.sch
 backplane.bak
 backplane.bck
+backplane.kicad_prl
 production
 production.zip
 _autosave-*
