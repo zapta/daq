@@ -3,7 +3,6 @@ Resolve the CP2102 version and TX/RX leds.
 
 Handle ERROR_HANDLER errors more gracefully, printing string and file name/line before hanging.
 
-Convert thermistors to degrees.
 
 -------
 

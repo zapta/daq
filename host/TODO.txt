@@ -1,1 +1,5 @@
 
+Convert thermistor to C.
+
+In the monitor GUI, display latest value of each channel.
+
