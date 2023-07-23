@@ -1,6 +1,0 @@
-(fp_lib_table
-  (version 7)
-  (lib (name "controller")(type "KiCad")(uri "${KIPRJMOD}/controller.pretty")(options "")(descr ""))
-  (lib (name "common")(type "KiCad")(uri "${KIPRJMOD}/../../common/kicad/common.pretty")(options "")(descr ""))
-  (lib (name "ble")(type "KiCad")(uri "C:/Users/user/projects/ble_stepper_motor_analyzer/repo/kicad/stepper_monitor.pretty")(options "")(descr ""))
-)
