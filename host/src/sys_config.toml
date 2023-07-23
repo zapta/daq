@@ -1,16 +1,16 @@
 # System configuration file
 
 [data_link]
-port = "COM9"
+port = "COM4"
 
 [channel.LC1]
 # grams = (adc_reading - offset) * scale
-offset = 38254
-scale = 0.0080
+offset = 101552
+scale = 0.002671
 
 [channel.THRM1]
-short_reading = 0x000000   
-open_reading  = 0x7fffff    
+short_reading = 120
+open_reading  = 4195471
 r_series      = 2000            
 
 [channel.THRM2]

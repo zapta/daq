@@ -11,6 +11,7 @@ import sys
 import os
 import time
 import pyqtgraph as pg
+import numpy as np
 import statistics
 
 from pyqtgraph.Qt import QtWidgets, QtCore, QtGui
@@ -94,16 +95,24 @@ async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, 
         lc1_chan_config: LoadCellChannelConfig = sys_config.get_load_cell_config("LC1")
         times_secs = []
         values_g = []
+        # logger.info(lc1_data.timed_values())
         for time_millis, adc_value in lc1_data.timed_values():
             times_secs.append(time_millis / 1000)
             values_g.append(lc1_chan_config.adc_reading_to_grams(adc_value))
         lc1_display_series.extend(times_secs, values_g)
-        # Process thermistor1
+        # Process thermistor1. We compute the average of the readings
+        # in this packet.
         therm1_data: ChannelData = parsed_log_packet.channel("THRM1")
+        times_millis = []
+        adc_values = []
+        for time_millis, adc_value in therm1_data.timed_values():
+          times_millis.append(time_millis)
+          adc_values.append(adc_value)
+        avg_times_millis = np.mean(times_millis)
+        avg_adc_value  = np.mean(adc_values)
         therm1_chan_config: ThermistorChannelConfig = sys_config.get_thermistor_config("THRM1")
-        time_millis, adc_value = therm1_data.timed_values()[0]
-        thrm1_display_series.extend([time_millis / 1000],
-                                    [therm1_chan_config.adc_reading_to_ohms(adc_value)])
+        thrm1_display_series.extend([avg_times_millis / 1000],
+                                    [therm1_chan_config.adc_reading_to_ohms(avg_adc_value)])
         # All done. Update the display
         update_display()
 
@@ -120,6 +129,7 @@ def update_display():
     y = lc1_display_series.values()
     plot1.clear()
     plot1.plot(x, y, pen=pg.mkPen("red", width=2), antialias=True)
+    logger.info(f"lc1: {lc1_display_series.mean_value():.3f}")
 
     # Update plot 2
     x = thrm1_display_series.retro_times()

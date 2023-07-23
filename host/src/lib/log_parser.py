@@ -107,12 +107,9 @@ class LogPacketsParser:
                               data: PacketData) -> Tuple[int, Any]:
         """Returns a list of time values (time_millis, value)"""
         first_value_rel_time = data.read_uint16()
-        # print(f"*** Rel start time: {first_value_rel_time}", flush=True)
         num_values = data.read_uint16()
-        # print(f"*** Num values: {num_values}", flush=True)
         step_interval_millis = data.read_uint16()
-        # print(f"*** Step interval: {step_interval_millis}", flush=True)
-
+        # print(f"*** {packet_start_time_millis}, {first_value_rel_time}, {num_values}, {step_interval_millis}", flush=True)
         assert not data.read_error()
         timed_values = []
         t_millis = packet_start_time_millis + first_value_rel_time

@@ -1,5 +1,6 @@
 from typing import List
 import logging
+import numpy as np
 
 logger = logging.getLogger("display_series")
 
@@ -18,6 +19,9 @@ class DisplaySeries:
     def clear(self) -> None:
       self.__times.clear()
       self.__values.clear()
+      
+    def mean_value(self) -> float:
+      return np.mean(self.__values)
 
     def extend(self, new_times: List[float], new_values: List[float]) -> None:
         assert len(new_times) > 0

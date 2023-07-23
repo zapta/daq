@@ -34,19 +34,30 @@ namespace adc {
 //   half.
 // * Point - a SPI transaction that reads the previous value and starts
 //   the next conversion.
-// * Cycle - the sequence of points in this order:
+// * Slot, pair of consecutive points (conversions) which are performed
+//   for each channel. By performing two conversions (points) and reading
+//   only the second value, we reduce internal cross talk between the
+//   thermistors and the load cell channels. Ideally, we should offload
+//   the thermistor channels to a seperate card.
+// * Cycle - the sequence of slots in this order:
 //   [LC1, T1, LC1, T2, LC1, T3]..., where LC = a load cell point, and Ti is
 //   a point of the respective thermistor channel. This pattern is optimized
-//   for high load cell rate and low thermistor rate.
+//   for high load cell rate and low thermistor rate. Remember that each slot
+//   has two conversions for the same channel, such that we have 12 points
+//   in each cycle.
 
 constexpr uint32_t kDmaBytesPerPoint = 13;
 constexpr uint32_t kDmaNumThermistorChans = 3;
-constexpr uint32_t kDmaNumPointsPerCycle = 2 * kDmaNumThermistorChans;
-constexpr uint32_t kDmaBytesPerCycle =
-    kDmaNumPointsPerCycle * kDmaBytesPerPoint;
+// We read each channel using two consecutive points and take
+// only the second channel, to reduce cross talk between the
+// channels.
+constexpr uint32_t kDmaSlotsPerCycle = 2 * kDmaNumThermistorChans;
+constexpr uint32_t kDmaPointsPerSlot = 2;
+constexpr uint32_t kDmaPointsPerCycle = kDmaPointsPerSlot * kDmaSlotsPerCycle;
+constexpr uint32_t kDmaBytesPerCycle = kDmaPointsPerCycle * kDmaBytesPerPoint;
 constexpr uint32_t kDmaCyclesPerHalf = 40;
-constexpr uint32_t kDmaPointsPerHalf =
-    kDmaNumPointsPerCycle * kDmaCyclesPerHalf;
+constexpr uint32_t kDmaSlotsPerHalf = kDmaSlotsPerCycle * kDmaCyclesPerHalf;
+constexpr uint32_t kDmaPointsPerHalf = kDmaPointsPerCycle * kDmaCyclesPerHalf;
 constexpr uint32_t kDmaBytesPerHalf = kDmaPointsPerHalf * kDmaBytesPerPoint;
 
 // The offset of the 3 bytes conversion data within the
@@ -54,8 +65,10 @@ constexpr uint32_t kDmaBytesPerHalf = kDmaPointsPerHalf * kDmaBytesPerPoint;
 constexpr uint32_t kRxDataOffsetInPoint = 2;
 
 // This is the frequency of TIM2 which generates the points time
-// base.
-constexpr uint16_t kDmaPointsPerSec = 1000;
+// base. The effective sampling rate of the load cell is this
+// value divided by 4, and for each thermistor, this value divided
+// by 12.
+constexpr uint16_t kDmaPointsPerSec = 2000;
 
 // Each of tx/rx buffer contains two halves that are used
 // as dual buffers with the DMA circular mode.
@@ -263,7 +276,7 @@ void start_continuos_DMA() {
   static_assert(kDmaNumThermistorChans == 3);
   static_assert(kDmaBytesPerPoint == 13);
   static_assert(kRxDataOffsetInPoint == 2);
-  static_assert(kDmaCyclesPerHalf * kDmaNumPointsPerCycle * kDmaBytesPerPoint ==
+  static_assert(kDmaCyclesPerHalf * kDmaPointsPerCycle * kDmaBytesPerPoint ==
                 kDmaBytesPerHalf);
   static_assert(2 * kDmaBytesPerHalf == sizeof(tx_buffer));
   static_assert(sizeof(tx_buffer) == sizeof(rx_buffer));
@@ -272,34 +285,41 @@ void start_continuos_DMA() {
   // for (uint32_t h = 0; h < 2; h++) {
   // Populate the first half of the TX buffer.
   for (uint32_t cycle = 0; cycle < kDmaCyclesPerHalf; cycle++) {
-    for (uint32_t pt = 0; pt < kDmaNumPointsPerCycle; pt++) {
+    for (uint32_t pt = 0; pt < kDmaPointsPerCycle; pt++) {
+      // Every consecutive points are a slot, in which we read the
+      // same channel twice.
+      const uint32_t slot = pt / kDmaPointsPerSlot;
+      const uint32_t iter = pt % kDmaPointsPerSlot;
+
+      // for (uint32_t iter = 0; iter < 2; iter++) {
       // Since we set the ADC for convertion that we will
       // read on next SPI transaction, we use the next point.
       // Next point index:
       // 0, 2, 4 -> load cell.
       // 1, 3, 5 -> thermistor 1, 2, 3, respectivly.
-      const uint32_t next_pt = (pt + 1) % kDmaNumPointsPerCycle;
-      const bool next_is_loadcell = ((next_pt & 0x01) == 0);
+      const uint32_t next_slot =
+          (iter == 0) ? slot : (slot + 1) % (kDmaSlotsPerCycle);
+      const bool next_slot_is_loadcell = ((next_slot & 0x01) == 0);
 
       // Reference selection.
       // Load cell: (ain0 - ain1)
       // Thermistors: (avdd - avss)
-      const uint8_t reg_0x06_val = next_is_loadcell ? 0x0a : 0x05;
+      const uint8_t reg_0x06_val = next_slot_is_loadcell ? 0x0a : 0x05;
 
       // PGA selection.
       // Load cell: x128 gain.
       // Thermistors: disabled.
-      const uint8_t reg_0x10_val = next_is_loadcell ? 0x07 : 0x80;
+      const uint8_t reg_0x10_val = next_slot_is_loadcell ? 0x07 : 0x00;
 
       // Input selection.
       // Load cell: (ain1 - ain0)
       // Thermistor 1: (ain4 - ain5)
       // Thermistor 2: (ain6 - ain7)
       // Thermistor 3: (ain8 - ain9)
-      const uint8_t reg_0x11_val = next_is_loadcell ? 0x34
-                                   : (next_pt == 1) ? 0x56
-                                   : (next_pt == 3) ? 0x78
-                                                    : 0x9a;
+      const uint8_t reg_0x11_val = next_slot_is_loadcell ? 0x34
+                                   : (next_slot == 1)    ? 0x56
+                                   : (next_slot == 3)    ? 0x78
+                                                         : 0x9a;
 
       // RDATA: Read data of previous conversion.
       *p++ = 0x12;
@@ -321,6 +341,7 @@ void start_continuos_DMA() {
       // START: Start next conversion.
       *p++ = 0x08;
       *p++ = 0x00;  // Dummy byte.
+      // }
     }
     // }
   }
@@ -394,7 +415,7 @@ static void setup() {
   logger.info("ADC device id: 0x%02hx", cmd_read_register(0));
 
   cmd_write_register(0x01, 0x00);  // Clear CRC and RESET flags.
-  cmd_write_register(0x02, 0x5c);  // 4800 SPS, FIR enabled.
+  cmd_write_register(0x02, 0x6C);  // 14400 SPS, (implicit Sinc5 filter)
   cmd_write_register(0x03, 0x11);  // 50us start delay, one shot.
 
   // These are temporary values. The real values are set later,
@@ -438,45 +459,50 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
       isr_millis - ((1000 * (kDmaPointsPerHalf - 1)) / kDmaPointsPerSec);
   packet_data.write_uint32(packet_base_millis);
   // Write the load cell channel data.
+  // logger.info("dt = %lu", time_util::millis() - packet_base_millis);
   {
     // Chan id. Load cell 1.
     packet_data.write_uint8(0x11);
     // Offset of first value relative to packet start time.
     packet_data.write_uint16(0);
     // Num of load cell points in this packet.
-    static_assert(kDmaPointsPerHalf % 2 == 0);
-    packet_data.write_uint16(kDmaPointsPerHalf / 2);
+    static_assert(kDmaSlotsPerHalf % 2 == 0);
+    // Only half of the slots are of load cell. The rest are
+    // thermistor channles.
+    packet_data.write_uint16(kDmaSlotsPerHalf / 2);
     // Millis between values. We don't allow truncation.
-    static_assert(kDmaPointsPerHalf / 2 > 1);
-    static_assert(kDmaPointsPerSec % 2 == 0);
-    static_assert((2 * 1000) % kDmaPointsPerSec == 0);
-    packet_data.write_uint16((2 * 1000) / kDmaPointsPerSec);
+    static_assert(kDmaPointsPerHalf / 4 > 1);
+    static_assert(kDmaPointsPerSec % 4 == 0);
+    static_assert((4 * 1000) % kDmaPointsPerSec == 0);
+    // Every fourth point is a loadcell reading.
+    packet_data.write_uint16((kDmaPointsPerSlot * 2 * 1000) / kDmaPointsPerSec);
     // Write the values. They are already in big endian order.
-    for (uint32_t i = 0; i < kDmaPointsPerHalf; i += 2) {
+    // We collect from the second point of each load cell slot.
+    for (uint32_t i = 1; i < kDmaPointsPerHalf; i += 4) {
       packet_data.write_bytes(
           &bfr[(i * kDmaBytesPerPoint) + kRxDataOffsetInPoint], 3);
     }
   }
 
-  // Output each of the thermistor channels. Each channel has a single point
-  // in each cycle of points.
+  // Output each of the thermistor channels. Each channel has a single slot
+  // in each cycle.
   for (uint32_t i = 0; i < kDmaNumThermistorChans; i++) {
     // Thermistor channel id.
     packet_data.write_uint8(0x21 + i);
     // First item offset in ms from packet base time. Truncation of
     // a fraction of a ms is ok.
-    const uint32_t first_point_index = 1 + 2 * i;
-    packet_data.write_uint16((1000 * first_point_index) / kDmaPointsPerSec);
-    // Number of points in this channel report. Each thermistor channel
-    // has a single point in each cycle.
+    const uint32_t first_pt_index = 3 + i * 4;
+    packet_data.write_uint16((1000 * first_pt_index) / kDmaPointsPerSec);
+    // Number of values in this channel report. Each thermistor channel
+    // has a single slot in each cycle.
     packet_data.write_uint16(kDmaCyclesPerHalf);
     // Millis between values. We don't allow truncation.
     static_assert(kDmaCyclesPerHalf > 1);
-    static_assert((1000 * kDmaNumPointsPerCycle) % kDmaPointsPerSec == 0);
-    packet_data.write_uint16((1000 * kDmaNumPointsPerCycle) / kDmaPointsPerSec);
+    static_assert((1000 * kDmaPointsPerCycle) % kDmaPointsPerSec == 0);
+    packet_data.write_uint16((1000 * kDmaPointsPerCycle) / kDmaPointsPerSec);
     // Write the values. They are already in big endian order.
     const uint32_t data_offset_in_cycle =
-        (first_point_index * kDmaBytesPerPoint) + kRxDataOffsetInPoint;
+        (first_pt_index * kDmaBytesPerPoint) + kRxDataOffsetInPoint;
     for (uint32_t cycle = 0; cycle < kDmaCyclesPerHalf; cycle++) {
       const uint32_t data_offset_in_bfr =
           (cycle * kDmaBytesPerCycle) + data_offset_in_cycle;

@@ -1,7 +1,8 @@
-from typing import Optional, List, Tuple, Literal, Any, Dict
-import sys
+from typing import  Any, Dict
 import tomllib
+import logging
 
+logger = logging.getLogger("sys_config")
 
 class LoadCellChannelConfig:
     """Configuration of a load cell channel."""
@@ -32,7 +33,13 @@ class ThermistorChannelConfig:
 
     def adc_reading_to_ohms(self, adc_reading: int) -> float:
         ratio = (adc_reading - self.__short_reading) / (self.__open_reading - self.__short_reading)
-        return (ratio * self.__r_series) / (1 - ratio)
+        if ratio >= 0.99:
+          resistance = 999999
+        else:
+          resistance = (ratio * self.__r_series) / (1 - ratio)
+        logger.info(f"Therm: {adc_reading:.1f}, {ratio:.7f}, {resistance:.2f}")
+        return resistance
+
 
 
 class SysConfig:
