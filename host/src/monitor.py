@@ -241,7 +241,7 @@ def init_display():
     plot1.setMouseEnabled(x=False, y=True)
     plot1.setXRange(-1.8, 0)
     plot1.setYRange(-100, 6100)
-    plot1.addLegend(offset=(5, 5))
+    plot1.addLegend(offset=(5, 5), verSpacing=-7, brush="#eee", labelTextSize='7pt')
 
 
     layout.nextRow()
@@ -251,7 +251,7 @@ def init_display():
     plot2.setMouseEnabled(x=False, y=True)
     plot2.setXRange(-200, 0)
     plot2.setYRange(0, 260)
-    plot2.addLegend(offset=(5, 5))
+    plot2.addLegend(offset=(5, 5), verSpacing=-7, brush="#eee", labelTextSize='7pt')
 
 
     # Add an empty row as spacing.
