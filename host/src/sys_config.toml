@@ -12,6 +12,9 @@ scale = 0.002671
 short_reading = 120
 open_reading  = 4195471
 r_series      = 2000            
+r_25c         = 100000
+beta          = 4725
+c             = 7.06e-8
 
 [channel.THRM2]
 short_reading = 0x000000   

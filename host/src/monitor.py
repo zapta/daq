@@ -111,8 +111,9 @@ async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, 
         avg_times_millis = np.mean(times_millis)
         avg_adc_value  = np.mean(adc_values)
         therm1_chan_config: ThermistorChannelConfig = sys_config.get_thermistor_config("THRM1")
+        # logger.info(f"{therm1_chan_config}")
         thrm1_display_series.extend([avg_times_millis / 1000],
-                                    [therm1_chan_config.adc_reading_to_ohms(avg_adc_value)])
+                                    [therm1_chan_config.adc_reading_to_c(avg_adc_value)])
         # All done. Update the display
         update_display()
 
