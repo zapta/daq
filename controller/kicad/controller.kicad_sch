@@ -4,6 +4,11 @@
 
   (paper "A3")
 
+  (title_block
+    (title "Controller")
+    (rev "0.2")
+  )
+
   (lib_symbols
     (symbol "Device:C" (pin_numbers hide) (pin_names (offset 0.254)) (in_bom yes) (on_board yes)
       (property "Reference" "C" (at 0.635 2.54 0)
@@ -4846,7 +4851,7 @@
     (property "Value" "Jumper_2_Open" (at 364.49 170.807 0)
       (effects (font (size 1.27 1.27)))
     )
-    (property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" (at 364.49 173.99 0)
+    (property "Footprint" "controller:PinHeader_1x02_P2.54mm_Vertical" (at 364.49 173.99 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (at 364.49 173.99 0)
@@ -5049,6 +5054,9 @@
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "LCSC" "C964632" (at 316.23 201.93 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "JLCRotOffset" "90" (at 316.23 201.93 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (pin "1" (uuid e758d3a7-5859-4f8f-acf2-918cde111928))

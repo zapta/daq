@@ -37,7 +37,7 @@
   (pad "1" thru_hole circle (at -5.08 0) (size 2.5 2.5) (drill 1.2) (layers "*.Cu" "*.Mask") (tstamp 131dc911-cb7b-4c3d-90cb-b08fdd10bacd))
   (pad "2" thru_hole circle (at 0 0) (size 2.5 2.5) (drill 1.2) (layers "*.Cu" "*.Mask") (tstamp 8ea123b6-b0f7-4779-a21f-3d4e920d59d6))
   (model "${KIPRJMOD}/3d_models/Microswitch - Omron D2F-L-A.stp"
-    (offset (xyz 5.08 5.715 2.921))
+    (offset (xyz 0 5.71 2.921))
     (scale (xyz 1 1 1))
     (rotate (xyz 0 0 0))
   )
