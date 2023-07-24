@@ -1,14 +1,19 @@
 # System configuration file
+#
+# Plot color names are here:
+# https://matplotlib.org/stable/gallery/color/named_colors.html
 
 [data_link]
 port = "COM4"
 
 [channel.LC1]
+color = "red"
 # grams = (adc_reading - offset) * scale
 offset = 101552
 scale = 0.002671
 
 [channel.THRM1]
+color = "blueviolet"
 short_reading = 120
 open_reading  = 4195471
 r_series      = 2000            
@@ -17,13 +22,20 @@ beta          = 4725
 c             = 7.06e-8
 
 [channel.THRM2]
-short_reading = 0x000000   
-open_reading  = 0x7fffff    
-r_series      = 2000   
+color = "blue"
+short_reading = 120
+open_reading  = 4195471
+r_series      = 2000            
+r_25c         = 100000
+beta          = 4725
+c             = 7.06e-8
 
 [channel.THRM3]
-short_reading = 0x000000   
-open_reading  = 0x7fffff    
-r_series      = 2000   
-
+color = "teal"
+short_reading = 120
+open_reading  = 4195471
+r_series      = 2000            
+r_25c         = 100000
+beta          = 4725
+c             = 7.06e-8
 
