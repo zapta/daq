@@ -3,14 +3,13 @@ import tomllib
 import logging
 import math
 
-
 logger = logging.getLogger("sys_config")
 
 
 class LoadCellChannelConfig:
     """Configuration of a load cell channel."""
 
-    def __init__(self, chan_name: str, color: str,  offset: int, scale: float):
+    def __init__(self, chan_name: str, color: str, offset: int, scale: float):
         self.__chan_name = chan_name
         self.__color = color
         self.__offset = offset
@@ -21,16 +20,16 @@ class LoadCellChannelConfig:
 
     def adc_reading_to_grams(self, adc_reading: int) -> float:
         return (adc_reading - self.__offset) * self.__scale
-      
+
     def color(self) -> str:
-      return self.__color
+        return self.__color
 
 
 class ThermistorChannelConfig:
     """Configuration of a thermistor channel."""
 
-    def __init__(self, chan_name: str, color: str, short_reading: int, open_reading: int, r_series: int,
-                 r_25c: int, beta: int, c: float):
+    def __init__(self, chan_name: str, color: str, short_reading: int, open_reading: int,
+                 r_series: int, r_25c: int, beta: int, c: float):
         self.__chan_name = chan_name
         self.__color = color
         self.__short_reading = short_reading
@@ -51,19 +50,19 @@ class ThermistorChannelConfig:
         return f"{self.__chan_name} ({self.__color}): range=[{self.__short_reading}, {self.__open_reading}], r_ser={self.__r_series}, r_25c={self.__r_25c}, beta={self.__beta}, c={self.__c}"
 
     def color(self) -> str:
-      return self.__color
-    
+        return self.__color
+
     def adc_reading_to_ohms(self, adc_reading: int) -> float:
         ratio = (adc_reading - self.__short_reading) / (self.__open_reading - self.__short_reading)
         if ratio >= 0.99:
-            resistance = 1e8-1
+            resistance = 1e8 - 1
         else:
             resistance = (ratio * self.__r_series) / (1 - ratio)
         return resistance
 
     def resistance_to_c(self, r: float) -> float:
-        if r >= 1e8-1:
-          return -273.15
+        if r >= 1e8 - 1:
+            return -273.15
         ln_R = math.log(r)
         # The Steinhart-Hart equation.
         reciprocal_T = self.__coef_A + (self.__coef_B * ln_R) + (self.__coef_C * ln_R * ln_R * ln_R)
@@ -107,20 +106,19 @@ class SysConfig:
                 r_25c = ch_config["r_25c"]
                 beta = ch_config["beta"]
                 c = ch_config["c"]
-                self.__thrm_ch_configs[ch_name] = ThermistorChannelConfig(ch_name, color, short_reading,
-                                                                      open_reading, r_series, r_25c,
-                                                                      beta, c)
+                self.__thrm_ch_configs[ch_name] = ThermistorChannelConfig(
+                    ch_name, color, short_reading, open_reading, r_series, r_25c, beta, c)
             else:
                 raise RuntimeError(f"Unexpected channel name in sys_config: {id}")
 
     def __str__(self):
         return f"SysConfig: {self.__toml_dict}"
-      
+
     def lc_chan_names(self):
-      return sorted(self.__lc_ch_configs.keys())
-    
+        return sorted(self.__lc_ch_configs.keys())
+
     def thrm_chan_names(self):
-      return sorted(self.__thrm_ch_configs.keys())
+        return sorted(self.__thrm_ch_configs.keys())
 
     def load_from_file(self, file_path: str) -> None:
         with open(file_path, "rb") as f:
@@ -130,10 +128,8 @@ class SysConfig:
     def get_load_cell_config(self, chan_name: str) -> LoadCellChannelConfig:
         return self.__lc_ch_configs[chan_name]
 
-
     def get_thermistor_config(self, chan_name: str) -> ThermistorChannelConfig:
         return self.__thrm_ch_configs[chan_name]
-
 
     def get_data_link_port(self) -> str:
         return self.__toml_dict["data_link"]["port"]
