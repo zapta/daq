@@ -15,7 +15,7 @@ import numpy as np
 import statistics
 
 from pyqtgraph.Qt import QtWidgets, QtCore, QtGui
-from pyqtgraph import   LabelItem
+from pyqtgraph import LabelItem
 from typing import Tuple, Optional, List, Dict
 from lib.log_parser import LogPacketsParser, ChannelData, ParsedLogPacket
 from lib.sys_config import SysConfig, LoadCellChannelConfig, ThermistorChannelConfig
@@ -51,20 +51,32 @@ main_event_loop = asyncio.get_event_loop()
 # TODO: Move to a common place.
 CONTROL_ENDPOINT = 0x01
 
+
+class LoadCellChannel:
+
+    def __init__(self, chan_name: str, lc_config: LoadCellChannelConfig):
+        self.chan_name = chan_name
+        self.lc_config = lc_config
+        self.display_series = DisplaySeries(1000)
+
+
+class ThermistorChannel:
+
+    def __init__(self, chan_name: str, therm_config: ThermistorChannelConfig):
+        self.chan_name = chan_name
+        self.therm_config = therm_config
+        self.display_series = DisplaySeries(1000)
+
+
 # Initialized later.
 sys_config: SysConfig = None
 serial_port: str = None
 serial_packets_client: SerialPacketsClient = None
 serial_reconnection_task = None
 
-# Tracks last <secs, grams> points of load cell.
-# lc1_display_series = DisplaySeries(1000)
-lc_display_series: Dict[str, DisplaySeries] = None
-
-# TODO: Initialize thermistor channel from sys_config.
-thrm_display_series: Dict[str, DisplaySeries] = None
-
-# thrm1_display_series = DisplaySeries(1000)
+# Initialized later. Keys are channel names.
+lc_channels: Dict[str, LoadCellChannel] = None
+therm_channels: Dict[str, ThermistorChannel] = None
 
 # Indicate pending button actions.
 pending_start_button_click = False
@@ -91,39 +103,44 @@ app_view = None
 lc_configs = {}
 therm_configs = {}
 
+
 async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, PacketData]:
     """Callback from the serial packets clients for incoming messages."""
-    global lc_display_series, thrm_display_series
+    global lc_channels, therm_channels
     logger.debug(f"Received message: [%d] %s", endpoint, data.hex_str(max_bytes=10))
     if endpoint == 10:
         parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(data)
         # Process load cell channels
-        for lc_ch_name in lc_display_series.keys():
-          lc_data: ChannelData = parsed_log_packet.channel(lc_ch_name)
-          lc_chan_config: LoadCellChannelConfig = sys_config.get_load_cell_config(lc_ch_name)
-          times_secs = []
-          values_g = []
-          # logger.info(lc1_data.timed_values())
-          for time_millis, adc_value in lc_data.timed_values():
-              times_secs.append(time_millis / 1000)
-              values_g.append(lc_chan_config.adc_reading_to_grams(adc_value))
-          lc_display_series[lc_ch_name].extend(times_secs, values_g)
+        for lc_ch_name in lc_channels.keys():
+            lc_data: ChannelData = parsed_log_packet.channel(lc_ch_name)
+            lc_chan: LoadCellChannel = lc_channels[lc_ch_name]
+            # @@@ channel
+            # lc_chan_config: LoadCellChannelConfig = sys_config.get_load_cell_config(lc_ch_name)
+            times_secs = []
+            values_g = []
+            # logger.info(lc1_data.timed_values())
+            for time_millis, adc_value in lc_data.timed_values():
+                times_secs.append(time_millis / 1000)
+                values_g.append(lc_chan.lc_config.adc_reading_to_grams(adc_value))
+            lc_chan.display_series.extend(times_secs, values_g)
         # Process thermistor channels
-        for thrm_ch_name in thrm_display_series.keys():
-          # Process thermistor. We compute the average of the readings
-          # in this packet.
-          therm1_data: ChannelData = parsed_log_packet.channel(thrm_ch_name)
-          times_millis = []
-          adc_values = []
-          for time_millis, adc_value in therm1_data.timed_values():
-            times_millis.append(time_millis)
-            adc_values.append(adc_value)
-          avg_times_millis = np.mean(times_millis)
-          avg_adc_value  = np.mean(adc_values)
-          therm_chan_config: ThermistorChannelConfig = sys_config.get_thermistor_config(thrm_ch_name)
-          # logger.info(f"{therm1_chan_config}")
-          thrm_display_series[thrm_ch_name].extend([avg_times_millis / 1000],
-                                      [therm_chan_config.adc_reading_to_c(avg_adc_value)])
+        for thrm_ch_name in therm_channels.keys():
+            # Process thermistor. We compute the average of the readings
+            # in this packet.
+            therm1_data: ChannelData = parsed_log_packet.channel(thrm_ch_name)
+            times_millis = []
+            adc_values = []
+            for time_millis, adc_value in therm1_data.timed_values():
+                times_millis.append(time_millis)
+                adc_values.append(adc_value)
+            avg_times_millis = np.mean(times_millis)
+            avg_adc_value = np.mean(adc_values)
+            therm_chan: ThermistorChannel = therm_channels[thrm_ch_name]
+            # therm_chan_config: ThermistorChannelConfig = sys_config.get_thermistor_config(
+            #     thrm_ch_name)
+            # logger.info(f"{therm1_chan_config}")
+            therm_chan.display_series.extend(
+                [avg_times_millis / 1000], [therm_chan.therm_config.adc_reading_to_c(avg_adc_value)])
         # All done. Update the display
         update_display()
 
@@ -134,26 +151,23 @@ def set_display_status_line(msg: str) -> None:
 
 
 def update_display():
-    global lc_display_series, thrm_display_series, plot1, plot2, sys_config
+    global lc_channels, therm_channels, plot1, plot2, sys_config
     # Update plot 1 with load_cells
     plot1.clear()
-    # plot1.addLegend(offset=(0, 0))
-    for ch_name, display_series in sorted(lc_display_series.items()):
-      x = display_series.retro_times()
-      y =display_series.values()
-      color = sys_config.get_load_cell_config(ch_name).color()
-      plot1.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name,  antialias=True)
-      # print(plot1, flush=True)
-      # plot1.legend()
-      logger.info(f"{ch_name}: {display_series.mean_value():.3f}")
+    for ch_name, lc_chan in sorted(lc_channels.items()):
+        x = lc_chan.display_series.retro_times()
+        y = lc_chan.display_series.values()
+        color = lc_chan.lc_config.color()
+        plot1.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name, antialias=True)
+        logger.info(f"{ch_name}: {lc_chan.display_series.mean_value():.3f}")
 
     # Update plot 2 with thermistors
     plot2.clear()
-    for ch_name, display_series in sorted(thrm_display_series.items()):
-      x = display_series.retro_times()
-      y = display_series.values()
-      color = sys_config.get_thermistor_config(ch_name).color()
-      plot2.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name, antialias=True)
+    for ch_name, therm_chan in sorted(therm_channels.items()):
+        x = therm_chan.display_series.retro_times()
+        y = therm_chan.display_series.values()
+        color = therm_chan.therm_config.color()
+        plot2.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name, antialias=True)
 
 
 async def connection_task():
@@ -207,15 +221,15 @@ def on_stop_button():
 
 
 def init_display():
-    global plot1, plot2, button1, button2, status_label, app, app_view, lc_display_series, thrm_display_series
-    
-    lc_display_series = {}
-    for ch_name in sys_config.lc_chan_names():
-      lc_display_series[ch_name] = DisplaySeries(1000)
-     
-    thrm_display_series = {}
-    for ch_name in sys_config.thrm_chan_names():
-      thrm_display_series[ch_name] = DisplaySeries(1000)   
+    global plot1, plot2, button1, button2, status_label, app, app_view, lc_channels, therm_channels
+
+    lc_channels = {}
+    for chan_name, lc_config in sys_config.get_load_cells_configs().items():
+        lc_channels[chan_name] = LoadCellChannel(chan_name, lc_config)
+
+    therm_channels = {}
+    for chan_name, therm_config in sys_config.get_thermistors_configs().items():
+        therm_channels[chan_name] = ThermistorChannel(chan_name, therm_config)
 
     pg.setConfigOption('background', 'w')
     pg.setConfigOption('foreground', 'k')
@@ -243,7 +257,6 @@ def init_display():
     plot1.setYRange(-100, 6100)
     plot1.addLegend(offset=(5, 5), verSpacing=-7, brush="#eee", labelTextSize='7pt')
 
-
     layout.nextRow()
     plot2 = layout.addPlot(title="Thermistors", colspan=5)
     plot2.setLabel('left', 'Temp', "C")
@@ -252,7 +265,6 @@ def init_display():
     plot2.setXRange(-200, 0)
     plot2.setYRange(0, 260)
     plot2.addLegend(offset=(5, 5), verSpacing=-7, brush="#eee", labelTextSize='7pt')
-
 
     # Add an empty row as spacing.
     # TODO: Is there a cleaner way to specify top margin?
@@ -352,7 +364,7 @@ def timer_handler():
                 name_len = response_data.read_uint8()
                 name_bytes = response_data.read_bytes(name_len)
                 name = name_bytes.decode("utf-8")
-                writes_ok = response_data.read_uint32();
+                writes_ok = response_data.read_uint32()
                 write_failures = response_data.read_uint32()
                 errors_note = f" ERRORS: {write_failures}" if write_failures else ""
                 msg = f"  Recording [{name}] [{recording_millis/1000:.0f} secs] [{writes_ok} records]{errors_note}"

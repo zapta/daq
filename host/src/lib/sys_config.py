@@ -114,11 +114,11 @@ class SysConfig:
     def __str__(self):
         return f"SysConfig: {self.__toml_dict}"
 
-    def lc_chan_names(self):
-        return sorted(self.__lc_ch_configs.keys())
+    # def lc_chan_names(self):
+    #     return sorted(self.__lc_ch_configs.keys())
 
-    def thrm_chan_names(self):
-        return sorted(self.__thrm_ch_configs.keys())
+    # def thrm_chan_names(self):
+    #     return sorted(self.__thrm_ch_configs.keys())
 
     def load_from_file(self, file_path: str) -> None:
         with open(file_path, "rb") as f:
@@ -130,6 +130,12 @@ class SysConfig:
 
     def get_thermistor_config(self, chan_name: str) -> ThermistorChannelConfig:
         return self.__thrm_ch_configs[chan_name]
+      
+    def get_load_cells_configs(self) -> Dict[str, LoadCellChannelConfig]:
+      return self.__lc_ch_configs
+    
+    def get_thermistors_configs(self) -> Dict[str, ThermistorChannelConfig]:
+      return self.__thrm_ch_configs
 
     def get_data_link_port(self) -> str:
         return self.__toml_dict["data_link"]["port"]
