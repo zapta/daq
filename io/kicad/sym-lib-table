@@ -2,5 +2,4 @@
   (version 7)
   (lib (name "io")(type "KiCad")(uri "${KIPRJMOD}/io.kicad_sym")(options "")(descr ""))
   (lib (name "common")(type "KiCad")(uri "${KIPRJMOD}/../../common/kicad/common.kicad_sym")(options "")(descr ""))
-  (lib (name "breakout")(type "KiCad")(uri "${KIPRJMOD}/../../io/breakout/breakout.kicad_sym")(options "")(descr ""))
 )
