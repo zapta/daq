@@ -436,7 +436,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "adc.kicad_pro",
+    "filename": "io.kicad_pro",
     "version": 1
   },
   "net_settings": {

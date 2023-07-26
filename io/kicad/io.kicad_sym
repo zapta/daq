@@ -57,7 +57,7 @@
     (property "Value" "ADS1261IRHBR" (at 41.91 58.42 0)
       (effects (font (size 1.524 1.524)))
     )
-    (property "Footprint" "adc:RHB0032E" (at 43.18 16.51 0)
+    (property "Footprint" "io:RHB0032E" (at 43.18 16.51 0)
       (effects (font (size 1.27 1.27) italic) hide)
     )
     (property "Datasheet" "ADS1261IRHBR" (at 41.91 20.32 0)

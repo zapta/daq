@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <export version="E">
   <design>
-    <source>/Users/user/projects/daq/repo/adc/kicad/adc.kicad_sch</source>
+    <source>/Users/user/projects/daq/repo/io/kicad/io.kicad_sch</source>
     <date>2023 June 30, Friday 09:50:59</date>
     <tool>Eeschema 7.0.1-0</tool>
     <sheet number="1" name="/" tstamps="/">
@@ -10,7 +10,7 @@
         <company/>
         <rev>0.1</rev>
         <date/>
-        <source>adc.kicad_sch</source>
+        <source>io.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
         <comment number="3" value=""/>
@@ -33,7 +33,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C12530"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -48,7 +48,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -63,7 +63,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -78,7 +78,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -93,7 +93,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C12530"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -108,7 +108,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C12530"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -123,7 +123,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -138,7 +138,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -153,7 +153,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -168,7 +168,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C52923"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -183,7 +183,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C52923"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -198,7 +198,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -213,7 +213,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -228,7 +228,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1532"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -243,7 +243,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C16772"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -258,7 +258,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1532"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -273,7 +273,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1538"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -288,7 +288,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1532"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -303,7 +303,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C16772"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -318,7 +318,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1532"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -333,7 +333,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C52923"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -348,7 +348,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C19702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -363,7 +363,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -378,7 +378,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -393,7 +393,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -408,7 +408,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C19702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -423,7 +423,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -438,7 +438,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C19702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -453,7 +453,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C19702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -468,7 +468,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -483,7 +483,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -498,7 +498,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C19702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -513,7 +513,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C19702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -528,7 +528,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -543,7 +543,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C52923"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -558,7 +558,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -573,7 +573,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C19702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -588,7 +588,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -603,7 +603,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -618,7 +618,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C19702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -633,7 +633,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C19702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -648,7 +648,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C19702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -663,7 +663,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -678,7 +678,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C1525"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -693,7 +693,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C52923"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -708,7 +708,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C52923"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -723,7 +723,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C19702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -738,7 +738,7 @@
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="LCSC" value="C19702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Unpolarized capacitor, small symbol"/>
       <property name="ki_keywords" value="capacitor cap"/>
       <sheetpath names="/" tstamps="/"/>
@@ -753,7 +753,7 @@
       <libsource lib="Device" part="LED" description="Light emitting diode"/>
       <property name="LCSC" value="C2286"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Light emitting diode"/>
       <property name="ki_keywords" value="LED diode"/>
       <sheetpath names="/" tstamps="/"/>
@@ -768,7 +768,7 @@
       <libsource lib="Device" part="LED" description="Light emitting diode"/>
       <property name="LCSC" value="C2286"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Light emitting diode"/>
       <property name="ki_keywords" value="LED diode"/>
       <sheetpath names="/" tstamps="/"/>
@@ -783,7 +783,7 @@
       <libsource lib="Device" part="LED" description="Light emitting diode"/>
       <property name="LCSC" value="C2286"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Light emitting diode"/>
       <property name="ki_keywords" value="LED diode"/>
       <sheetpath names="/" tstamps="/"/>
@@ -798,7 +798,7 @@
       <libsource lib="Device" part="LED" description="Light emitting diode"/>
       <property name="LCSC" value="C2286"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Light emitting diode"/>
       <property name="ki_keywords" value="LED diode"/>
       <sheetpath names="/" tstamps="/"/>
@@ -813,7 +813,7 @@
       <libsource lib="Device" part="LED" description="Light emitting diode"/>
       <property name="LCSC" value="C2286"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Light emitting diode"/>
       <property name="ki_keywords" value="LED diode"/>
       <sheetpath names="/" tstamps="/"/>
@@ -821,14 +821,14 @@
     </comp>
     <comp ref="J1">
       <value>Conn_01x07_Pin</value>
-      <footprint>adc:connector_7pins_horizontal</footprint>
+      <footprint>io:connector_7pins_horizontal</footprint>
       <fields>
         <field name="LCSC">C70896</field>
       </fields>
       <libsource lib="Connector" part="Conn_01x07_Pin" description="Generic connector, single row, 01x07, script generated"/>
       <property name="LCSC" value="C70896"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Generic connector, single row, 01x07, script generated"/>
       <property name="ki_keywords" value="connector"/>
       <sheetpath names="/" tstamps="/"/>
@@ -836,14 +836,14 @@
     </comp>
     <comp ref="J2">
       <value>Conn_01x02_Pin</value>
-      <footprint>adc:connector_2pins_horizontal</footprint>
+      <footprint>io:connector_2pins_horizontal</footprint>
       <fields>
         <field name="LCSC">C30436</field>
       </fields>
       <libsource lib="Connector" part="Conn_01x02_Pin" description="Generic connector, single row, 01x02, script generated"/>
       <property name="LCSC" value="C30436"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Generic connector, single row, 01x02, script generated"/>
       <property name="ki_keywords" value="connector"/>
       <sheetpath names="/" tstamps="/"/>
@@ -851,14 +851,14 @@
     </comp>
     <comp ref="J3">
       <value>Conn_01x02_Pin</value>
-      <footprint>adc:connector_2pins_horizontal</footprint>
+      <footprint>io:connector_2pins_horizontal</footprint>
       <fields>
         <field name="LCSC">C30436</field>
       </fields>
       <libsource lib="Connector" part="Conn_01x02_Pin" description="Generic connector, single row, 01x02, script generated"/>
       <property name="LCSC" value="C30436"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Generic connector, single row, 01x02, script generated"/>
       <property name="ki_keywords" value="connector"/>
       <sheetpath names="/" tstamps="/"/>
@@ -866,14 +866,14 @@
     </comp>
     <comp ref="J4">
       <value>Conn_01x02_Pin</value>
-      <footprint>adc:connector_2pins_horizontal</footprint>
+      <footprint>io:connector_2pins_horizontal</footprint>
       <fields>
         <field name="LCSC">C30436</field>
       </fields>
       <libsource lib="Connector" part="Conn_01x02_Pin" description="Generic connector, single row, 01x02, script generated"/>
       <property name="LCSC" value="C30436"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Generic connector, single row, 01x02, script generated"/>
       <property name="ki_keywords" value="connector"/>
       <sheetpath names="/" tstamps="/"/>
@@ -888,7 +888,7 @@
       <libsource lib="Device" part="L_Ferrite" description="Inductor with ferrite core"/>
       <property name="LCSC" value="C531291"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Inductor with ferrite core"/>
       <property name="ki_keywords" value="inductor choke coil reactor magnetic"/>
       <sheetpath names="/" tstamps="/"/>
@@ -903,7 +903,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C328418"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -918,7 +918,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C328418"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -933,7 +933,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C328418"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -948,7 +948,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C11702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -963,7 +963,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C11702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -978,7 +978,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C11702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -993,7 +993,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C328418"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1008,7 +1008,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C328418"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1023,7 +1023,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C11702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1038,7 +1038,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C11702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1053,7 +1053,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C11702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1068,7 +1068,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C328418"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1083,7 +1083,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C328418"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1098,7 +1098,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C328418"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1113,7 +1113,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C25794"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1128,7 +1128,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C25794"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1143,7 +1143,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C328418"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1158,7 +1158,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C25118"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1173,7 +1173,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C25118"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1188,7 +1188,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C11702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1203,7 +1203,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C25118"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1218,7 +1218,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C25118"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1233,7 +1233,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C25744"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1248,7 +1248,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C25744"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1263,7 +1263,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C25905"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1278,7 +1278,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C25905"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1293,7 +1293,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C25905"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1308,7 +1308,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C25794"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1323,7 +1323,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C25794"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1338,7 +1338,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C328418"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1353,7 +1353,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C2759490"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1368,7 +1368,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C852328"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1383,7 +1383,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C172084"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1398,7 +1398,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C11702"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1413,7 +1413,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C328418"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1428,7 +1428,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C328418"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1443,7 +1443,7 @@
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
       <property name="LCSC" value="C17477"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Resistor, small US symbol"/>
       <property name="ki_keywords" value="r resistor"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1451,15 +1451,15 @@
     </comp>
     <comp ref="U1">
       <value>ADS1261BIRHBT</value>
-      <footprint>adc:RHB0032E</footprint>
+      <footprint>io:RHB0032E</footprint>
       <datasheet>ADS1261IRHBR</datasheet>
       <fields>
         <field name="LCSC">C2669964</field>
       </fields>
-      <libsource lib="adc" part="ADS1261IRHBR" description=""/>
+      <libsource lib="io" part="ADS1261IRHBR" description=""/>
       <property name="LCSC" value="C2669964"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_keywords" value="ADS1261IRHBR"/>
       <sheetpath names="/" tstamps="/"/>
       <tstamps>5cc9949a-b29a-48ee-b8c9-3dca9cd4c56d</tstamps>
@@ -1473,7 +1473,7 @@
       <libsource lib="" part="ESD5344D_1" description="Low Cost Monolithic Voltage-to-Frequency Converter, SOIC-8"/>
       <property name="LCSC" value="C2841840"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Low Cost Monolithic Voltage-to-Frequency Converter, SOIC-8"/>
       <property name="ki_keywords" value="v-to-f v-f"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1481,14 +1481,14 @@
     </comp>
     <comp ref="U3">
       <value>TPS7A2050PDBVR</value>
-      <footprint>adc:SOT-23-5</footprint>
+      <footprint>io:SOT-23-5</footprint>
       <fields>
         <field name="LCSC">C2864504</field>
       </fields>
-      <libsource lib="adc" part="TPS7A2050" description="300mA, Micropower, Ultra-Low-Dropout, Low-Noise Adjustable CMOS Regulator, VSSOP-8"/>
+      <libsource lib="io" part="TPS7A2050" description="300mA, Micropower, Ultra-Low-Dropout, Low-Noise Adjustable CMOS Regulator, VSSOP-8"/>
       <property name="LCSC" value="C2864504"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="300mA, Micropower, Ultra-Low-Dropout, Low-Noise Adjustable CMOS Regulator, VSSOP-8"/>
       <property name="ki_keywords" value="adjustable linear regulator"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1496,14 +1496,14 @@
     </comp>
     <comp ref="U4">
       <value>TPS7A2025PDBVR&#xD;</value>
-      <footprint>adc:SOT-23-5</footprint>
+      <footprint>io:SOT-23-5</footprint>
       <fields>
         <field name="LCSC">C2869949</field>
       </fields>
-      <libsource lib="adc" part="TPS7A2050" description="300mA, Micropower, Ultra-Low-Dropout, Low-Noise Adjustable CMOS Regulator, VSSOP-8"/>
+      <libsource lib="io" part="TPS7A2050" description="300mA, Micropower, Ultra-Low-Dropout, Low-Noise Adjustable CMOS Regulator, VSSOP-8"/>
       <property name="LCSC" value="C2869949"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="300mA, Micropower, Ultra-Low-Dropout, Low-Noise Adjustable CMOS Regulator, VSSOP-8"/>
       <property name="ki_keywords" value="adjustable linear regulator"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1515,10 +1515,10 @@
       <fields>
         <field name="LCSC">C57950</field>
       </fields>
-      <libsource lib="adc" part="TPS65135" description="Split-Rail Converter with Dual, Positive and Negative Outputs (300mA typ, Switch Current Limit 800mA typ), 2.7-5.5V, VQFN-24"/>
+      <libsource lib="io" part="TPS65135" description="Split-Rail Converter with Dual, Positive and Negative Outputs (300mA typ, Switch Current Limit 800mA typ), 2.7-5.5V, VQFN-24"/>
       <property name="LCSC" value="C57950"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="Split-Rail Converter with Dual, Positive and Negative Outputs (300mA typ, Switch Current Limit 800mA typ), 2.7-5.5V, VQFN-24"/>
       <property name="ki_keywords" value="split-rail switching dual positive negative"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1534,7 +1534,7 @@
       <libsource lib="" part="ADP7182AUJZ_1" description="200mA, Low Noise, CMOS Low Dropout Regulator, Negative, Adjustable, TSOT-23-5"/>
       <property name="LCSC" value="C514357"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="200mA, Low Noise, CMOS Low Dropout Regulator, Negative, Adjustable, TSOT-23-5"/>
       <property name="ki_keywords" value="linear regulator ldo adjustable negative"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1547,10 +1547,10 @@
       <fields>
         <field name="LCSC">C462196</field>
       </fields>
-      <libsource lib="adc" part="ADP7182AUJZ" description="200mA, Low Noise, CMOS Low Dropout Regulator, Negative, Adjustable, TSOT-23-5"/>
+      <libsource lib="io" part="ADP7182AUJZ" description="200mA, Low Noise, CMOS Low Dropout Regulator, Negative, Adjustable, TSOT-23-5"/>
       <property name="LCSC" value="C462196"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="200mA, Low Noise, CMOS Low Dropout Regulator, Negative, Adjustable, TSOT-23-5"/>
       <property name="ki_keywords" value="linear regulator ldo adjustable negative"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1566,7 +1566,7 @@
       <libsource lib="breakout" part="XC6206P332MR" description="100mA Low Dropout Voltage Regulator, Fixed Output, SOT89"/>
       <property name="LCSC" value="C5446"/>
       <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="adc.kicad_sch"/>
+      <property name="Sheetfile" value="io.kicad_sch"/>
       <property name="ki_description" value="100mA Low Dropout Voltage Regulator, Fixed Output, SOT89"/>
       <property name="ki_keywords" value="100mA LDO Regulator Fixed Positive"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1750,7 +1750,7 @@
         <pin num="2" name="B" type="passive"/>
       </pins>
     </libpart>
-    <libpart lib="adc" part="ADP7182AUJZ">
+    <libpart lib="io" part="ADP7182AUJZ">
       <description>200mA, Low Noise, CMOS Low Dropout Regulator, Negative, Adjustable, TSOT-23-5</description>
       <docs>https://www.analog.com/media/en/technical-documentation/data-sheets/ADP7182.pdf</docs>
       <footprints>
@@ -1770,7 +1770,7 @@
         <pin num="5" name="VOUT" type="power_out"/>
       </pins>
     </libpart>
-    <libpart lib="adc" part="ADS1261IRHBR">
+    <libpart lib="io" part="ADS1261IRHBR">
       <docs>ADS1261IRHBR</docs>
       <footprints>
         <fp>RHB0032E</fp>
@@ -1779,7 +1779,7 @@
       <fields>
         <field name="Reference">U</field>
         <field name="Value">ADS1261IRHBR</field>
-        <field name="Footprint">adc:RHB0032E</field>
+        <field name="Footprint">io:RHB0032E</field>
         <field name="Datasheet">ADS1261IRHBR</field>
       </fields>
       <pins>
@@ -1818,7 +1818,7 @@
         <pin num="33" name="PAD" type="power_in"/>
       </pins>
     </libpart>
-    <libpart lib="adc" part="TPS65135">
+    <libpart lib="io" part="TPS65135">
       <description>Split-Rail Converter with Dual, Positive and Negative Outputs (300mA typ, Switch Current Limit 800mA typ), 2.7-5.5V, VQFN-24</description>
       <footprints>
         <fp>VQFN*1EP*4x4mm*P0.5mm*</fp>
@@ -1847,7 +1847,7 @@
         <pin num="17" name="PAD" type="power_in"/>
       </pins>
     </libpart>
-    <libpart lib="adc" part="TPS7A2050">
+    <libpart lib="io" part="TPS7A2050">
       <description>300mA, Micropower, Ultra-Low-Dropout, Low-Noise Adjustable CMOS Regulator, VSSOP-8</description>
       <footprints>
         <fp>VSSOP*3.0x3.0mm*P0.65mm*</fp>
@@ -2007,11 +2007,11 @@
     <library logical="Jumper">
       <uri>/Applications/KiCad 7.0.1/KiCad.app/Contents/SharedSupport/symbols//Jumper.kicad_sym</uri>
     </library>
-    <library logical="adc">
-      <uri>/Users/user/projects/daq/repo/adc/kicad/adc.kicad_sym</uri>
+    <library logical="io">
+      <uri>/Users/user/projects/daq/repo/io/kicad/io.kicad_sym</uri>
     </library>
     <library logical="breakout">
-      <uri>/Users/user/projects/daq/repo/adc/breakout/breakout.kicad_sym</uri>
+      <uri>/Users/user/projects/daq/repo/io/breakout/breakout.kicad_sym</uri>
     </library>
     <library logical="common">
       <uri>/Users/user/projects/daq/repo/common/kicad/common.kicad_sym</uri>

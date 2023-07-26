@@ -452,7 +452,7 @@
   )
   (wire (pts (xy 86.36 74.93) (xy 92.71 74.93))
     (stroke (width 0) (type default))
-    (uuid 8a9c3fc3-eaaf-4492-bf13-b56e2adc9098)
+    (uuid 8a9c3fc3-eaaf-4492-bf13-b56e2io9098)
   )
   (wire (pts (xy 59.69 74.93) (xy 76.2 74.93))
     (stroke (width 0) (type default))
