@@ -104,6 +104,7 @@ int main(void)
   MX_TIM12_Init();
   MX_SDMMC1_SD_Init();
   MX_FATFS_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */

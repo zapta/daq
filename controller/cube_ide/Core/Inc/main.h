@@ -69,6 +69,10 @@ void Error_Handler(void);
 #define ADC_MOSI_GPIO_Port GPIOA
 #define ADC_CS_PWM_Pin GPIO_PIN_14
 #define ADC_CS_PWM_GPIO_Port GPIOB
+#define IFC_IN1_Pin GPIO_PIN_6
+#define IFC_IN1_GPIO_Port GPIOC
+#define IFC_OUT1_Pin GPIO_PIN_7
+#define IFC_OUT1_GPIO_Port GPIOC
 #define TEST1_Pin GPIO_PIN_1
 #define TEST1_GPIO_Port GPIOD
 #define SD_SWITCH_Pin GPIO_PIN_4

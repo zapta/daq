@@ -67,6 +67,8 @@ int main(void) {
   SystemClock_Config();
   PeriphCommonClock_Config();
 
+  // This should match the initialization in 
+  // lib/cube_ide/Core/src/main.c which we do not use.
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_SPI1_Init();
@@ -74,6 +76,7 @@ int main(void) {
   MX_TIM12_Init();
   MX_SDMMC1_SD_Init();
   MX_FATFS_Init();
+  MX_USART2_UART_Init();
 
   if (!main_task.start()) {
     Error_Handler();
