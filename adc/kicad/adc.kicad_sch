@@ -7049,7 +7049,7 @@
     (property "Datasheet" "~" (at 258.445 56.515 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "LCSC" "C328418" (at 258.445 56.515 0)
+    (property "LCSC" "C852711" (at 258.445 56.515 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (pin "1" (uuid b80110cb-0f2e-4b2f-84f6-f4e8c4f42c58))
