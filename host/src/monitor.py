@@ -37,6 +37,12 @@ parser.add_argument("--sys_config",
                     dest="sys_config",
                     default="sys_config.toml",
                     help="Path to system configuration file.")
+parser.add_argument('--calibration',
+                    dest="calibration",
+                    default=False,
+                    action=argparse.BooleanOptionalAction,
+                    help="If on, dump also calibration info.")
+
 args = parser.parse_args()
 
 logging.basicConfig(
@@ -114,15 +120,17 @@ async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, 
         for lc_ch_name in lc_channels.keys():
             lc_data: ChannelData = parsed_log_packet.channel(lc_ch_name)
             lc_chan: LoadCellChannel = lc_channels[lc_ch_name]
-            # @@@ channel
-            # lc_chan_config: LoadCellChannelConfig = sys_config.get_load_cell_config(lc_ch_name)
             times_secs = []
             values_g = []
-            # logger.info(lc1_data.timed_values())
+            adc_values_sum = 0
             for time_millis, adc_value in lc_data.timed_values():
                 times_secs.append(time_millis / 1000)
                 values_g.append(lc_chan.lc_config.adc_reading_to_grams(adc_value))
+                adc_values_sum += adc_value
             lc_chan.display_series.extend(times_secs, values_g)
+            avg_adc_value = adc_values_sum / len(times_secs)
+            if args.calibration:
+                lc_chan.lc_config.dump_lc_calibration(avg_adc_value)
         # Process thermistor channels
         for thrm_ch_name in therm_channels.keys():
             # Process thermistor. We compute the average of the readings
@@ -140,7 +148,11 @@ async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, 
             #     thrm_ch_name)
             # logger.info(f"{therm1_chan_config}")
             therm_chan.display_series.extend(
-                [avg_times_millis / 1000], [therm_chan.therm_config.adc_reading_to_c(avg_adc_value)])
+                [avg_times_millis / 1000],
+                [therm_chan.therm_config.adc_reading_to_c(avg_adc_value)])
+            if args.calibration:
+                therm_chan.therm_config.dump_therm_calibration(avg_adc_value)
+
         # All done. Update the display
         update_display()
 
@@ -159,7 +171,7 @@ def update_display():
         y = lc_chan.display_series.values()
         color = lc_chan.lc_config.color()
         plot1.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name, antialias=True)
-        logger.info(f"{ch_name}: {lc_chan.display_series.mean_value():.3f}")
+        # logger.info(f"{ch_name}: {lc_chan.display_series.mean_value():.3f}")
 
     # Update plot 2 with thermistors
     plot2.clear()
@@ -309,7 +321,7 @@ def timer_handler():
 
     if pending_start_button_click:
         recording_name = time.strftime("%y%m%d-%H%M%S")
-        logger.info(f"Will start a recording named {recording_name}")
+        logger.info(f"Will start a recording {recording_name}")
         recording_name_bytes = recording_name.encode()
         cmd = PacketData()
         cmd.add_uint8(0x02)  # Command = START
