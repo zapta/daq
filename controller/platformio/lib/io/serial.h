@@ -87,6 +87,7 @@ class Serial {
   }
 
  private:
+  // For interrupt handling.
   static void uart_TxCpltCallback(UART_HandleTypeDef* huart);
   static void uart_RxCpltCallback(UART_HandleTypeDef* huart);
   static void uart_RxEventCallback(UART_HandleTypeDef* huart, uint16_t Size);
