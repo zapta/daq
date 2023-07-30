@@ -128,5 +128,8 @@ class Serial {
 };
 
 namespace serial {
+// Used by data link.
 extern Serial serial1;
+// Used by printer link.
+extern Serial serial2;
 }  // namespace serial

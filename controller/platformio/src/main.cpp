@@ -27,6 +27,7 @@ StaticTask<2000> adc_task(adc::adc_task_body, "ADC", 7);
 // Called from from the main FreeRTOS task.
 void app_main() {
   serial::serial1.init();
+  serial::serial2.init();
 
   HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_1);
   // Set TIM12 PWM to 40%. This signal acts as

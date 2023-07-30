@@ -2,11 +2,15 @@
 
 namespace serial {
 Serial serial1(&huart1);
+Serial serial2(&huart2);
 
 // Finds the serial by huart. Fatal error if not found.
 Serial *get_serial_by_huart(UART_HandleTypeDef *huart) {
   if (huart == &huart1) {
     return &serial::serial1;
+  }
+  if (huart == &huart2) {
+    return &serial::serial2;
   }
   // Not found.
   for (;;) {
