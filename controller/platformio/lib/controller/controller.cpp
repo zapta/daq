@@ -7,13 +7,11 @@
 
 namespace controller {
 
-
 // Protects access to the variables below.
 static StaticMutex mutex;
 
 static data_recorder::RecordingName tmp_new_log_session_name;
 static data_recorder::RecordingInfo tmp_recording_info;
-
 
 PacketStatus handle_control_command(const SerialPacketsData& command_data,
                                     SerialPacketsData& response_data) {
@@ -97,14 +95,12 @@ PacketStatus handle_control_command(const SerialPacketsData& command_data,
   return PacketStatus::UNHANDLED;
 }
 
-
-
 PacketStatus host_link_command_handler(uint8_t endpoint,
                                        const SerialPacketsData& command_data,
                                        SerialPacketsData& response_data) {
   if (endpoint == host_link::SelfPorts::CONTROL_COMMAND) {
     logger.info("Recieved a control commannd at endpoint %02hx", endpoint);
-    return controller::handle_control_command(command_data, response_data);
+    return handle_control_command(command_data, response_data);
   }
   logger.error("Ignored command at endpoint %02hx", endpoint);
   return PacketStatus::UNHANDLED;
@@ -113,7 +109,13 @@ PacketStatus host_link_command_handler(uint8_t endpoint,
 // A callback type for incoming messages.
 void host_link_message_handler(uint8_t endpoint,
                                const SerialPacketsData& message_data) {
-  logger.info("Recieved a message at endpoint %02hx", endpoint);
+  // Currently we don't use nor expect incoming messages.
+  logger.warning("Recieved a message at endpoint %02hx", endpoint);
+}
+
+void report_event(const EventName& event_name) {
+  // TODO: Implementing logging and reporting in status.
+  logger.info("Event: [%s]", event_name.c_str());
 }
 
 }  // namespace controller

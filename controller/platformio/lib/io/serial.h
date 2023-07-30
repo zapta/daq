@@ -42,7 +42,7 @@ class Serial {
   uint16_t available() {
     uint16_t result = 0;
     {
-      MutexScope mutex_scope(_rx_mutext);
+      MutexScope mutex_scope(_rx_mutex);
       __disable_irq();
       { result = _rx_buffer.size(); }
       __enable_irq();
@@ -55,7 +55,7 @@ class Serial {
     for (;;) {
       int bytes_read = 0;
       {
-        MutexScope mutex_scope(_rx_mutext);
+        MutexScope mutex_scope(_rx_mutex);
         __disable_irq();
         { bytes_read = _rx_buffer.read(bfr, len); }
         __enable_irq();
@@ -99,7 +99,7 @@ class Serial {
   uint8_t _tx_transfer_buffer[20];
   // RX
   CircularBuffer<uint8_t, 5000> _rx_buffer;
-  StaticMutex _rx_mutext;
+  StaticMutex _rx_mutex;
   uint8_t _rx_transfer_buffer[20];
 
   // Called in mutex and in interrupt. No need to protect access.
