@@ -97,7 +97,7 @@ PacketStatus handle_control_command(const SerialPacketsData& command_data,
   return PacketStatus::UNHANDLED;
 }
 
-}  // namespace controller
+
 
 PacketStatus host_link_command_handler(uint8_t endpoint,
                                        const SerialPacketsData& command_data,
@@ -115,3 +115,5 @@ void host_link_message_handler(uint8_t endpoint,
                                const SerialPacketsData& message_data) {
   logger.info("Recieved a message at endpoint %02hx", endpoint);
 }
+
+}  // namespace controller

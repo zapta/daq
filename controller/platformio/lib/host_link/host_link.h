@@ -5,12 +5,12 @@
 
 // A callback handler for incoming host link commands. Implemented by 
 // the controller.
-PacketStatus host_link_command_handler(uint8_t endpoint, const SerialPacketsData& command_data,
-                     SerialPacketsData& response_data);
+// PacketStatus host_link_command_handler(uint8_t endpoint, const SerialPacketsData& command_data,
+//                      SerialPacketsData& response_data);
 
-// A callback handler for incoming host link messages. Implemented by 
-// the controller.
-void host_link_message_handler(uint8_t endpoint, const SerialPacketsData& message_data);
+// // A callback handler for incoming host link messages. Implemented by 
+// // the controller.
+// void host_link_message_handler(uint8_t endpoint, const SerialPacketsData& message_data);
 
 
 namespace host_link {
