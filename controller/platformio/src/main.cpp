@@ -49,7 +49,6 @@ void app_main() {
   printer_link::setup(serial::serial2);
 
   // Start tasks.
-
   if (!host_link_rx_task.start()) {
     Error_Handler();
   }
