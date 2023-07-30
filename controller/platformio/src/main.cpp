@@ -12,6 +12,7 @@
 #include "host_link.h"
 #include "io.h"
 #include "logger.h"
+#include "printer_link.h"
 #include "serial.h"
 #include "spi.h"
 #include "static_task.h"
@@ -19,9 +20,11 @@
 #include "usart.h"
 #include "usbd_cdc_if.h"
 
-// static SerialPacketsData data;
 
+// Tasks with static stack allocations.
 StaticTask<2000> host_link_rx_task(host_link::rx_task_body, "Host RX", 8);
+StaticTask<2000> printer_link_rx_task(printer_link::rx_task_body, "Printer RX",
+                                      5);
 StaticTask<2000> adc_task(adc::adc_task_body, "ADC", 7);
 
 // Called from from the main FreeRTOS task.
@@ -39,8 +42,18 @@ void app_main() {
   //   logger.error("Failed to open default log file.");
   // }
 
+  // Init host link.
   host_link::setup(serial::serial1);
+
+  // Init printer link.
+  printer_link::setup(serial::serial2);
+
+  // Start tasks.
+
   if (!host_link_rx_task.start()) {
+    Error_Handler();
+  }
+  if (!printer_link_rx_task.start()) {
     Error_Handler();
   }
   if (!adc_task.start()) {
