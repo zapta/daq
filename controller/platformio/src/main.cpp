@@ -20,7 +20,6 @@
 #include "usart.h"
 #include "usbd_cdc_if.h"
 
-
 // Tasks with static stack allocations.
 StaticTask<2000> host_link_rx_task(host_link::rx_task_body, "Host RX", 8);
 StaticTask<2000> printer_link_rx_task(printer_link::rx_task_body, "Printer RX",
@@ -37,10 +36,6 @@ void app_main() {
   // ADC ontinuos CS.
   __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_1, 400);
   HAL_TIM_Base_Start_IT(&htim12);
-
-  // if (!data_recorder::open_log_file("default.log")) {
-  //   logger.error("Failed to open default log file.");
-  // }
 
   // Init host link.
   host_link::setup(serial::serial1);
