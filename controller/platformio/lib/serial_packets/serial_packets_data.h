@@ -162,9 +162,6 @@ class SerialPacketsBuffer {
 
     // Pre conditions for reading the length byte.
     if (_had_read_errors || unread_bytes() < 1) {
-      // if (buffer_size >= 1) {
-      //   buffer[0] = 0;
-      // }
       _had_read_errors = true;
       return;
     }
@@ -172,26 +169,15 @@ class SerialPacketsBuffer {
     // Read length byte and check preconditions for reading
     // the string bytes.
     const uint16_t n = (uint16_t)_buffer[_bytes_read++];
-    // const uint16_t dst_size = str->max_len();
     if (n > unread_bytes() || n > str->max_len()) {
-      // if (buffer_size >= 1) {
-      //   buffer[0] = 0;
-      // }
       _had_read_errors = true;
       return;
     }
 
-    // Read the string bytes and append a terminator.
-    // memcpy(buffer, &_buffer[_bytes_read], n);
+    // Read the string bytes. Since we verified sizes earlier.
+    // we don't expect an error status here..
     str->set((char*)&_buffer[_bytes_read], n);
-    // buffer[n] = 0;
     _bytes_read += n;
-    // memset(bytes_buffer, 0, bytes_to_read);
-    //   _had_read_errors = true;
-    //   return;
-    // }
-    // memcpy(bytes_buffer, &_buffer[_bytes_read], bytes_to_read);
-    // _bytes_read += bytes_to_read;
   }
 
   void skip_bytes(uint32_t bytes_to_skip) const {
