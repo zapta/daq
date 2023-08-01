@@ -139,6 +139,6 @@ class LogPacketsParser:
                 timed_values = self._parse_int24_sequence(packet_start_sys_time_millis, data)
                 result.append_timed_values(chan_name, timed_values)
             else:
-                raise ValueError("Unexpected log group id: {group_id}")
+                raise ValueError(f"Unexpected log group id: {group_id}")
         assert data.all_read_ok()
         return result

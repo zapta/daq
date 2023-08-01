@@ -1,7 +1,5 @@
 #include "printer_link.h"
 
-#include <ctype.h>
-
 #include "controller.h"
 #include "logger.h"
 #include "time_util.h"
@@ -25,15 +23,16 @@ static uint8_t temp_buffer[40];
 static uint32_t collect_start_millis;
 
 // Valid in COLLECT mode, empty otherwise. Contains the
-// event name characters collected so far.
-static controller::EventName event_name_buffer;
+// marker name characters collected so far.
+static controller::MarkerName marker_name_buffer;
 
 // Perfomrs a state transitions. OK to reenter existing state.
 static void set_state(State new_state) {
   state = new_state;
-  event_name_buffer.clear();
+  marker_name_buffer.clear();
   collect_start_millis = (new_state == COLLECT) ? time_util::millis() : 0;
-  logger.info("State -> %s", state == COLLECT ? "COLLECT" : "IDLE");
+  logger.info("Printer link: State -> %s",
+              state == COLLECT ? "COLLECT" : "IDLE");
 }
 
 // One time initialization of this module. Should be the first
@@ -45,10 +44,6 @@ void setup(Serial& serial) {
   }
   set_state(IDLE);
   link_serial = &serial;
-}
-
-static inline bool is_valid_event_char(uint8_t c) {
-  return isalnum(c) || strchr("-_.:", c);
 }
 
 static void process_next_rx_char(uint8_t c) {
@@ -66,22 +61,26 @@ static void process_next_rx_char(uint8_t c) {
   //
   // Handle the end char.
   if (c == ']') {
-    controller::report_event(event_name_buffer);
+    if (marker_name_buffer.is_empty()) {
+      logger.error("Dropping an empty marker");
+    } else {
+      controller::report_marker(marker_name_buffer);
+    }
     set_state(IDLE);
     return;
   }
 
-  // Validate event name char.
-  if (!is_valid_event_char(c)) {
-    logger.error("Invalid event name char: [0x%02x]", c);
+  // Validate the char.
+  if (!controller::is_valid_marker_char(c)) {
+    logger.error("Invalid marker name char: [0x%02x]", c);
     set_state(IDLE);
     return;
   }
 
-  // Append the char to event name. Check for overflow.
-  const bool ok = event_name_buffer.append(c);
+  // Append the char to marker name. Check for overflow.
+  const bool ok = marker_name_buffer.append(c);
   if (!ok) {
-    logger.error("Event name too long %s...", event_name_buffer.c_str());
+    logger.error("Marker name too long %s...", marker_name_buffer.c_str());
     set_state(IDLE);
     return;
   }
@@ -97,14 +96,14 @@ void rx_task_body(void* argument) {
   for (;;) {
     // Wait for rx chars.
     const int n = link_serial->read(temp_buffer, sizeof(temp_buffer));
-    logger.info("Recieved %d chars", n);
+    logger.info("Printer link: Recieved %d chars", n);
     // If current COLLECT session is too old, clear it.
     if (state == COLLECT) {
       const uint32_t millis_in_collect =
           time_util::millis() - collect_start_millis;
       if (millis_in_collect > 1000) {
-        logger.error("Event name RX timeout, dropping left overs: [%s]",
-                     event_name_buffer.c_str());
+        logger.error("Marker name RX timeout, dropping left overs: [%s...]",
+                     marker_name_buffer.c_str());
         set_state(IDLE);
       }
     }

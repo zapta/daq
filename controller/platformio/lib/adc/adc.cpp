@@ -78,8 +78,8 @@ static uint8_t rx_buffer[2 * kDmaBytesPerHalf] = {};
 static SerialPacketsData packet_data;
 
 // For encoding the data as packets for logging to SD card.
-SerialPacketsEncoder packet_encoder;
-StuffedPacketBuffer stuffed_packet;
+static SerialPacketsEncoder packet_encoder;
+static StuffedPacketBuffer stuffed_packet;
 
 enum IrqEventId {
   EVENT_HALF_COMPLETE = 1,
@@ -510,16 +510,20 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
     }
   }
 
+  
   // Verify writing was OK.
   if (packet_data.had_write_errors()) {
     Error_Handler();
   }
 
+  // TODO: The controller has similar logic for marker logging. Consider
+  // to refactor to a common place that dispatches the packets to client
+  // and SD.
+
   // Send data to host.
-  host_link::client.sendMessage(HostPorts::ADC_REPORT_MESSAGE, packet_data);
+  host_link::client.sendMessage(HostPorts::LOG_REPORT_MESSAGE, packet_data);
 
   // Store data on SD card.
-  // io::TEST1.high();
   packet_encoder.encode_log_packet(packet_data, &stuffed_packet);
   data_recorder::append_if_recording(stuffed_packet);
 

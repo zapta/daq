@@ -16,7 +16,7 @@
 namespace host_link {
 
 enum HostPorts {
-  ADC_REPORT_MESSAGE = 10
+  LOG_REPORT_MESSAGE = 10
 };
 
 enum SelfPorts {

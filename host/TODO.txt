@@ -1,5 +1,7 @@
 
-Convert thermistor to C.
+Add to the monitor support for markers.
+
+Add to the log processor support for markers.
 
 In the monitor GUI, display latest value of each channel.
 

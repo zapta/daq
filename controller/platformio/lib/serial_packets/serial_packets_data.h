@@ -105,6 +105,7 @@ class SerialPacketsBuffer {
 
   // Encode <len_byte><bytes...>
   // TODO: Add unit tests.
+  // TODO: Add a similar method to write static string (len is known);
   void write_str(const char* str) {
     const uint32_t n = strlen(str);
     if (_had_write_errors || n > 255 || (1 + n) > free_bytes()) {

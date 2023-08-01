@@ -5,6 +5,8 @@
 #include "serial_packets_client.h"
 #include "static_mutex.h"
 
+using host_link::HostPorts;
+
 namespace controller {
 
 // Protects access to the variables below.
@@ -12,6 +14,11 @@ static StaticMutex mutex;
 
 static data_recorder::RecordingName tmp_new_log_session_name;
 static data_recorder::RecordingInfo tmp_recording_info;
+
+// Temp packet data. Used to encode log packets.
+static SerialPacketsData packet_data;
+static SerialPacketsEncoder packet_encoder;
+static StuffedPacketBuffer stuffed_packet;
 
 PacketStatus handle_control_command(const SerialPacketsData& command_data,
                                     SerialPacketsData& response_data) {
@@ -113,9 +120,39 @@ void host_link_message_handler(uint8_t endpoint,
   logger.warning("Recieved a message at endpoint %02hx", endpoint);
 }
 
-void report_event(const EventName& event_name) {
+// Marker name is assumed to be validated.
+void report_marker(const MarkerName& marker_name) {
+  MutexScope scope(mutex);
+
+  // Encode a log record that contain marker channel with
+  // a single data point.
+  // TODO: Consider to perform buffering of multiple markers.
+  packet_data.clear();
+  packet_data.write_uint8(1);                     // packet format version
+  packet_data.write_uint32(time_util::millis());  // Base time.
+  packet_data.write_uint8(0x07);                  // Marker channel id
+  packet_data.write_uint16(0);                    // Relative time offset
+  packet_data.write_uint16(1);                    // Num data points
+  packet_data.write_str(marker_name.c_str());
+
+  // Verify writing was OK.
+  if (packet_data.had_write_errors()) {
+    Error_Handler();
+  }
+
+  // TODO: The adc has similar logic for marker logging. Consider
+  // to refactor to a common place that dispatches the packets to client
+  // and SD.
+
+  // Send data to host.
+  host_link::client.sendMessage(HostPorts::LOG_REPORT_MESSAGE, packet_data);
+
+  // Store data on SD card.
+  packet_encoder.encode_log_packet(packet_data, &stuffed_packet);
+  data_recorder::append_if_recording(stuffed_packet);
+
   // TODO: Implementing logging and reporting in status.
-  logger.info("Event: [%s]", event_name.c_str());
+  logger.info("Marker: [%s]", marker_name.c_str());
 }
 
 }  // namespace controller

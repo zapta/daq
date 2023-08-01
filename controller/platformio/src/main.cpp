@@ -69,8 +69,6 @@ void app_main() {
         logger.info("Recording [%s], %lu msecs.",
                     recording_info.recording_name.c_str(),
                     recording_info.recording_time_millis);
-      } else {
-        logger.info("Data recorder off.");
       }
     }
 
