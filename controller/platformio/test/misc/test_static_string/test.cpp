@@ -15,8 +15,8 @@ void tearDown() {}
 
 void test_default_constructor() {
   StaticString<3> str;
-  TEST_ASSERT_EQUAL(0, str.kMaxLen);
-  TEST_ASSERT_EQUAL(0, str.max_len());
+  TEST_ASSERT_EQUAL(3, str.kMaxLen);
+  TEST_ASSERT_EQUAL(3, str.max_len());
   TEST_ASSERT_EQUAL(0, str.len());
   TEST_ASSERT_EQUAL(0, strlen(str.c_str()));
   TEST_ASSERT_TRUE(str.is_empty());
@@ -27,23 +27,23 @@ void test_set_c_str() {
   StaticString<2> str;
   TEST_ASSERT_TRUE(str.set_c_str("xy"));
   TEST_ASSERT_EQUAL(2, str.len());
-  TEST_ASSERT_EQ(0, strcmp("xy", str.c_str()));
+  TEST_ASSERT_EQUAL(0, strcmp("xy", str.c_str()));
   // String too long.
   TEST_ASSERT_FALSE(str.set_c_str("xyz"));
   TEST_ASSERT_EQUAL(2, str.len());
-  TEST_ASSERT_EQ(0, strcmp("xy", str.c_str()));
+  TEST_ASSERT_EQUAL(0, strcmp("xy", str.c_str()));
 }
 
 void test_append() {
   StaticString<2> str;
   TEST_ASSERT_TRUE(str.append('x'));
-  TEST_ASSERT_EQ(0, strcmp("x", str.c_str()));
+  TEST_ASSERT_EQUAL(0, strcmp("x", str.c_str()));
 
   TEST_ASSERT_TRUE(str.append('y'));
-  TEST_ASSERT_EQ(0, strcmp("xy", str.c_str()));
+  TEST_ASSERT_EQUAL(0, strcmp("xy", str.c_str()));
 
   TEST_ASSERT_FALSE(str.append('z'));
-  TEST_ASSERT_EQ(0, strcmp("xy", str.c_str()));
+  TEST_ASSERT_EQUAL(0, strcmp("xy", str.c_str()));
 }
 
 void app_main() {
