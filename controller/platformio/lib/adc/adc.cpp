@@ -124,7 +124,7 @@ void spi_TxRxHalfCpltCallbackIsr(SPI_HandleTypeDef *hspi) {
   // we want to transfer the entire buffer before we stop
   // the DMA.
   if (state != DMA_STATE_ONE_SHOT) {
-    BaseType_t task_woken;
+    BaseType_t task_woken = pdFALSE;
     IrqEvent event = {.id = EVENT_HALF_COMPLETE,
                       .isr_millis = time_util::millis_from_isr()};
     irq_event_queue.add_from_isr(event, &task_woken);
@@ -145,7 +145,7 @@ void spi_TxRxCpltCallbackIsr(SPI_HandleTypeDef *hspi) {
     state = DMA_STATE_IDLE;
   }
 
-  BaseType_t task_woken;
+  BaseType_t task_woken = pdFALSE;
   IrqEvent event = {.id = EVENT_FULL_COMPLETE,
                     .isr_millis = time_util::millis_from_isr()};
   irq_event_queue.add_from_isr(event, &task_woken);

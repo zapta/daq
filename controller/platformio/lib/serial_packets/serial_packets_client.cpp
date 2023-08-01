@@ -38,8 +38,8 @@ void SerialPacketsClient::rx_task_body() {
       continue;
     }
 
-    // NOTE: Blocking. Guarantees n > 0.
-    uint16_t n =
+    // Guarantees n > 0.
+    const uint16_t n =
         _serial->read(_rx_task_data.in_buffer, sizeof(_rx_task_data.in_buffer));
 
     for (int i = 0; i < n; i++) {

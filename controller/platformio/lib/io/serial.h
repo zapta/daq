@@ -4,9 +4,10 @@
 #include "FreeRTOS.h"
 #include "circular_buffer.h"
 #include "semphr.h"
+#include "static_binary_semaphore.h"
 #include "static_mutex.h"
-#include "usart.h"
 #include "time_util.h"
+#include "usart.h"
 
 class Serial {
  public:
@@ -50,21 +51,54 @@ class Serial {
     return result;
   }
 
-  // If blocking = true, blocks and return non zero count.
-  uint16_t read(uint8_t* bfr, uint16_t len, bool blocking = true) {
+  // Clear rx/tx buffers. Useful for unit test setup. Note that
+  // this doesn't clear in flight HAL rx/tx buffers.
+  void clear() {
+    MutexScope mutex_scope(_rx_mutex);
+    __disable_irq();
+    {
+      _tx_buffer.clear();
+      _rx_buffer.clear();
+    }
+    __enable_irq();
+  }
+
+  // Read without timeout. Returns the number of bytes read into
+  // bfr. Gurantees at least one byte but tries maximize the number of
+  // bytes returns without adding waiting time.
+  uint16_t read(uint8_t* bfr, uint16_t bfr_size) {
     for (;;) {
+      // Wait for an indication that data may be available.
+      const bool ok = _rx_data_avail_sem.take(portMAX_DELAY);
+      if (!ok) {
+        // We don't expect a timeout since we block forever.
+        Error_Handler();
+      }
+
+      // Try to read the  data from the rx buffer.
       int bytes_read = 0;
+      bool bytes_left = false;
       {
         MutexScope mutex_scope(_rx_mutex);
         __disable_irq();
-        { bytes_read = _rx_buffer.read(bfr, len); }
+        {
+          bytes_read = _rx_buffer.read(bfr, bfr_size);
+          bytes_left = !_rx_buffer.is_empty();
+        }
         __enable_irq();
       }
-      if (bytes_read || !blocking) {
+      // If there is data left in the rx buffer, preserve the data
+      // available status.
+      if (bytes_left) {
+        _rx_data_avail_sem.give();
+      }
+      if (bytes_read) {
         return bytes_read;
       }
-      // Wait and try again.
-      time_util::delay_millis(5);
+
+      // Theoretically we can reach here if two tasks take
+      // from the data avail semaphore but one consumes all
+      // the rx data.
     }
   }
 
@@ -83,7 +117,7 @@ class Serial {
       Error_Handler();
     }
     // Start the reception.
-    rx_next_chunk(0);
+    start_hal_rx();
   }
 
  private:
@@ -93,16 +127,20 @@ class Serial {
   static void uart_RxEventCallback(UART_HandleTypeDef* huart, uint16_t Size);
 
   UART_HandleTypeDef* _huart;
-  // TX
+  // --- TX
   CircularBuffer<uint8_t, 5000> _tx_buffer;
   StaticMutex _tx_mutex;
   uint8_t _tx_transfer_buffer[20];
-  // RX
+
+  // ---RX
   CircularBuffer<uint8_t, 5000> _rx_buffer;
   StaticMutex _rx_mutex;
+  // Indicates that RX buffer has data. Allows to
+  // avoid polling of the buffer.
+  StaticBinarySemaphore _rx_data_avail_sem;
   uint8_t _rx_transfer_buffer[20];
 
-  // Called in mutex and in interrupt. No need to protect access.
+  // Called in within mutex or from in interrupt. No need to protect access.
   void tx_next_chunk() {
     const uint16_t len =
         _tx_buffer.read(_tx_transfer_buffer, sizeof(_tx_transfer_buffer));
@@ -111,14 +149,21 @@ class Serial {
     }
   }
 
-  // Called from an interrupt. Now need to protect access.
-  void rx_next_chunk(uint16_t len) {
+  // Called from isr to accept new incoming data.
+  void rx_next_chunk_isr(uint16_t len, BaseType_t* task_woken) {
     if (len) {
       const bool ok = _rx_buffer.write(_rx_transfer_buffer, len, true);
       if (!ok) {
         asm("nop");
       }
+      // Indicate that data is available.
+      _rx_data_avail_sem.give_from_isr(task_woken);
     }
+    start_hal_rx();
+  }
+
+  // Called from a task (init) or from RX isr.
+  void start_hal_rx() {
     const HAL_StatusTypeDef status = HAL_UARTEx_ReceiveToIdle_IT(
         _huart, _rx_transfer_buffer, sizeof(_rx_transfer_buffer));
     if (status != HAL_OK) {

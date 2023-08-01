@@ -22,32 +22,18 @@ class StaticQueue {
 
   inline void reset() { xQueueReset(_handle); }
 
-
   // Must call portYIELD_FROM_ISR(task_woken) at the very end of the ISR.
   inline bool add_from_isr(const T& item, BaseType_t* task_woken) {
     BaseType_t status = xQueueSendToBackFromISR(_handle, &item, task_woken);
     return status == pdPASS;
   }
 
-  inline bool consume_from_task( T* item_buffer, uint32_t timeout) {
-    BaseType_t status = xQueueReceive(_handle, item_buffer, timeout);
+  // The special timeout portMAX_DELAY indicates waiting forever.
+  inline bool consume_from_task(T* item_buffer, uint32_t timeout_millis) {
+    static_assert(configTICK_RATE_HZ == 1000);
+    BaseType_t status = xQueueReceive(_handle, item_buffer, timeout_millis);
     return status == pdTRUE;
   }
-
-  // bool enqueue_from_irq(const T& item) {
-  //   BaseType_t task_woken;
-  //   const BaseType_t status =
-  //       xQueueSendToBackFromISR(_handle, &item, &task_woken);
-  //   if (status != pdPASS) {
-  //     return false;
-  //   }
-  //   if
-  // }
-
-  // inline void take(TickType_t xTicksToWait) {
-  //   xSemaphoreTake(_handle, xTicksToWait);
-  // }
-  // inline void give() { xSemaphoreGive(_handle); }
 
  private:
   uint8_t _items_mem[sizeof(T) * N];

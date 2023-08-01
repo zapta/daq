@@ -10,15 +10,22 @@
 #include "../../unity_util.h"
 #include "fatfs.h"
 #include "serial_packets_data.h"
+#include "text_util.h"
 #include "time_util.h"
 
-// static uint8_t buffer[1024];
 constexpr uint32_t kBytesToTest = 10000000;
 constexpr uint32_t kBytesPerPacket = 720;
 static uint8_t buffer[kBytesPerPacket];
 static StuffedPacketBuffer stuffed_packet;
 
-void setUp() {}
+static TCHAR file1_wname[20];
+
+void setUp() {
+  static_assert(sizeof(uint16_t) == sizeof(TCHAR));
+  const bool ok = text_util::wstr_from_str(
+      file1_wname, sizeof(file1_wname) / sizeof(file1_wname[0]), "TEST.BIN");
+  TEST_ASSERT_TRUE(ok);
+}
 
 void tearDown() {}
 
@@ -27,7 +34,7 @@ void test_read_write() {
   TEST_ASSERT_EQUAL(status, FRESULT::FR_OK);
 
   // ----- Write file
-  status = f_open(&SDFile, "TEST.BIN", FA_CREATE_ALWAYS | FA_WRITE);
+  status = f_open(&SDFile, file1_wname, FA_CREATE_ALWAYS | FA_WRITE);
   TEST_ASSERT_EQUAL(status, FRESULT::FR_OK);
 
   uint32_t bytes_written = 0;
@@ -57,7 +64,7 @@ void test_read_write() {
 
   // ----- Write file
 
-  status = f_open(&SDFile, "TEST.BIN", FA_OPEN_EXISTING | FA_READ);
+  status = f_open(&SDFile, file1_wname, FA_OPEN_EXISTING | FA_READ);
   TEST_ASSERT_EQUAL(status, FRESULT::FR_OK);
 
   uint32_t bytes_verified = 0;

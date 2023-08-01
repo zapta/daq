@@ -93,9 +93,7 @@ void setUp() {
 
   // Clear serial input
   time_util::delay_millis(100);
-  uint8_t byte_buffer[1];
-  while (DATA_SERIAL.read(byte_buffer, 1, false)) {
-  }
+  DATA_SERIAL.clear();
 
   PacketStatus status =
       client->begin(DATA_SERIAL, command_handler, message_handler);
@@ -119,10 +117,11 @@ void test_simple_serial_loop() {
   TEST_ASSERT_GREATER_OR_EQUAL(3, DATA_SERIAL.available());
   for (int i = 0; i < 3; i++) {
     uint8_t b;
-    const uint16_t n = DATA_SERIAL.read(&b, 1, false);
+    const uint16_t n = DATA_SERIAL.read(&b, 1);
     TEST_ASSERT_EQUAL(1, n);
     TEST_ASSERT_EQUAL_HEX8(str[i], b);
   }
+  TEST_ASSERT_GREATER_OR_EQUAL(0, DATA_SERIAL.available());
 }
 
 void test_send_message_loop() {

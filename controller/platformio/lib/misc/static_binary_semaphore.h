@@ -3,7 +3,7 @@
 #include <FreeRTOS.h>
 #include <semphr.h>
 
-// #include "main.h"
+#include "main.h"
 
 // A binary sempahore and its static memory.
 class StaticBinarySemaphore {
@@ -20,14 +20,25 @@ class StaticBinarySemaphore {
 
   inline SemaphoreHandle_t handle() { return _handle; }
 
-  inline void take(TickType_t xTicksToWait) {
-    xSemaphoreTake(_handle, xTicksToWait);
+  // Do not call from ISR. Timeout of portMAX_DELAY indicates
+  // wait forever.
+  inline bool take(TickType_t timeout_millis) {
+    static_assert(configTICK_RATE_HZ == 1000);
+    return xSemaphoreTake(_handle, timeout_millis);
   }
 
-  inline void give() { xSemaphoreGive(_handle); }
+  inline void give() {
+    const bool ok = xSemaphoreGive(_handle);
+    if (!ok) {
+      Error_Handler();
+    }
+  }
 
-  inline void give_from_isr(signed BaseType_t* pxHigherPriorityTaskWoken) {
-    xSemaphoreGiveFromISR(_handle, pxHigherPriorityTaskWoken);
+  inline void give_from_isr(BaseType_t* task_woken) {
+    const bool ok = xSemaphoreGiveFromISR(_handle, task_woken);
+    if (!ok) {
+      Error_Handler();
+    }
   }
 
  private:

@@ -4,17 +4,13 @@
 #include <semphr.h>
 // #include "main.h"
 
-
-
 // A mutex and its static memory.
 class StaticMutex {
  public:
   StaticMutex() : _handle(xSemaphoreCreateMutexStatic(&_mutex_buffer)) {}
 
   // This will typically be used in testing only.
-  ~StaticMutex() {
-    vSemaphoreDelete(_handle);
-  }
+  ~StaticMutex() { vSemaphoreDelete(_handle); }
 
   // Prevent copy and assignment.
   StaticMutex(const StaticMutex& other) = delete;
@@ -22,10 +18,20 @@ class StaticMutex {
 
   inline SemaphoreHandle_t handle() { return _handle; }
 
-  inline void take(TickType_t xTicksToWait) {
-    xSemaphoreTake(_handle, xTicksToWait);
+  // Should not be called from ISR. Timeout of portMAX_DELAY
+  // indicates wait forever.
+  inline bool take(TickType_t timeout_millis) {
+    static_assert(configTICK_RATE_HZ == 1000);
+    return xSemaphoreTake(_handle, timeout_millis);
   }
-  inline void give() { xSemaphoreGive(_handle); }
+
+  // Should not be called from ISR.
+  inline void give() {
+    const bool ok = xSemaphoreGive(_handle);
+    if (!ok) {
+      Error_Handler();
+    }
+  }
 
  private:
   StaticSemaphore_t _mutex_buffer;
