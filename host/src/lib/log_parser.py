@@ -104,17 +104,33 @@ class LogPacketsParser:
         pass
 
     def _parse_int24_sequence(self, packet_start_time_millis: int,
-                              data: PacketData) -> Tuple[int, Any]:
+                              data: PacketData) -> List[Tuple[int, float]]:
+        """Returns a list of time values (time_millis, value)"""
+        first_value_rel_time: int = data.read_uint16()
+        num_values = data.read_uint16()
+        step_interval_millis = data.read_uint16() if num_values > 0 else 0
+        # print(f"*** {packet_start_time_millis}, {first_value_rel_time}, {num_values}, {step_interval_millis}", flush=True)
+        assert not data.read_error()
+        timed_values = []
+        t_millis: int = packet_start_time_millis + first_value_rel_time
+        for i in range(num_values):
+            timed_values.append((t_millis, data.read_int24()))
+            t_millis += step_interval_millis
+        assert not data.read_error()
+        return timed_values
+
+    def _parse_str_sequence(self, packet_start_time_millis: int,
+                            data: PacketData) -> List[Tuple[int, str]]:
         """Returns a list of time values (time_millis, value)"""
         first_value_rel_time = data.read_uint16()
         num_values = data.read_uint16()
-        step_interval_millis = data.read_uint16()
+        step_interval_millis = data.read_uint16() if num_values > 1 else 0
         # print(f"*** {packet_start_time_millis}, {first_value_rel_time}, {num_values}, {step_interval_millis}", flush=True)
         assert not data.read_error()
         timed_values = []
         t_millis = packet_start_time_millis + first_value_rel_time
         for i in range(num_values):
-            timed_values.append((t_millis, data.read_int24()))
+            timed_values.append((t_millis, data.read_str()))
             t_millis += step_interval_millis
         assert not data.read_error()
         return timed_values
@@ -137,6 +153,10 @@ class LogPacketsParser:
             elif chan_id >= 0x21 and chan_id <= 0x26:
                 chan_name = f"THRM{chan_id - 0x21 + 1}"
                 timed_values = self._parse_int24_sequence(packet_start_sys_time_millis, data)
+                result.append_timed_values(chan_name, timed_values)
+            elif chan_id == 0x07:
+                chan_name = "MRKR"
+                timed_values = self._parse_str_sequence(packet_start_sys_time_millis, data)
                 result.append_timed_values(chan_name, timed_values)
             else:
                 raise ValueError(f"Unexpected log group id: {group_id}")

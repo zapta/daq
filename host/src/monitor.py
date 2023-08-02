@@ -119,6 +119,9 @@ async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, 
         # Process load cell channels
         for lc_ch_name in lc_channels.keys():
             lc_data: ChannelData = parsed_log_packet.channel(lc_ch_name)
+            if not lc_data:
+                # This packet has no data for this channel.
+                break
             lc_chan: LoadCellChannel = lc_channels[lc_ch_name]
             times_secs = []
             values_g = []
@@ -135,15 +138,19 @@ async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, 
         for thrm_ch_name in therm_channels.keys():
             # Process thermistor. We compute the average of the readings
             # in this packet.
-            therm1_data: ChannelData = parsed_log_packet.channel(thrm_ch_name)
+            therm_data: ChannelData = parsed_log_packet.channel(thrm_ch_name)
+            if not therm_data:
+                # This packet has no data for this channel.
+                break
+            lc_chan: LoadCellChannel = lc_channels[lc_ch_name]
+            therm_chan: ThermistorChannel = therm_channels[thrm_ch_name]
             times_millis = []
             adc_values = []
-            for time_millis, adc_value in therm1_data.timed_values():
+            for time_millis, adc_value in therm_data.timed_values():
                 times_millis.append(time_millis)
                 adc_values.append(adc_value)
             avg_times_millis = np.mean(times_millis)
             avg_adc_value = np.mean(adc_values)
-            therm_chan: ThermistorChannel = therm_channels[thrm_ch_name]
             # therm_chan_config: ThermistorChannelConfig = sys_config.get_thermistor_config(
             #     thrm_ch_name)
             # logger.info(f"{therm1_chan_config}")
@@ -152,6 +159,11 @@ async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, 
                 [therm_chan.therm_config.adc_reading_to_c(avg_adc_value)])
             if args.calibration:
                 therm_chan.therm_config.dump_therm_calibration(avg_adc_value)
+        # Process marker channel.
+        marker_data: ChannelData = parsed_log_packet.channel("MRKR")
+        if marker_data:
+            for time_millis, marker_str in marker_data.timed_values():
+                logger.info(f"Marker: [{marker_str}] @ t={time_millis/1000:.3f}]")
 
         # All done. Update the display
         update_display()

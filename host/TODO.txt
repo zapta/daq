@@ -1,5 +1,5 @@
 
-Add to the monitor support for markers.
+Add to the monitor visual indication of markers.
 
 Add to the log processor support for markers.
 
