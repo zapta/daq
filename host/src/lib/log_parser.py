@@ -60,14 +60,12 @@ class ParsedLogPacket:
 
     def base_time_millis(self) -> int:
         return self.__packet_base_time_millis
-    
+
     def base_time(self) -> int:
         return self.__packet_base_time_millis / 1000.0
 
-    # def channels(self) -> Dict[str, ChannelData]:
-    #     return self.__channels
     def channels(self) -> Dict[str, ChannelData]:
-        return self.__channels.values()
+        return self.__channels
 
     def channel(self, chan_name: str) -> Optional[ChannelData]:
         return self.__channels.get(chan_name, None)
@@ -90,9 +88,7 @@ class ParsedLogPacket:
             if (result is None) or result < chan_end:
                 result = chan_end
         return result
-    
 
-    
     def end_time(self) -> float:
         t_millis = self.end_time_millis()
         return t_millis / 1000.0 if t_millis else None
