@@ -76,7 +76,7 @@ chan_dict: Dict[str, Channel] = {}
 
 
 class Channel:
-
+    """Represents a single channel."""
     def __init__(self, chan_name: str, file_name: str, file):
         # Time is device time in seconds.
         self.chan_name = chan_name
