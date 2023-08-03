@@ -1,5 +1,5 @@
 
-Add to the monitor visual indication of markers.
+Reset the monitor vars if device is reset or reconnected
 
 Add to the log processor support for markers.
 

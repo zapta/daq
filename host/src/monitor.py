@@ -12,10 +12,13 @@ import os
 import time
 import pyqtgraph as pg
 import numpy as np
+import re
 import statistics
 
-from pyqtgraph.Qt import QtWidgets, QtCore, QtGui
-from pyqtgraph import LabelItem
+# TODO: clean up device reset and reconnect logic.
+
+from PyQt6 import QtWidgets, QtCore
+from pyqtgraph import PlotWidget, plot, LabelItem
 from typing import Tuple, Optional, List, Dict
 from lib.log_parser import LogPacketsParser, ChannelData, ParsedLogPacket
 from lib.sys_config import SysConfig, LoadCellChannelConfig, ThermistorChannelConfig
@@ -45,6 +48,13 @@ parser.add_argument('--calibration',
 
 args = parser.parse_args()
 
+# X spans, in secs, of the two plots.
+# TODO: Make these command line flags.
+# TODO: Add a control of LC channel down sampling for display.
+plot1_x_span = 2.0
+plot2_x_span = 200.0
+max_plot_x_span = max(plot1_x_span, plot2_x_span)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(relativeCreated)07d %(levelname)-7s %(filename)-10s: %(message)s",
@@ -57,13 +67,68 @@ main_event_loop = asyncio.get_event_loop()
 # TODO: Move to a common place.
 CONTROL_ENDPOINT = 0x01
 
+# Add more color regex as needed.
+markers_color_table = [[re.compile("stop"), "red"], [re.compile("start"), "green"]]
+
+
+class MarkerEntry:
+    """A single marker entry in the marker history list."""
+
+    def __init__(self, marker_time: float, marker_name: str):
+        # Time is device time in seconds.
+        self.time = marker_time
+        self.name = marker_name
+        self.color = self.assign_marker_color(marker_name)
+        self.pen = pg.mkPen(color=self.color, width=1, style=QtCore.Qt.PenStyle.DashLine)
+
+    def assign_marker_color(self, marker_name: str) -> str:
+        lower_marker_name = marker_name.lower()
+        for entry in markers_color_table:
+            if entry[0].match(lower_marker_name):
+                return entry[1]
+        return "gray"
+
+
+class MarkerHistory:
+    """A class that tracks the recent markers."""
+
+    def __init__(self):
+        # Oldest first.
+        self.markers: List[MarkerEntry] = []
+
+    def clear(self):
+        self.markers.clear()
+
+    def append(self, time: float, name: str):
+        # Make sure time is monotonic. Time is in secs.
+        if self.markers:
+            assert self.markers[-1].time <= time
+        self.markers.append(MarkerEntry(time, name))
+
+    def prune_older_than(self, min_time: float):
+        """Delete prefix of marker older than min_time"""
+        items_to_delete = len(self.markers)
+        for i in range(len(self.markers)):
+            if self.markers[i].time >= min_time:
+                items_to_delete = i
+                break
+        if items_to_delete:
+            self.markers = self.markers[items_to_delete:]
+
+    def keep_at_most(self, max_len: int):
+        n = len(self.markers)
+        if max_len <= 0:
+            self.markers = []
+        elif max_len > n:
+            self.markers = self.markers[-max_len:]
+
 
 class LoadCellChannel:
 
     def __init__(self, chan_name: str, lc_config: LoadCellChannelConfig):
         self.chan_name = chan_name
         self.lc_config = lc_config
-        self.display_series = DisplaySeries(1000)
+        self.display_series = DisplaySeries()
 
 
 class ThermistorChannel:
@@ -71,7 +136,7 @@ class ThermistorChannel:
     def __init__(self, chan_name: str, therm_config: ThermistorChannelConfig):
         self.chan_name = chan_name
         self.therm_config = therm_config
-        self.display_series = DisplaySeries(1000)
+        self.display_series = DisplaySeries()
 
 
 # Initialized later.
@@ -83,6 +148,8 @@ serial_reconnection_task = None
 # Initialized later. Keys are channel names.
 lc_channels: Dict[str, LoadCellChannel] = None
 therm_channels: Dict[str, ThermistorChannel] = None
+
+markers_history = MarkerHistory()
 
 # Indicate pending button actions.
 pending_start_button_click = False
@@ -109,13 +176,20 @@ app_view = None
 lc_configs = {}
 therm_configs = {}
 
+# Device time in secs. Represent the time of last
+# known info.
+latest_log_time = None
+
 
 async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, PacketData]:
     """Callback from the serial packets clients for incoming messages."""
-    global lc_channels, therm_channels
+    global lc_channels, therm_channels, latest_log_time
     logger.debug(f"Received message: [%d] %s", endpoint, data.hex_str(max_bytes=10))
     if endpoint == 10:
         parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(data)
+        packet_end_time = parsed_log_packet.end_time()
+        if latest_log_time is None or packet_end_time > latest_log_time:
+            latest_log_time = packet_end_time
         # Process load cell channels
         for lc_ch_name in lc_channels.keys():
             lc_data: ChannelData = parsed_log_packet.channel(lc_ch_name)
@@ -162,8 +236,10 @@ async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, 
         # Process marker channel.
         marker_data: ChannelData = parsed_log_packet.channel("MRKR")
         if marker_data:
-            for time_millis, marker_str in marker_data.timed_values():
-                logger.info(f"Marker: [{marker_str}] @ t={time_millis/1000:.3f}]")
+            for time_millis, marker_name in marker_data.timed_values():
+                time = time_millis / 1000
+                logger.info(f"Marker: [{marker_name}] @ t={time:.3f}]")
+                markers_history.append(time, marker_name)
 
         # All done. Update the display
         update_display()
@@ -174,24 +250,48 @@ def set_display_status_line(msg: str) -> None:
     status_label.setText("  " + msg)
 
 
+
+
+
 def update_display():
+
     global lc_channels, therm_channels, plot1, plot2, sys_config
-    # Update plot 1 with load_cells
     plot1.clear()
+    plot2.clear()
+
+    if not latest_log_time:
+        logger.info("No log base time to update graphs")
+        markers_history.clear()
+        return
+
+    # Remove markers that are beyond all plots.
+    markers_history.prune_older_than(latest_log_time - max_plot_x_span)
+
+    # Update plot 1 with load_cells
     for ch_name, lc_chan in sorted(lc_channels.items()):
-        x = lc_chan.display_series.retro_times()
+        lc_chan.display_series.delete_older_than(latest_log_time - plot1_x_span)
+        x = lc_chan.display_series.relative_times(latest_log_time)
         y = lc_chan.display_series.values()
         color = lc_chan.lc_config.color()
         plot1.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name, antialias=True)
         # logger.info(f"{ch_name}: {lc_chan.display_series.mean_value():.3f}")
 
     # Update plot 2 with thermistors
-    plot2.clear()
     for ch_name, therm_chan in sorted(therm_channels.items()):
-        x = therm_chan.display_series.retro_times()
+        lc_chan.display_series.delete_older_than(latest_log_time - plot2_x_span)
+        x = therm_chan.display_series.relative_times(latest_log_time)
         y = therm_chan.display_series.values()
         color = therm_chan.therm_config.color()
         plot2.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name, antialias=True)
+
+    # Draw the markers on plot1, plot2.
+    # marker_pen = pg.mkPen(color="red", width=2)
+    for marker in markers_history.markers:
+        rel_time = marker.time - latest_log_time
+        if rel_time > -plot1_x_span:
+            plot1.addLine(x=rel_time, pen=marker.pen)
+        if rel_time > -plot2_x_span:
+            plot2.addLine(x=rel_time, pen=marker.pen)
 
 
 async def connection_task():
@@ -277,7 +377,7 @@ def init_display():
     plot1.setLabel('left', 'Force', "g")
     plot1.showGrid(False, True, 0.7)
     plot1.setMouseEnabled(x=False, y=True)
-    plot1.setXRange(-1.8, 0)
+    plot1.setXRange(-(plot1_x_span * 0.95), 0)
     plot1.setYRange(-100, 6100)
     plot1.addLegend(offset=(5, 5), verSpacing=-7, brush="#eee", labelTextSize='7pt')
 
@@ -286,7 +386,7 @@ def init_display():
     plot2.setLabel('left', 'Temp', "C")
     plot2.showGrid(False, True, 0.7)
     plot2.setMouseEnabled(x=False, y=True)
-    plot2.setXRange(-200, 0)
+    plot2.setXRange(-(plot2_x_span * 0.95), 0)
     plot2.setYRange(0, 260)
     plot2.addLegend(offset=(5, 5), verSpacing=-7, brush="#eee", labelTextSize='7pt')
 
@@ -313,10 +413,12 @@ def init_display():
     layout.addItem(button2_proxy, colspan=1)
 
 
+# Variables to handle execution of outgoing commands.
 command_start_future = None
 command_stop_future = None
 command_status_future = None
 
+# Last (host) time we sent a command to fetch device status.
 last_command_status_time = time.time() - 10
 
 
