@@ -182,7 +182,8 @@ def main():
         init_channel(chan_name, f"T[s],{chan_name}[adc],{chan_name}[g]")
     for chan_name in sys_config.get_thermistors_configs():
         init_channel(chan_name, f"T[s],{chan_name}[adc],{chan_name}[R],{chan_name}[C]")
-    init_channel("MRKR", f"T[s],{chan_name}[name]")
+    chan_name = "MRKR"
+    init_channel(chan_name, f"T[s],{chan_name}[name]")
 
     while (bfr := in_f.read(1000)):
         # Report progress every 2 secs.
