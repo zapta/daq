@@ -71,12 +71,10 @@ markers_color_table.append([
     re.compile("start|begin"),
     pg.mkPen(color="green", width=2, style=QtCore.Qt.PenStyle.DashLine)
 ])
-markers_color_table.append(                       [
-                           re.compile("stop|end"),
-                           pg.mkPen(color="red",
-                                    width=2,
-                                    style=QtCore.Qt.PenStyle.DashLine)
-                       ])
+markers_color_table.append([
+    re.compile("stop|end"),
+    pg.mkPen(color="red", width=2, style=QtCore.Qt.PenStyle.DashLine)
+])
 
 
 class MarkerEntry:
