@@ -116,7 +116,7 @@ static void internal_stop_recording() {
   current_recording_name.clear();
 }
 
-void stop_recording_session() {
+void stop_recording() {
   MutexScope scope(mutex);
 
   if (state == STATE_IDLE) {

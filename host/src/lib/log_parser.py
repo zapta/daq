@@ -53,10 +53,14 @@ class ChannelData:
 
 class ParsedLogPacket:
 
-    def __init__(self, packet_base_time_millis):
+    def __init__(self, session_id: int, packet_base_time_millis: int):
         """Constructor."""
+        self.__session_id: int = session_id
         self.__packet_base_time_millis: int = packet_base_time_millis
         self.__channels: Dict[str, ChannelData] = OrderedDict()
+
+    def session_id(self) -> int:
+        return self.__session_id
 
     def base_time_millis(self) -> int:
         return self.__packet_base_time_millis
@@ -144,24 +148,25 @@ class LogPacketsParser:
         data.reset_read_location()
         version = data.read_uint8()
         assert version == 1, f"Unexpected log packet version: {version}"
-        packet_start_sys_time_millis = data.read_uint32()
+        session_id = data.read_uint32()
+        packet_start_time_millis = data.read_uint32()
         # print(f"### {packet_start_sys_time_millis:07d}", flush=True)
-        result: ParsedLogPacket = ParsedLogPacket(packet_start_sys_time_millis)
+        result: ParsedLogPacket = ParsedLogPacket(session_id, packet_start_time_millis)
         while not data.read_error() and not data.all_read():
             chan_id = data.read_uint8()
             assert not data.read_error()
             if chan_id >= 0x11 and chan_id <= 0x14:
                 chan_name = f"LC{chan_id - 0x11 + 1}"
-                timed_values = self._parse_int24_sequence(packet_start_sys_time_millis, data)
+                timed_values = self._parse_int24_sequence(packet_start_time_millis, data)
                 # print(f"+++1 {chan_name}, {type(timed_values)}")
                 result.append_timed_values(chan_name, timed_values)
             elif chan_id >= 0x21 and chan_id <= 0x26:
                 chan_name = f"THRM{chan_id - 0x21 + 1}"
-                timed_values = self._parse_int24_sequence(packet_start_sys_time_millis, data)
+                timed_values = self._parse_int24_sequence(packet_start_time_millis, data)
                 result.append_timed_values(chan_name, timed_values)
             elif chan_id == 0x07:
                 chan_name = "MRKR"
-                timed_values = self._parse_str_sequence(packet_start_sys_time_millis, data)
+                timed_values = self._parse_str_sequence(packet_start_time_millis, data)
                 result.append_timed_values(chan_name, timed_values)
             else:
                 raise ValueError(f"Unexpected log group id: {group_id}")

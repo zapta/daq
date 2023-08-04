@@ -15,6 +15,7 @@
 #include "serial_packets_client.h"
 #include "spi.h"
 #include "static_queue.h"
+#include "session.h"
 #include "stm32h7xx_hal_spi.h"
 #include "stm32h7xx_hal_spi_ex.h"
 #include "tim.h"
@@ -452,6 +453,7 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
   // const bool reports_enabled = controller::is_adc_report_enabled();
   packet_data.clear();
   packet_data.write_uint8(1);  // packet version
+  packet_data.write_uint32(session::id());  // Device session id.
   // NOTE: In case of a millis wrap around, it's ok if this wraps back. All
   // timestamps are mod 2^32.
   const uint32_t packet_base_millis =

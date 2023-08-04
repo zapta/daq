@@ -19,7 +19,7 @@ struct RecordingInfo {
 bool start_recording(const RecordingName& new_recording_name);
 
 // Stop existing recording, if any.
-void stop_recording_session();
+void stop_recording();
 
 // Ignored silently if recording is off.
 // Packet should be a serialized LOG packet with no write errors.

@@ -5,7 +5,6 @@
 import argparse
 import asyncio
 import logging
-import platform
 import signal
 import sys
 import os
@@ -13,7 +12,6 @@ import time
 import pyqtgraph as pg
 import numpy as np
 import re
-import statistics
 
 # TODO: clean up device reset and reconnect logic.
 
@@ -30,7 +28,7 @@ from lib.display_series import DisplaySeries
 # sys.path.insert(0, "../../../../serial_packets_py/repo/src")
 
 from serial_packets.client import SerialPacketsClient
-from serial_packets.packets import PacketStatus, PacketsEvent, PacketData
+from serial_packets.packets import PacketStatus, PacketData
 
 # Allows to stop the program by typing ctrl-c.
 signal.signal(signal.SIGINT, lambda number, frame: sys.exit())
@@ -143,7 +141,7 @@ class ThermistorChannel:
 sys_config: SysConfig = None
 serial_port: str = None
 serial_packets_client: SerialPacketsClient = None
-serial_reconnection_task = None
+# serial_reconnection_task = None
 
 # Initialized later. Keys are channel names.
 lc_channels: Dict[str, LoadCellChannel] = None
@@ -187,6 +185,10 @@ async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, 
     logger.debug(f"Received message: [%d] %s", endpoint, data.hex_str(max_bytes=10))
     if endpoint == 10:
         parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(data)
+        # Ignore packet if it's a left over from a previous device session (before reboot).
+        if parsed_log_packet.session_id() != device_session_id:
+          logger.warning(f"Session id mismatch ({parsed_log_packet.session_id():08x} vs {device_session_id:08x}), ignoring packet")
+          return
         packet_end_time = parsed_log_packet.end_time()
         if latest_log_time is None or packet_end_time > latest_log_time:
             latest_log_time = packet_end_time
@@ -250,12 +252,11 @@ def set_display_status_line(msg: str) -> None:
     status_label.setText("  " + msg)
 
 
-
-
-
 def update_display():
 
-    global lc_channels, therm_channels, plot1, plot2, sys_config
+    global lc_channels, therm_channels, plot1, plot2, sys_config, latest_log_time
+    
+    # logger.info(f"Update display(), latest_log_time = {latest_log_time}")
     plot1.clear()
     plot2.clear()
 
@@ -302,6 +303,7 @@ async def connection_task():
             connected = await serial_packets_client.connect()
             if connected:
                 logger.info("Serial port reconnected")
+                reset_display()
             else:
                 logger.error(f"Failed to reconnect to serial port {serial_port}")
             await asyncio.sleep(5)
@@ -421,6 +423,25 @@ command_status_future = None
 # Last (host) time we sent a command to fetch device status.
 last_command_status_time = time.time() - 10
 
+# When the device starts it picks a random uint32 as a session
+# id. We use it to detect device restarts. 0 is an 
+# invalid session id.
+device_session_id = 0
+
+
+# Resets the session. E.g. when the devices was detected
+# to go through reset.
+def reset_display():
+    global latest_log_time
+    latest_log_time = None
+    for chan in lc_channels.values():
+        chan.display_series.clear()
+    for chan in therm_channels.values():
+        chan.display_series.clear()
+    markers_history.clear()
+    set_display_status_line("")
+    update_display()
+
 
 def timer_handler():
     """Called repeatedly by the pyqtgraph framework."""
@@ -428,6 +449,7 @@ def timer_handler():
     global pending_start_button_click, command_start_future
     global pending_stop_button_click, command_stop_future
     global last_command_status_time, command_status_future
+    global device_session_id
 
     # Process any pending events of the serial packets client.
     # This calls indirectly display_update when new packets arrive.
@@ -483,22 +505,35 @@ def timer_handler():
             logger.error(f"STATUS command failed with status: {status}")
             msg = f"ERROR: Device not available (status {status})"
         else:
+            # print(response_data.hex_str(), flush=True)
             version = response_data.read_uint8()
+            # assert(version == 1)
+            session_id = response_data.read_uint32()
+            # logger.info(f"Session id: {session_id:08x}")
+            device_time_millis = response_data.read_uint32()
             recording_active = response_data.read_uint8()
             if recording_active:
                 recording_millis = response_data.read_uint32()
-                name_len = response_data.read_uint8()
-                name_bytes = response_data.read_bytes(name_len)
-                name = name_bytes.decode("utf-8")
+                name = response_data.read_str()
+                # name_bytes = response_data.read_bytes(name_len)
+                # logger.info(f"Name bytes: [{name_bytes}]")
+                # name = name_bytes.decode("utf-8")
                 writes_ok = response_data.read_uint32()
                 write_failures = response_data.read_uint32()
                 errors_note = f" ERRORS: {write_failures}" if write_failures else ""
                 msg = f"  Recording [{name}] [{recording_millis/1000:.0f} secs] [{writes_ok} records]{errors_note}"
             else:
                 msg = "  Recording is off"
+            # logger.info(f"*** Available: {response_data.bytes_left_to_read()}")
+            # assert not response_data.read_error()
             assert response_data.all_read_ok()
+            if session_id != device_session_id:
+                logger.info("Device reset detected, clearing display.")
+                device_session_id = session_id 
+                logger.info(f"New session id: {device_session_id:08x}")
+                reset_display()
+                msg = "Device reset"  
         set_display_status_line(msg)
-
 
 sys_config = SysConfig()
 sys_config.load_from_file(args.sys_config)

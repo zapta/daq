@@ -3,6 +3,7 @@
 #include "data_recorder.h"
 #include "host_link.h"
 #include "serial_packets_client.h"
+#include "session.h"
 #include "static_mutex.h"
 
 using host_link::HostPorts;
@@ -12,7 +13,7 @@ namespace controller {
 // Protects access to the variables below.
 static StaticMutex mutex;
 
-static data_recorder::RecordingName tmp_new_log_session_name;
+static data_recorder::RecordingName tmp_new_log_recording_name;
 static data_recorder::RecordingInfo tmp_recording_info;
 
 // Temp packet data. Used to encode log packets.
@@ -38,38 +39,37 @@ PacketStatus handle_control_command(const SerialPacketsData& command_data,
       return PacketStatus::OK;
       break;
 
-    // Command 0x02 - START a new session with given name.
+    // Command 0x02 - START a new recording with given name.
     case 0x02: {
       MutexScope scope(mutex);
-      // Get session id string.
-      command_data.read_str(&tmp_new_log_session_name);
+      // Get recording id string.
+      command_data.read_str(&tmp_new_log_recording_name);
       if (!command_data.all_read_ok()) {
         logger.error("START command: Invalid command data.");
         return PacketStatus::INVALID_ARGUMENT;
       }
-      const bool had_old_session = data_recorder::is_recording_active();
+      const bool had_old_recording = data_recorder::is_recording_active();
       const bool opened_ok =
-          data_recorder::start_recording(tmp_new_log_session_name);
+          data_recorder::start_recording(tmp_new_log_recording_name);
       if (!opened_ok) {
-        logger.error(
-            "START command: failed to create recording file for session [%s]",
-            tmp_new_log_session_name.c_str());
+        logger.error("START command: failed to create recording file for [%s]",
+                     tmp_new_log_recording_name.c_str());
         return PacketStatus::GENERAL_ERROR;
       }
-      response_data.write_uint8(had_old_session ? 1 : 0);
+      response_data.write_uint8(had_old_recording ? 1 : 0);
       return PacketStatus::OK;
     } break;
 
-    // Command 0x03 - Stop currently running session. If nay..
+    // Command 0x03 - Stop currently running recording. If nay..
     case 0x03: {
       MutexScope scope(mutex);
       if (!command_data.all_read_ok()) {
         logger.error("STOP command: Invalid command data.");
         return PacketStatus::INVALID_ARGUMENT;
       }
-      const bool had_old_session = data_recorder::is_recording_active();
-      data_recorder::stop_recording_session();
-      response_data.write_uint8(had_old_session ? 1 : 0);
+      const bool had_old_recording = data_recorder::is_recording_active();
+      data_recorder::stop_recording();
+      response_data.write_uint8(had_old_recording ? 1 : 0);
       return PacketStatus::OK;
     } break;
 
@@ -80,16 +80,16 @@ PacketStatus handle_control_command(const SerialPacketsData& command_data,
         logger.error("STATUS command: Invalid command data.");
         return PacketStatus::INVALID_ARGUMENT;
       }
-      response_data.write_uint8(1);  // Format version
+      response_data.write_uint8(1);                     // Format version
+      response_data.write_uint32(session::id());        // Device session id.
+      response_data.write_uint32(time_util::millis());  // Device time
       data_recorder::get_recoding_info(&tmp_recording_info);
+      response_data.write_uint8(tmp_recording_info.recording_active ? 1 : 0);
       if (tmp_recording_info.recording_active) {
-        response_data.write_uint8(1);
         response_data.write_uint32(tmp_recording_info.recording_time_millis);
         response_data.write_str(tmp_recording_info.recording_name.c_str());
         response_data.write_uint32(tmp_recording_info.writes_ok);
         response_data.write_uint32(tmp_recording_info.write_failures);
-      } else {
-        response_data.write_uint8(0);
       }
       return PacketStatus::OK;
     } break;
@@ -129,6 +129,7 @@ void report_marker(const MarkerName& marker_name) {
   // TODO: Consider to perform buffering of multiple markers.
   packet_data.clear();
   packet_data.write_uint8(1);                     // packet format version
+  packet_data.write_uint32(session::id());        // Device session id.
   packet_data.write_uint32(time_util::millis());  // Base time.
   packet_data.write_uint8(0x07);                  // Marker channel id
   packet_data.write_uint16(0);                    // Relative time offset
