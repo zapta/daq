@@ -49,16 +49,6 @@ parser.add_argument("--output_dir",
 
 args = parser.parse_args()
 
-# def grams(adc_ticks: int) -> float:
-#     """Converts ADC ticks to grams"""
-#     return (adc_ticks - ADC_TICKS_ZERO_OFFSET) * GRAMS_PER_ADC_TICK
-
-# TODO: Make this per loadcell and per channel.
-ZERO_OFFSET = 16925
-
-# TODO: Add sampling interval information to the packet.
-# SAMPLING_INTERVAL_MILLIS = 2
-
 first_packet_start_time = None
 last_packet_end_time_millis = None
 

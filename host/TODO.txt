@@ -1,5 +1,5 @@
 
 
-Add to the log processor support for markers.
+Implement a post processor to assemble test fragments, based on markers.
 
 
