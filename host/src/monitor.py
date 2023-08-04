@@ -66,7 +66,17 @@ main_event_loop = asyncio.get_event_loop()
 CONTROL_ENDPOINT = 0x01
 
 # Add more color regex as needed.
-markers_color_table = [[re.compile("stop"), "red"], [re.compile("start"), "green"]]
+markers_color_table = []
+markers_color_table.append([
+    re.compile("start|begin"),
+    pg.mkPen(color="green", width=2, style=QtCore.Qt.PenStyle.DashLine)
+])
+markers_color_table.append(                       [
+                           re.compile("stop|end"),
+                           pg.mkPen(color="red",
+                                    width=2,
+                                    style=QtCore.Qt.PenStyle.DashLine)
+                       ])
 
 
 class MarkerEntry:
@@ -76,15 +86,17 @@ class MarkerEntry:
         # Time is device time in seconds.
         self.time = marker_time
         self.name = marker_name
-        self.color = self.assign_marker_color(marker_name)
-        self.pen = pg.mkPen(color=self.color, width=1, style=QtCore.Qt.PenStyle.DashLine)
+        self.pen = self.assign_pen(marker_name)
 
-    def assign_marker_color(self, marker_name: str) -> str:
+    def assign_pen(self, marker_name: str):
+        """ Returns a pen for this maker name."""
         lower_marker_name = marker_name.lower()
         for entry in markers_color_table:
             if entry[0].match(lower_marker_name):
                 return entry[1]
-        return "gray"
+        return pg.mkPen(color="gray",
+                        width=1,
+                        style=QtCore.Qt.PenStyle.DashLine)
 
 
 class MarkerHistory:
@@ -179,16 +191,21 @@ therm_configs = {}
 latest_log_time = None
 
 
-async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, PacketData]:
+async def message_async_callback(endpoint: int,
+                                 data: PacketData) -> Tuple[int, PacketData]:
     """Callback from the serial packets clients for incoming messages."""
     global lc_channels, therm_channels, latest_log_time
-    logger.debug(f"Received message: [%d] %s", endpoint, data.hex_str(max_bytes=10))
+    logger.debug(f"Received message: [%d] %s", endpoint,
+                 data.hex_str(max_bytes=10))
     if endpoint == 10:
-        parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(data)
+        parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(
+            data)
         # Ignore packet if it's a left over from a previous device session (before reboot).
         if parsed_log_packet.session_id() != device_session_id:
-          logger.warning(f"Session id mismatch ({parsed_log_packet.session_id():08x} vs {device_session_id:08x}), ignoring packet")
-          return
+            logger.warning(
+                f"Session id mismatch ({parsed_log_packet.session_id():08x} vs {device_session_id:08x}), ignoring packet"
+            )
+            return
         packet_end_time = parsed_log_packet.end_time()
         if latest_log_time is None or packet_end_time > latest_log_time:
             latest_log_time = packet_end_time
@@ -204,7 +221,8 @@ async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, 
             adc_values_sum = 0
             for time_millis, adc_value in lc_data.timed_values():
                 times_secs.append(time_millis / 1000)
-                values_g.append(lc_chan.lc_config.adc_reading_to_grams(adc_value))
+                values_g.append(
+                    lc_chan.lc_config.adc_reading_to_grams(adc_value))
                 adc_values_sum += adc_value
             lc_chan.display_series.extend(times_secs, values_g)
             avg_adc_value = adc_values_sum / len(times_secs)
@@ -255,7 +273,7 @@ def set_display_status_line(msg: str) -> None:
 def update_display():
 
     global lc_channels, therm_channels, plot1, plot2, sys_config, latest_log_time
-    
+
     # logger.info(f"Update display(), latest_log_time = {latest_log_time}")
     plot1.clear()
     plot2.clear()
@@ -270,20 +288,30 @@ def update_display():
 
     # Update plot 1 with load_cells
     for ch_name, lc_chan in sorted(lc_channels.items()):
-        lc_chan.display_series.delete_older_than(latest_log_time - plot1_x_span)
+        lc_chan.display_series.delete_older_than(latest_log_time -
+                                                 plot1_x_span)
         x = lc_chan.display_series.relative_times(latest_log_time)
         y = lc_chan.display_series.values()
         color = lc_chan.lc_config.color()
-        plot1.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name, antialias=True)
+        plot1.plot(x,
+                   y,
+                   pen=pg.mkPen(color=color, width=2),
+                   name=ch_name,
+                   antialias=True)
         # logger.info(f"{ch_name}: {lc_chan.display_series.mean_value():.3f}")
 
     # Update plot 2 with thermistors
     for ch_name, therm_chan in sorted(therm_channels.items()):
-        lc_chan.display_series.delete_older_than(latest_log_time - plot2_x_span)
+        lc_chan.display_series.delete_older_than(latest_log_time -
+                                                 plot2_x_span)
         x = therm_chan.display_series.relative_times(latest_log_time)
         y = therm_chan.display_series.values()
         color = therm_chan.therm_config.color()
-        plot2.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name, antialias=True)
+        plot2.plot(x,
+                   y,
+                   pen=pg.mkPen(color=color, width=2),
+                   name=ch_name,
+                   antialias=True)
 
     # Draw the markers on plot1, plot2.
     # marker_pen = pg.mkPen(color="red", width=2)
@@ -305,7 +333,8 @@ async def connection_task():
                 logger.info("Serial port reconnected")
                 reset_display()
             else:
-                logger.error(f"Failed to reconnect to serial port {serial_port}")
+                logger.error(
+                    f"Failed to reconnect to serial port {serial_port}")
             await asyncio.sleep(5)
         else:
             await asyncio.sleep(1)
@@ -317,16 +346,18 @@ async def init_serial_packets_client() -> None:
     # assert args.sys_config is not None
     # sys_config.load_from_file(args.sys_config)
     serial_port = sys_config.get_data_link_port()
-    serial_packets_client = SerialPacketsClient(serial_port,
-                                                command_async_callback=None,
-                                                message_async_callback=message_async_callback,
-                                                event_async_callback=None,
-                                                baudrate=115200)
+    serial_packets_client = SerialPacketsClient(
+        serial_port,
+        command_async_callback=None,
+        message_async_callback=message_async_callback,
+        event_async_callback=None,
+        baudrate=115200)
     connected = await serial_packets_client.connect()
     assert connected, f"Could not open port {serial_port}"
     # We are good. Create a continuous task that will try to reconnect
     # if the serial connection disconnected (e.g. USB plug is removed).
-    reconnection_task = asyncio.create_task(connection_task(), name="connection_task")
+    reconnection_task = asyncio.create_task(connection_task(),
+                                            name="connection_task")
 
 
 async def do_nothing():
@@ -354,7 +385,8 @@ def init_display():
         lc_channels[chan_name] = LoadCellChannel(chan_name, lc_config)
 
     therm_channels = {}
-    for chan_name, therm_config in sys_config.get_thermistors_configs().items():
+    for chan_name, therm_config in sys_config.get_thermistors_configs().items(
+    ):
         therm_channels[chan_name] = ThermistorChannel(chan_name, therm_config)
 
     pg.setConfigOption('background', 'w')
@@ -381,7 +413,10 @@ def init_display():
     plot1.setMouseEnabled(x=False, y=True)
     plot1.setXRange(-(plot1_x_span * 0.95), 0)
     plot1.setYRange(-100, 6100)
-    plot1.addLegend(offset=(5, 5), verSpacing=-7, brush="#eee", labelTextSize='7pt')
+    plot1.addLegend(offset=(5, 5),
+                    verSpacing=-7,
+                    brush="#eee",
+                    labelTextSize='7pt')
 
     layout.nextRow()
     plot2 = layout.addPlot(title="Thermistors", colspan=5)
@@ -390,7 +425,10 @@ def init_display():
     plot2.setMouseEnabled(x=False, y=True)
     plot2.setXRange(-(plot2_x_span * 0.95), 0)
     plot2.setYRange(0, 260)
-    plot2.addLegend(offset=(5, 5), verSpacing=-7, brush="#eee", labelTextSize='7pt')
+    plot2.addLegend(offset=(5, 5),
+                    verSpacing=-7,
+                    brush="#eee",
+                    labelTextSize='7pt')
 
     # Add an empty row as spacing.
     # TODO: Is there a cleaner way to specify top margin?
@@ -424,7 +462,7 @@ command_status_future = None
 last_command_status_time = time.time() - 10
 
 # When the device starts it picks a random uint32 as a session
-# id. We use it to detect device restarts. 0 is an 
+# id. We use it to detect device restarts. 0 is an
 # invalid session id.
 device_session_id = 0
 
@@ -464,7 +502,8 @@ def timer_handler():
         cmd.add_uint8(len(recording_name_bytes))  # str len
         cmd.add_bytes(recording_name_bytes)
         logger.info(f"START command: {cmd.hex_str(max_bytes=5)}")
-        command_start_future = serial_packets_client.send_command_future(CONTROL_ENDPOINT, cmd)
+        command_start_future = serial_packets_client.send_command_future(
+            CONTROL_ENDPOINT, cmd)
         pending_start_button_click = False
 
     if command_start_future and command_start_future.done():
@@ -479,7 +518,8 @@ def timer_handler():
         cmd = PacketData()
         cmd.add_uint8(0x03)  # Command = STOP
         logger.info(f"STOP command: {cmd.hex_str(max_bytes=5)}")
-        command_stop_future = serial_packets_client.send_command_future(CONTROL_ENDPOINT, cmd)
+        command_stop_future = serial_packets_client.send_command_future(
+            CONTROL_ENDPOINT, cmd)
         pending_stop_button_click = False
 
     if command_stop_future and command_stop_future.done():
@@ -494,7 +534,8 @@ def timer_handler():
         cmd = PacketData()
         cmd.add_uint8(0x04)  # Command = STATUS
         logger.debug(f"STATUS command: {cmd.hex_str(max_bytes=5)}")
-        command_status_future = serial_packets_client.send_command_future(CONTROL_ENDPOINT, cmd)
+        command_status_future = serial_packets_client.send_command_future(
+            CONTROL_ENDPOINT, cmd)
         last_command_status_time = time.time()
 
     if command_status_future and command_status_future.done():
@@ -529,11 +570,12 @@ def timer_handler():
             assert response_data.all_read_ok()
             if session_id != device_session_id:
                 logger.info("Device reset detected, clearing display.")
-                device_session_id = session_id 
+                device_session_id = session_id
                 logger.info(f"New session id: {device_session_id:08x}")
                 reset_display()
-                msg = "Device reset"  
+                msg = "Device reset"
         set_display_status_line(msg)
+
 
 sys_config = SysConfig()
 sys_config.load_from_file(args.sys_config)
