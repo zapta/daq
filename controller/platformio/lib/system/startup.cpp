@@ -14,6 +14,7 @@
 #include "spi.h"
 #include "static_task.h"
 #include "tim.h"
+#include "rng.h"
 #include "usart.h"
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
@@ -77,6 +78,8 @@ int main(void) {
   MX_SDMMC1_SD_Init();
   MX_FATFS_Init();
   MX_USART2_UART_Init();
+  MX_RNG_Init();
+
 
   if (!main_task.start()) {
     App_Error_Handler();

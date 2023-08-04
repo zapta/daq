@@ -13,6 +13,7 @@
 #include "io.h"
 #include "logger.h"
 #include "printer_link.h"
+#include "session.h"
 #include "serial.h"
 #include "spi.h"
 #include "static_task.h"
@@ -26,8 +27,19 @@ StaticTask<2000> printer_link_rx_task(printer_link::rx_task_body, "Printer RX",
                                       5);
 StaticTask<2000> adc_task(adc::adc_task_body, "ADC", 7);
 
+// static void test_rand() {
+//   for (int i = 0; i < 10; i++) {
+//     uint32_t start_millis = time_util::millis();
+//     uint32_t result = 0;
+//     auto status = HAL_RNG_GenerateRandomNumber(&hrng, &result);
+//     logger.info("Rand: %d, %08lx, %3lu", status, result, time_util::millis() -start_millis);
+//   }
+// }
+
 // Called from from the main FreeRTOS task.
 void app_main() {
+  session::setup();
+  
   serial::serial1.init();
   serial::serial2.init();
 
@@ -70,6 +82,7 @@ void app_main() {
                     recording_info.recording_name.c_str(),
                     recording_info.recording_time_millis);
       }
+      logger.info("Session id: [%08lx]", session::id());
     }
 
     time_util::delay_millis(100);
