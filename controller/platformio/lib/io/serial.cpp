@@ -1,6 +1,9 @@
 #include "serial.h"
 #include "common.h"
 
+// #pragma GCC push_options
+// #pragma GCC optimize("O0")
+
 namespace serial {
 Serial serial1(&huart1);
 Serial serial2(&huart2);
@@ -46,4 +49,7 @@ void Serial::uart_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size) {
   serial->rx_next_chunk_isr(size, &task_woken);
   portYIELD_FROM_ISR(task_woken)
 }
+
+// #pragma GCC pop_options
+
 

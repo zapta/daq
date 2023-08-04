@@ -519,21 +519,20 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
   // and SD.
 
   // Send data to host.
+  io::TEST1.high();
   host_link::client.sendMessage(HostPorts::LOG_REPORT_MESSAGE, packet_data);
 
   // Store data on SD card.
   packet_encoder.encode_log_packet(packet_data, &stuffed_packet);
   data_recorder::append_if_recording(stuffed_packet);
+  io::TEST1.low();
 
   // Debugging info.
   if (true) {
     logger.info(
-        "ADC %d: %lx, %lx, %lx, %lx, %lx", id,
-        decode_int24(&bfr[kRxDataOffsetInPoint]),
+        "ADC %d: %ld, %ld, %ld", id, decode_int24(&bfr[kRxDataOffsetInPoint]),
         decode_int24(&bfr[kRxDataOffsetInPoint + 2 * kDmaBytesPerPoint]),
-        decode_int24(&bfr[kRxDataOffsetInPoint + 4 * kDmaBytesPerPoint]),
-        decode_int24(&bfr[kRxDataOffsetInPoint + 6 * kDmaBytesPerPoint]),
-        decode_int24(&bfr[kRxDataOffsetInPoint + 8 * kDmaBytesPerPoint]));
+        decode_int24(&bfr[kRxDataOffsetInPoint + 4 * kDmaBytesPerPoint]));
   }
 
   if (false) {

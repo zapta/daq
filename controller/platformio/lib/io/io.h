@@ -57,7 +57,9 @@ class InputPin {
 
 namespace io {
 
+// Port E3. Not available on PCIE.
 extern OutputPin LED;
+// Port D1 = PCIE B13.
 extern OutputPin TEST1;
 
 // High when pressed.

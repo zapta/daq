@@ -52,9 +52,10 @@ static uint32_t writes_ok = 0;
 static uint32_t write_failures = 0;
 
 // Assumes level == STATE_OPENED and mutex is grabbed.
-// Tries to write pending bytes to SD.
-// Always clears pending_bytes upon return.
-static void internal_write_pending_bytes() {
+// Tries to write pending bytes to SD. Always clears pending_bytes upon return.
+// We call this function with pending_bytes being a multiple of _MAX_SS
+// except for the last write in the file.
+static void internal_write_all_pending_bytes() {
   if (pending_bytes == 0) {
     // Nothing to do.
     return;
@@ -91,7 +92,7 @@ static void internal_write_pending_bytes() {
 // TODO: Change mutexs to be recursive.
 static void internal_stop_recording() {
   if (state >= STATE_OPENED) {
-    internal_write_pending_bytes();
+    internal_write_all_pending_bytes();
     f_close(&SDFile);
   }
 
@@ -225,10 +226,15 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
 
   // Split the packet into two parts, the number of bytes that will be
   // written now and the number of bytes that will stay pending for
-  // a future write.
-  const uint16_t packet_bytes_left_over =
-      (pending_bytes + packet_size) % _MAX_SS;
+  // a future write. We assume that pending bytes < _MAX_SS.
+  const uint16_t total_bytes = pending_bytes + packet_size;
+  const uint16_t packet_bytes_left_over = (total_bytes >= _MAX_SS) ?
+      (total_bytes % _MAX_SS) : packet_size;
   const uint16_t packet_bytes_to_write = packet_size - packet_bytes_left_over;
+
+  logger.info("pending=%lu. This packet: size: %hu, packet_write: %hu, packet_left over: %hu",
+              pending_bytes, packet_size, packet_bytes_to_write, packet_bytes_left_over);
+
 
   // Maybe write pending and packet part 1.
   packet.reset_reading();
@@ -242,7 +248,7 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
     pending_bytes += packet_bytes_to_write;
 
     // Write to SD.
-    internal_write_pending_bytes();
+    internal_write_all_pending_bytes();
   }
 
   // If there are left over bytes, store as pending bytes.
@@ -259,8 +265,6 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
     // Should not happen since we derived from packet size.
     App_Error_Handler();
   }
-
-  // writes_ok++;
 }
 
 bool is_recording_active() {
@@ -290,7 +294,5 @@ void get_recoding_info(RecordingInfo* info) {
     info->write_failures = 0;
   }
 }
-
-
 
 }  // namespace data_recorder

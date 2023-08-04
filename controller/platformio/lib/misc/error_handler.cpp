@@ -15,3 +15,5 @@ void Error_Handler() {
     asm("nop");
   }
 }
+
+#pragma GCC pop_options

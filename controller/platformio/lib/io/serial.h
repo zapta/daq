@@ -171,7 +171,8 @@ class Serial {
     // _huart->error_code indicates the error code.
     // Search UART_Error_Definition for codes.
   void uart_error_isr() {
-    App_Error_Handler();
+    // TODO: Count errors by type. Some of the errors
+    // are soft.
   }
 
   // Called from a task (init) or from RX isr.
