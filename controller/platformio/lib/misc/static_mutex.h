@@ -1,8 +1,8 @@
 #pragma once
 
+#include "common.h"
 #include <FreeRTOS.h>
 #include <semphr.h>
-// #include "main.h"
 
 // A mutex and its static memory.
 class StaticMutex {
@@ -29,7 +29,7 @@ class StaticMutex {
   inline void give() {
     const bool ok = xSemaphoreGive(_handle);
     if (!ok) {
-      Error_Handler();
+      App_Error_Handler();
     }
   }
 

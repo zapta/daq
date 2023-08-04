@@ -45,13 +45,13 @@ void app_main() {
 
   // Start tasks.
   if (!host_link_rx_task.start()) {
-    Error_Handler();
+    App_Error_Handler();
   }
   if (!printer_link_rx_task.start()) {
-    Error_Handler();
+    App_Error_Handler();
   }
   if (!adc_task.start()) {
-    Error_Handler();
+    App_Error_Handler();
   }
 
   Elappsed report_timer;

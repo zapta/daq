@@ -43,7 +43,7 @@ void main_task_body(void* argument) {
   MX_USB_DEVICE_Init();
   HAL_Delay(1000);  // Let it connect.
   if (!cdc_logger_task.start()) {
-    Error_Handler();
+    App_Error_Handler();
   }
   logger.set_level(LOG_INFO);
   logger.info("Serial USB started");
@@ -53,7 +53,7 @@ void main_task_body(void* argument) {
 
   // Should not return.
   app_main();
-  Error_Handler();
+  App_Error_Handler();
 }
 
 // Based on lib/autogen_core/main.c.ignore
@@ -79,10 +79,10 @@ int main(void) {
   MX_USART2_UART_Init();
 
   if (!main_task.start()) {
-    Error_Handler();
+    App_Error_Handler();
   }
 
   // Should not return.
   vTaskStartScheduler();
-  Error_Handler();
+  App_Error_Handler();
 }

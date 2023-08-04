@@ -136,7 +136,7 @@ bool start_recording(const RecordingName& new_session_name) {
 
   if (!current_recording_name.set_c_str(new_session_name.c_str())) {
     // Should not happen since we have identical buffer sizes.
-    Error_Handler();
+    App_Error_Handler();
   }
 
   FRESULT status = f_mount(&SDFatFS, (TCHAR const*)SDPath, 0);
@@ -174,7 +174,7 @@ bool start_recording(const RecordingName& new_session_name) {
   // Not expecting buffer here overflow since we checked the sizes
   // above, but just in case.
   if (i > (sizeof(recording_file_wname) / sizeof(recording_file_wname[0]))) {
-    Error_Handler();
+    App_Error_Handler();
   }
 
   status = f_open(&SDFile, recording_file_wname, FA_CREATE_ALWAYS | FA_WRITE);
@@ -199,7 +199,7 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
   }
 
   if (state == STATE_IDLE) {
-    // Not in session. Ignore silently.
+    // Not recording. Ignore silently.
     return;
   }
 
@@ -220,7 +220,7 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
 
   if (pending_bytes + packet_size > sizeof(write_buffer)) {
     // Should not happen since we derive buffer size from max packet size.
-    Error_Handler();
+    App_Error_Handler();
   }
 
   // Split the packet into two parts, the number of bytes that will be
@@ -237,7 +237,7 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
     packet.read_bytes(&write_buffer[pending_bytes], packet_bytes_to_write);
     if (packet.had_read_errors()) {
       // Should not happen since we verified the size.
-      Error_Handler();
+      App_Error_Handler();
     }
     pending_bytes += packet_bytes_to_write;
 
@@ -250,14 +250,14 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
     packet.read_bytes(&write_buffer[pending_bytes], packet_bytes_left_over);
     if (packet.had_read_errors()) {
       // Should not happen since we derived from packet size.
-      Error_Handler();
+      App_Error_Handler();
     }
     pending_bytes += packet_bytes_left_over;
   }
 
   if (!packet.all_read_ok()) {
     // Should not happen since we derived from packet size.
-    Error_Handler();
+    App_Error_Handler();
   }
 
   // writes_ok++;
@@ -291,17 +291,6 @@ void get_recoding_info(RecordingInfo* info) {
   }
 }
 
-// void dump_summary() {
-  
-//   MutexScope scope(mutex);
 
-//   if (state == STATE_IDLE) {
-//     logger.info("Data Recorder is off.");
-//     return;
-//   }
-
-//   logger.info("Recording [%s] has %lu records.", current_session_name.c_str(),
-//               records_written);
-// }
 
 }  // namespace data_recorder

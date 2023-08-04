@@ -137,7 +137,7 @@ void report_marker(const MarkerName& marker_name) {
 
   // Verify writing was OK.
   if (packet_data.had_write_errors()) {
-    Error_Handler();
+    App_Error_Handler();
   }
 
   // TODO: The adc has similar logic for marker logging. Consider

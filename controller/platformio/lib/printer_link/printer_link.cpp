@@ -40,7 +40,7 @@ static void set_state(State new_state) {
 void setup(Serial& serial) {
   if (link_serial) {
     // Already initialized.
-    Error_Handler();
+    App_Error_Handler();
   }
   set_state(IDLE);
   link_serial = &serial;
@@ -91,7 +91,7 @@ static void process_next_rx_char(uint8_t c) {
 void rx_task_body(void* argument) {
   if (!link_serial) {
     // Setup not called.
-    Error_Handler();
+    App_Error_Handler();
   }
   for (;;) {
     // Wait for rx chars.

@@ -2,9 +2,7 @@
 #pragma once
 
 #include <stdio.h>
-
 #include <algorithm>
-
 #include "main.h"
 #include "stdarg.h"
 

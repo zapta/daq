@@ -1,6 +1,7 @@
 // Serial driver. Interrupt driven, no worker tasks.
 #pragma once
 
+#include "common.h"
 #include "FreeRTOS.h"
 #include "circular_buffer.h"
 #include "semphr.h"
@@ -72,7 +73,7 @@ class Serial {
       const bool ok = _rx_data_avail_sem.take(portMAX_DELAY);
       if (!ok) {
         // We don't expect a timeout since we block forever.
-        Error_Handler();
+        App_Error_Handler();
       }
 
       // Try to read the  data from the rx buffer.
@@ -104,17 +105,21 @@ class Serial {
 
   void init() {
     // Register callback handlers.
+    if (HAL_OK != HAL_UART_RegisterCallback(_huart, HAL_UART_ERROR_CB_ID,
+                                            uart_ErrorCallback)) {
+      App_Error_Handler();
+    }
     if (HAL_OK != HAL_UART_RegisterCallback(_huart, HAL_UART_TX_COMPLETE_CB_ID,
                                             uart_TxCpltCallback)) {
-      Error_Handler();
+      App_Error_Handler();
     }
     if (HAL_OK != HAL_UART_RegisterCallback(_huart, HAL_UART_RX_COMPLETE_CB_ID,
                                             uart_RxCpltCallback)) {
-      Error_Handler();
+      App_Error_Handler();
     }
     if (HAL_OK !=
         HAL_UART_RegisterRxEventCallback(_huart, uart_RxEventCallback)) {
-      Error_Handler();
+      App_Error_Handler();
     }
     // Start the reception.
     start_hal_rx();
@@ -122,6 +127,7 @@ class Serial {
 
  private:
   // For interrupt handling.
+  static void uart_ErrorCallback(UART_HandleTypeDef* huart);
   static void uart_TxCpltCallback(UART_HandleTypeDef* huart);
   static void uart_RxCpltCallback(UART_HandleTypeDef* huart);
   static void uart_RxEventCallback(UART_HandleTypeDef* huart, uint16_t Size);
@@ -130,7 +136,7 @@ class Serial {
   // --- TX
   CircularBuffer<uint8_t, 5000> _tx_buffer;
   StaticMutex _tx_mutex;
-  uint8_t _tx_transfer_buffer[20];
+  uint8_t _tx_hal_buffer[20];
 
   // ---RX
   CircularBuffer<uint8_t, 5000> _rx_buffer;
@@ -138,23 +144,23 @@ class Serial {
   // Indicates that RX buffer has data. Allows to
   // avoid polling of the buffer.
   StaticBinarySemaphore _rx_data_avail_sem;
-  uint8_t _rx_transfer_buffer[20];
+  uint8_t _rx_hal_buffer[20];
 
   // Called in within mutex or from in interrupt. No need to protect access.
   void tx_next_chunk() {
     const uint16_t len =
-        _tx_buffer.read(_tx_transfer_buffer, sizeof(_tx_transfer_buffer));
+        _tx_buffer.read(_tx_hal_buffer, sizeof(_tx_hal_buffer));
     if (len > 0) {
-      HAL_UART_Transmit_IT(_huart, _tx_transfer_buffer, len);
+      HAL_UART_Transmit_IT(_huart, _tx_hal_buffer, len);
     }
   }
 
   // Called from isr to accept new incoming data.
   void rx_next_chunk_isr(uint16_t len, BaseType_t* task_woken) {
     if (len) {
-      const bool ok = _rx_buffer.write(_rx_transfer_buffer, len, true);
+      const bool ok = _rx_buffer.write(_rx_hal_buffer, len, true);
       if (!ok) {
-        asm("nop");
+        App_Error_Handler();
       }
       // Indicate that data is available.
       _rx_data_avail_sem.give_from_isr(task_woken);
@@ -162,12 +168,18 @@ class Serial {
     start_hal_rx();
   }
 
+    // _huart->error_code indicates the error code.
+    // Search UART_Error_Definition for codes.
+  void uart_error_isr() {
+    App_Error_Handler();
+  }
+
   // Called from a task (init) or from RX isr.
   void start_hal_rx() {
     const HAL_StatusTypeDef status = HAL_UARTEx_ReceiveToIdle_IT(
-        _huart, _rx_transfer_buffer, sizeof(_rx_transfer_buffer));
+        _huart, _rx_hal_buffer, sizeof(_rx_hal_buffer));
     if (status != HAL_OK) {
-      asm("nop");
+      App_Error_Handler();
     }
   }
 };

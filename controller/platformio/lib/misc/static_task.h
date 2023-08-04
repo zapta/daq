@@ -2,6 +2,7 @@
 
 #include <FreeRTOS.h>
 
+#include "common.h"
 #include "logger.h"
 #include "task.h"
 
@@ -14,7 +15,7 @@ class StaticTask {
 
   ~StaticTask() {
     // Static tasks should not be finalized.
-    Error_Handler();
+    App_Error_Handler();
   }
 
   bool start() {

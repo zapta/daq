@@ -6,13 +6,12 @@
 
 #include <cstring>
 
+#include "common.h"
 #include "controller.h"
 #include "data_recorder.h"
 #include "dma.h"
 #include "host_link.h"
 #include "io.h"
-#include "logger.h"
-#include "main.h"
 #include "serial_packets_client.h"
 #include "spi.h"
 #include "static_queue.h"
@@ -163,7 +162,7 @@ void spi_ErrorCallbackIsr(SPI_HandleTypeDef *hspi) {
 // sync which we use as a repeating ADC CS.
 static void set_dma_request_generator(uint32_t num_transfers_per_sync) {
   if (state != DMA_STATE_IDLE) {
-    Error_Handler();
+    App_Error_Handler();
   }
 
   // Set tx DMA request generator.
@@ -182,14 +181,14 @@ static void set_dma_request_generator(uint32_t num_transfers_per_sync) {
 // in rx_buffer.
 static void spi_send_one_shot(const uint8_t *cmd, uint16_t num_bytes) {
   if (state != DMA_STATE_IDLE) {
-    Error_Handler();
+    App_Error_Handler();
   }
 
   // time_util::delay_millis(50);
 
   logger.info("Sending SPI one shot (%hu bytes)", num_bytes);
   if (num_bytes > sizeof(rx_buffer)) {
-    Error_Handler();
+    App_Error_Handler();
   }
 
   // For determinism.
@@ -205,23 +204,23 @@ static void spi_send_one_shot(const uint8_t *cmd, uint16_t num_bytes) {
   const HAL_StatusTypeDef status =
       HAL_SPI_TransmitReceive_DMA(&hspi1, cmd, rx_buffer, num_bytes);
   if (status != HAL_StatusTypeDef::HAL_OK) {
-    Error_Handler();
+    App_Error_Handler();
   }
 
   IrqEvent event;
   if (!irq_event_queue.consume_from_task(&event, 300)) {
-    Error_Handler();
+    App_Error_Handler();
   }
 
   // We expect the IRQ handler that aborted the DMA to also
   // set the state to IDLE.
   if (state != DMA_STATE_IDLE) {
-    Error_Handler();
+    App_Error_Handler();
   }
 
   // logger.info("IRQ event: %d", event.id);
   if (event.id != IrqEventId::EVENT_FULL_COMPLETE) {
-    Error_Handler();
+    App_Error_Handler();
   }
 }
 
@@ -236,7 +235,7 @@ void cmd_reset() {
 
 uint8_t cmd_read_register(uint8_t reg_index) {
   if (reg_index > 18) {
-    Error_Handler();
+    App_Error_Handler();
   }
   const uint8_t cmd_code = (uint8_t)0x20 | reg_index;
   const uint8_t cmd[] = {cmd_code, 0x0, 0x0};
@@ -246,7 +245,7 @@ uint8_t cmd_read_register(uint8_t reg_index) {
 
 void cmd_write_register(uint8_t reg_index, uint8_t val) {
   if (reg_index > 18) {
-    Error_Handler();
+    App_Error_Handler();
   }
   const uint8_t cmd_code = (uint8_t)0x40 | reg_index;
   const uint8_t cmd[] = {cmd_code, val};
@@ -269,7 +268,7 @@ int32_t decode_int24(const uint8_t *bfr3) {
 // Assuming cs is pulsing.
 void start_continuos_DMA() {
   if (state != DMA_STATE_IDLE) {
-    Error_Handler();
+    App_Error_Handler();
   }
 
   // Confirm the assumptions of the code below.
@@ -348,7 +347,7 @@ void start_continuos_DMA() {
 
   // We expect to be here exactly past the first half.
   if (p != (&tx_buffer[kDmaBytesPerHalf])) {
-    Error_Handler();
+    App_Error_Handler();
   }
 
   // Copy the first half to second half.
@@ -378,7 +377,7 @@ void start_continuos_DMA() {
                                                   sizeof(tx_buffer));
   if (HAL_OK != status) {
     // dma_active = false;
-    Error_Handler();
+    App_Error_Handler();
   }
 
   logger.info("ADC: continuos DMA started.");
@@ -386,7 +385,7 @@ void start_continuos_DMA() {
 
 static void setup() {
   if (!state == DMA_STATE_IDLE) {
-    Error_Handler();
+    App_Error_Handler();
   }
 
   // Register interrupt handler. These handler are marked in
@@ -395,15 +394,15 @@ static void setup() {
   if (HAL_OK != HAL_SPI_RegisterCallback(&hspi1,
                                          HAL_SPI_TX_RX_HALF_COMPLETE_CB_ID,
                                          spi_TxRxHalfCpltCallbackIsr)) {
-    Error_Handler();
+    App_Error_Handler();
   }
   if (HAL_OK != HAL_SPI_RegisterCallback(&hspi1, HAL_SPI_TX_RX_COMPLETE_CB_ID,
                                          spi_TxRxCpltCallbackIsr)) {
-    Error_Handler();
+    App_Error_Handler();
   }
   if (HAL_OK != HAL_SPI_RegisterCallback(&hspi1, HAL_SPI_ERROR_CB_ID,
                                          spi_ErrorCallbackIsr)) {
-    Error_Handler();
+    App_Error_Handler();
   }
 
   // Per the ADS1261 sample code, since we don't monitor the READY
@@ -510,10 +509,9 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
     }
   }
 
-  
   // Verify writing was OK.
   if (packet_data.had_write_errors()) {
-    Error_Handler();
+    App_Error_Handler();
   }
 
   // TODO: The controller has similar logic for marker logging. Consider
@@ -563,7 +561,7 @@ void adc_task_body(void *argument) {
       process_rx_dma_half_buffer(1, event.isr_millis,
                                  &rx_buffer[kDmaBytesPerHalf]);
     } else {
-      Error_Handler();
+      App_Error_Handler();
     }
   }
 }

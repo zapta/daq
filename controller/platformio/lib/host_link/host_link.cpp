@@ -16,7 +16,7 @@ void setup(Serial& serial) {
 void rx_task_body(void* argument) {
   // This method doesn't return.
   client.rx_task_body();
-  Error_Handler();
+  App_Error_Handler();
 }
 
 }  // namespace host_link

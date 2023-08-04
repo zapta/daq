@@ -80,7 +80,7 @@ static SerialPacketsData packet_data;
 void rx_task_body(void* argument) {
   // Should not return.
   client->rx_task_body();
-  Error_Handler();
+  App_Error_Handler();
 }
 
 static StaticTask<2000> rx_task(rx_task_body, "rx_test", 5);

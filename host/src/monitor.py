@@ -319,7 +319,7 @@ async def init_serial_packets_client() -> None:
                                                 command_async_callback=None,
                                                 message_async_callback=message_async_callback,
                                                 event_async_callback=None,
-                                                baudrate=576000)
+                                                baudrate=115200)
     connected = await serial_packets_client.connect()
     assert connected, f"Could not open port {serial_port}"
     # We are good. Create a continuous task that will try to reconnect
