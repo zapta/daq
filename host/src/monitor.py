@@ -50,7 +50,7 @@ args = parser.parse_args()
 # TODO: Make these command line flags.
 # TODO: Add a control of LC channel down sampling for display.
 plot1_x_span = 2.0
-plot2_x_span = 200.0
+plot2_x_span = 70.0
 max_plot_x_span = max(plot1_x_span, plot2_x_span)
 
 logging.basicConfig(
