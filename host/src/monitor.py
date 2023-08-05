@@ -17,9 +17,9 @@ import re
 
 from PyQt6 import QtWidgets, QtCore
 from pyqtgraph import PlotWidget, plot, LabelItem
-from typing import Tuple, Optional, List, Dict
+from typing import Tuple, Optional, List, Dict, Any
 from lib.log_parser import LogPacketsParser, ChannelData, ParsedLogPacket
-from lib.sys_config import SysConfig, LoadCellChannelConfig, TemperatureChannelConfig
+from lib.sys_config import SysConfig, MarkersConfig, LoadCellChannelConfig, TemperatureChannelConfig
 from lib.display_series import DisplaySeries
 
 # A workaround to avoid auto formatting.
@@ -65,36 +65,19 @@ main_event_loop = asyncio.get_event_loop()
 # TODO: Move to a common place.
 CONTROL_ENDPOINT = 0x01
 
-# Add more color regex as needed.
-markers_color_table = []
-markers_color_table.append([
-    re.compile("start|begin"),
-    pg.mkPen(color="green", width=2, style=QtCore.Qt.PenStyle.DashLine)
-])
-markers_color_table.append([
-    re.compile("stop|end"),
-    pg.mkPen(color="red", width=2, style=QtCore.Qt.PenStyle.DashLine)
-])
+
 
 
 class MarkerEntry:
     """A single marker entry in the marker history list."""
 
-    def __init__(self, marker_time: float, marker_name: str):
+    def __init__(self, marker_time: float, marker_name: str, marker_pen: Any):
         # Time is device time in seconds.
         self.time = marker_time
         self.name = marker_name
-        self.pen = self.assign_pen(marker_name)
+        self.pen = marker_pen
 
-    def assign_pen(self, marker_name: str):
-        """ Returns a pen for this maker name."""
-        lower_marker_name = marker_name.lower()
-        for entry in markers_color_table:
-            if entry[0].match(lower_marker_name):
-                return entry[1]
-        return pg.mkPen(color="gray",
-                        width=1,
-                        style=QtCore.Qt.PenStyle.DashLine)
+    
 
 
 class MarkerHistory:
@@ -107,11 +90,11 @@ class MarkerHistory:
     def clear(self):
         self.markers.clear()
 
-    def append(self, time: float, name: str):
+    def append(self, time: float, name: str, pen:Any) -> None:
         # Make sure time is monotonic. Time is in secs.
         if self.markers:
             assert self.markers[-1].time <= time
-        self.markers.append(MarkerEntry(time, name))
+        self.markers.append(MarkerEntry(time, name, pen))
 
     def prune_older_than(self, min_time: float):
         """Delete prefix of marker older than min_time"""
@@ -250,11 +233,13 @@ async def message_async_callback(endpoint: int,
                 temperature_chan.temperature_config.dump_temperature_calibration(avg_adc_value)
         # Process marker channel.
         marker_data: ChannelData = parsed_log_packet.channel("MRKR")
+        markers_config: MarkersConfig = sys_config.markers_config()
         if marker_data:
             for time_millis, marker_name in marker_data.timed_values():
                 time = time_millis / 1000
-                logger.info(f"Marker: [{marker_name}] @ t={time:.3f}]")
-                markers_history.append(time, marker_name)
+                action, value  = markers_config.classify_marker(marker_name)
+                logger.info(f"Marker: [{marker_name}] action=[{action}] value[{value}] time={time:.3f}]")
+                markers_history.append(time, marker_name, markers_config.pen_for_marker(marker_name))
 
         # All done. Update the display
         update_display()
@@ -340,7 +325,7 @@ async def init_serial_packets_client() -> None:
     # sys_config = SysConfig()
     # assert args.sys_config is not None
     # sys_config.load_from_file(args.sys_config)
-    serial_port = sys_config.get_data_link_port()
+    serial_port = sys_config.data_link_port()
     serial_packets_client = SerialPacketsClient(
         serial_port,
         command_async_callback=None,
@@ -376,11 +361,11 @@ def init_display():
     global plot1, plot2, button1, button2, status_label, app, app_view, lc_channels, temperature_channels
 
     lc_channels = {}
-    for chan_name, lc_config in sys_config.get_load_cells_configs().items():
+    for chan_name, lc_config in sys_config.load_cells_configs().items():
         lc_channels[chan_name] = LoadCellChannel(chan_name, lc_config)
 
     temperature_channels = {}
-    for chan_name, temperature_config in sys_config.get_temperature_configs().items(
+    for chan_name, temperature_config in sys_config.temperature_configs().items(
     ):
         temperature_channels[chan_name] = TemperatureChannel(chan_name, temperature_config)
 

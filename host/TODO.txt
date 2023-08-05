@@ -1,4 +1,7 @@
 
+
+Change the marker configuration in sys config not to be restricted to begin/end.
+
 Add support for pt1000 channels.
 
 Implement a post processor to assemble test fragments, based on markers.

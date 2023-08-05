@@ -94,31 +94,31 @@ def process_packet(packet: DecodedLogPacket):
     if last_packet_end_time_millis is None or packet_end_time_millis > last_packet_end_time_millis:
         last_packet_end_time_millis = packet_end_time_millis
     # Process load cells.
-    for chan_name, lc_config in sys_config.get_load_cells_configs().items():
+    for chan_name, lc_config in sys_config.load_cells_configs().items():
         chan_data = parsed_log_packet.channel(chan_name)
         if not chan_data:
             continue
         chan = chan_dict[chan_name]
         f = chan.file
-        for time, value in chan_data.timed_values():
+        for time, marker_name in chan_data.timed_values():
             millis_in_session = time - first_packet_start_time
-            g = lc_config.adc_reading_to_grams(value)
-            f.write(f"{millis_in_session/1000:.3f},{value},{g:.3f}\n")
+            g = lc_config.adc_reading_to_grams(marker_name)
+            f.write(f"{millis_in_session/1000:.3f},{marker_name},{g:.3f}\n")
         point_count += chan_data.size()
         chan.value_count += chan_data.size()
 
     # Process temperature channels.
-    for chan_name, temperature_config in sys_config.get_temperature_configs().items():
+    for chan_name, temperature_config in sys_config.temperature_configs().items():
         chan_data = parsed_log_packet.channel(chan_name)
         if not chan_data:
             continue
         chan = chan_dict[chan_name]
         f = chan.file
-        for time, value in chan_data.timed_values():
+        for time, marker_name in chan_data.timed_values():
             millis_in_session = time - first_packet_start_time
-            r = temperature_config.adc_reading_to_ohms(value)
+            r = temperature_config.adc_reading_to_ohms(marker_name)
             c = temperature_config.resistance_to_c(r)
-            f.write(f"{millis_in_session/1000:.3f},{value},{r:.2f},{c:.3f}\n")
+            f.write(f"{millis_in_session/1000:.3f},{marker_name},{r:.2f},{c:.3f}\n")
         point_count += chan_data.size()
         chan.value_count += chan_data.size()
 
@@ -127,11 +127,13 @@ def process_packet(packet: DecodedLogPacket):
     chan = chan_dict[chan_name]
     f = chan.file
     chan_data = parsed_log_packet.channel(chan_name)
+    markers_config = sys_config.markers_config()
     if chan_data:
-        for time, value in chan_data.timed_values():
+        for time, marker_name in chan_data.timed_values():
             millis_in_session = time - first_packet_start_time
             point_count += 1
-            f.write(f"{millis_in_session/1000:.3f},{value}\n")
+            action, value = markers_config.classify_marker(marker_name)
+            f.write(f"{millis_in_session/1000:.3f},{marker_name},{action},{value}\n")
         point_count += chan_data.size()
         chan.value_count += chan_data.size()
 
@@ -168,12 +170,12 @@ def main():
     last_progress_report_time = time.time()
 
     # Initialized channels and their output files.
-    for chan_name in sys_config.get_load_cells_configs():
+    for chan_name in sys_config.load_cells_configs():
         init_channel(chan_name, f"T[s],{chan_name}[adc],{chan_name}[g]")
-    for chan_name in sys_config.get_temperature_configs():
+    for chan_name in sys_config.temperature_configs():
         init_channel(chan_name, f"T[s],{chan_name}[adc],{chan_name}[R],{chan_name}[C]")
     chan_name = "MRKR"
-    init_channel(chan_name, f"T[s],{chan_name}[name]")
+    init_channel(chan_name, f"T[s],{chan_name}[name],{chan_name}[action],{chan_name}[value]")
 
     while (bfr := in_f.read(1000)):
         # Report progress every 2 secs.
