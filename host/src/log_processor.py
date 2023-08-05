@@ -103,7 +103,7 @@ def process_packet(packet: DecodedLogPacket):
         for time, marker_name in chan_data.timed_values():
             millis_in_session = time - first_packet_start_time
             g = lc_config.adc_reading_to_grams(marker_name)
-            f.write(f"{millis_in_session/1000:.3f},{marker_name},{g:.3f}\n")
+            f.write(f"{millis_in_session},{marker_name},{g:.3f}\n")
         point_count += chan_data.size()
         chan.value_count += chan_data.size()
 
@@ -118,7 +118,7 @@ def process_packet(packet: DecodedLogPacket):
             millis_in_session = time - first_packet_start_time
             r = temperature_config.adc_reading_to_ohms(marker_name)
             c = temperature_config.resistance_to_c(r)
-            f.write(f"{millis_in_session/1000:.3f},{marker_name},{r:.2f},{c:.3f}\n")
+            f.write(f"{millis_in_session},{marker_name},{r:.2f},{c:.3f}\n")
         point_count += chan_data.size()
         chan.value_count += chan_data.size()
 
@@ -133,7 +133,7 @@ def process_packet(packet: DecodedLogPacket):
             millis_in_session = time - first_packet_start_time
             point_count += 1
             marker_type, marker_value = markers_config.classify_marker(marker_name)
-            f.write(f"{millis_in_session/1000:.3f},{marker_name},{marker_type},{marker_value}\n")
+            f.write(f"{millis_in_session},{marker_name},{marker_type},{marker_value}\n")
         point_count += chan_data.size()
         chan.value_count += chan_data.size()
 
@@ -171,11 +171,11 @@ def main():
 
     # Initialized channels and their output files.
     for chan_name in sys_config.load_cells_configs():
-        init_channel(chan_name, f"T[s],{chan_name}[adc],{chan_name}[g]")
+        init_channel(chan_name, f"T[ms],{chan_name}[adc],{chan_name}[g]")
     for chan_name in sys_config.temperature_configs():
-        init_channel(chan_name, f"T[s],{chan_name}[adc],{chan_name}[R],{chan_name}[C]")
+        init_channel(chan_name, f"T[ms],{chan_name}[adc],{chan_name}[R],{chan_name}[C]")
     chan_name = "MRKR"
-    init_channel(chan_name, f"T[s],{chan_name}[name],{chan_name}[type],{chan_name}[value]")
+    init_channel(chan_name, f"T[ms],{chan_name}[name],{chan_name}[type],{chan_name}[value]")
 
     while (bfr := in_f.read(1000)):
         # Report progress every 2 secs.
