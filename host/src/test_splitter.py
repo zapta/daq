@@ -10,7 +10,6 @@ from typing import Tuple, Optional, List, Dict
 import os
 import pandas as pd
 from lib.data_utils import extract_test_data, load_test_ranges, TestRange
-# from lib.sys_config import SysConfig
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
 

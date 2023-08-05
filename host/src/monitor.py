@@ -18,7 +18,7 @@ from typing import Tuple, Optional, List, Dict, Any
 from lib.log_parser import LogPacketsParser, ChannelData, ParsedLogPacket
 from lib.sys_config import SysConfig, MarkersConfig, LoadCellChannelConfig, TemperatureChannelConfig
 from lib.display_series import DisplaySeries
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 # A workaround to avoid auto formatting.
 # For using the local version of serial_packet. Comment out if
@@ -64,7 +64,7 @@ main_event_loop = asyncio.get_event_loop()
 CONTROL_ENDPOINT = 0x01
 
 
-@dataclass
+@dataclass(frozen=True)
 class MarkerEntry:
     """A single marker entry in the marker history list."""
     marker_time: float
@@ -72,12 +72,14 @@ class MarkerEntry:
     marker_pen: Any
 
 
+@dataclass(frozen=True)
 class MarkerHistory:
     """A class that tracks the recent markers."""
+    markers: List[MarkerEntry] = field(default_factory=list)
 
-    def __init__(self):
-        # Oldest first.
-        self.markers: List[MarkerEntry] = []
+    # def __init__(self):
+    #     # Oldest first.
+    #     self.markers: List[MarkerEntry] = []
 
     def clear(self):
         self.markers.clear()
@@ -98,28 +100,36 @@ class MarkerHistory:
         if items_to_delete:
             self.markers = self.markers[items_to_delete:]
 
-    def keep_at_most(self, max_len: int):
-        n = len(self.markers)
-        if max_len <= 0:
-            self.markers = []
-        elif max_len > n:
-            self.markers = self.markers[-max_len:]
+    # def keep_at_most(self, max_len: int):
+    #     n = len(self.markers)
+    #     if max_len <= 0:
+    #         self.markers = []
+    #     elif max_len > n:
+    #         self.markers = self.markers[-max_len:]
 
 
+@dataclass(frozen=True)
 class LoadCellChannel:
+    # def __init__(self, chan_name: str, lc_config: LoadCellChannelConfig):
+    chan_name: str
+    lc_config: LoadCellChannelConfig
+    display_series: DisplaySeries
 
-    def __init__(self, chan_name: str, lc_config: LoadCellChannelConfig):
-        self.chan_name = chan_name
-        self.lc_config = lc_config
-        self.display_series = DisplaySeries()
+    # self.chan_name = chan_name
+    # self.lc_config = lc_config
+    # self.display_series = DisplaySeries()
 
 
+@dataclass(frozen=True)
 class TemperatureChannel:
+    chan_name: str
+    temperature_config: TemperatureChannelConfig
+    display_series: DisplaySeries
 
-    def __init__(self, chan_name: str, temperature_config: TemperatureChannelConfig):
-        self.chan_name = chan_name
-        self.temperature_config = temperature_config
-        self.display_series = DisplaySeries()
+    # def __init__(self, chan_name: str, temperature_config: TemperatureChannelConfig):
+    #     self.chan_name = chan_name
+    #     self.temperature_config = temperature_config
+    #     self.display_series = DisplaySeries()
 
 
 # Initialized later.
@@ -340,11 +350,12 @@ def init_display():
 
     lc_channels = {}
     for chan_name, lc_config in sys_config.load_cells_configs().items():
-        lc_channels[chan_name] = LoadCellChannel(chan_name, lc_config)
+        lc_channels[chan_name] = LoadCellChannel(chan_name, lc_config, DisplaySeries())
 
     temperature_channels = {}
     for chan_name, temperature_config in sys_config.temperature_configs().items():
-        temperature_channels[chan_name] = TemperatureChannel(chan_name, temperature_config)
+        temperature_channels[chan_name] = TemperatureChannel(chan_name, temperature_config,
+                                                             DisplaySeries())
 
     pg.setConfigOption('background', 'w')
     pg.setConfigOption('foreground', 'k')

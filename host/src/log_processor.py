@@ -66,7 +66,7 @@ log_packets_parser = LogPacketsParser()
 chan_dict: Dict[str, Channel] = {}
 
 
-@dataclass
+@dataclass(frozen=False)
 class Channel:
     """Represents a single output channel (an output .csv file)."""
     chan_name: str
@@ -82,7 +82,7 @@ def session_span_secs() -> float:
 
 
 # Used to extract test ranges.
-@dataclass
+@dataclass(frozen=True)
 class PendingTest:
     test_name: str
     test_start_time_ms: int
@@ -198,7 +198,8 @@ def main():
     for chan_name in sys_config.load_cells_configs():
         init_channel(chan_name, f"T[ms],Value[adc],Value[g]", f"_channel_{chan_name.lower()}")
     for chan_name in sys_config.temperature_configs():
-        init_channel(chan_name, f"T[ms],Value[adc],Value[R],Value[C]", f"_channel_{chan_name.lower()}")
+        init_channel(chan_name, f"T[ms],Value[adc],Value[R],Value[C]",
+                     f"_channel_{chan_name.lower()}")
     # chan_name = "MRKR"
     init_channel("MRKR", f"T[ms],Name,Type,Value", "_markers")
     # A pseudo channel with tests start/end times extracted from the markers.
