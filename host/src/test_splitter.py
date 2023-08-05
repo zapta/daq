@@ -24,11 +24,11 @@ logger = logging.getLogger("main")
 parser = argparse.ArgumentParser()
 parser.add_argument("--input_dir",
                     dest="input_dir",
-                    default=".",
+                    default="",
                     help="Input directory with channels .csv files.")
 parser.add_argument("--output_dir",
                     dest="output_dir",
-                    default=".",
+                    default="",
                     help="Output directory for generated files.")
 
 args = parser.parse_args()
@@ -46,17 +46,16 @@ class TestRange:
       
     def __repr__(self):
        return str(self)
-
-def main():
-    global sys_config
-    sys_config = SysConfig()
-    sys_config.load_from_file("sys_config.toml")
-    logger.info("Test collector started.")
-    logger.info(f"Input dir : [{args.input_dir}]")
-    logger.info(f"Output dir: [{args.output_dir}]")
-
-    rows = pd.read_csv('_channel_mrkr.csv', delimiter=',')
-    tests = []
+    
+def input_file_path(basic_name: str) -> str:
+  if args.input_dir:
+    return os.join(args.input_dir, basic_name)
+  return basic_name 
+     
+def load_test_ranges(markers_file_path: str) -> List[TestRange]:
+    logger.info(f"Loading test ranges from marker file {markers_file_path}")
+    rows = pd.read_csv(markers_file_path, delimiter=',')
+    result = []
     current_test_name = None
     current_test_start_ms = None
     for i, row in rows.iterrows():
@@ -72,7 +71,7 @@ def main():
             assert marker_value, "End marker has an empty test name"
             assert current_test_name, "Missing start marker for test {marker_value}"
             assert marker_value == current_test_name, "Test name mismatch"
-            tests.append(TestRange(current_test_name, current_test_start_ms, marker_time_ms))
+            result.append(TestRange(current_test_name, current_test_start_ms, marker_time_ms))
             current_test_name = None
             current_test_start_ms = None
         else:
@@ -80,7 +79,27 @@ def main():
             continue
 
     assert current_test_name is None, "Missing test end"
-    print(tests)
+    return result
+
+
+def main():
+    global sys_config
+    
+    logger.info("Test Splitter started.")
+
+    sys_config = SysConfig()
+    sys_config.load_from_file("sys_config.toml")
+    # logger.info(f"Input dir : [{args.input_dir}]")
+    # logger.info(f"Output dir: [{args.output_dir}]")
+
+    # Load test ranges
+    markers_file_path = input_file_path('_channel_mrkr.csv')
+    test_ranges = load_test_ranges(markers_file_path)
+    logger.info(f"Found {len(test_ranges)} test ranges.")
+    for test_range in test_ranges:
+      logger.info(f"- {test_range}")
+      
+      
     logger.info(f"All done.")
 
 
