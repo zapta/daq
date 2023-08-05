@@ -5,7 +5,7 @@
 #pragma GCC push_options
 #pragma GCC optimize("O0")
 
-void App_Error_Handler() { App_Error_Handler(); }
+void App_Error_Handler() { Error_Handler(); }
 
 // This is also called by HAL and the cube_ide libraries.
 void Error_Handler() {
