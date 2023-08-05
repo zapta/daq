@@ -7,11 +7,12 @@ from __future__ import annotations
 
 import argparse
 import logging
-from typing import Tuple, Optional, List, Dict
+from typing import Tuple, Optional, List, Dict, Any
 import time
 import sys
 import os
 import glob
+from dataclasses import dataclass
 from lib.log_parser import LogPacketsParser, ParsedLogPacket
 from lib.sys_config import SysConfig
 
@@ -65,14 +66,13 @@ log_packets_parser = LogPacketsParser()
 chan_dict: Dict[str, Channel] = {}
 
 
+@dataclass
 class Channel:
-    """Represents a single channel."""
-    def __init__(self, chan_name: str, file_name: str, file):
-        # Time is device time in seconds.
-        self.chan_name = chan_name
-        self.file_path = file_name
-        self.file = file
-        self.value_count = 0
+    """Represents a single output channel (an output .csv file)."""
+    chan_name: str
+    file_path: str
+    file: Any
+    value_count: int
 
 
 def session_span_secs() -> float:
@@ -81,9 +81,19 @@ def session_span_secs() -> float:
     return (last_packet_end_time_millis - first_packet_start_time) / 1000
 
 
+# Used to extract test ranges.
+@dataclass
+class PendingTest:
+    test_name: str
+    test_start_time_ms: int
+
+
+pending_test: PendingTest = None
+
+
 def process_packet(packet: DecodedLogPacket):
     global log_packets_parser, first_packet_start_time, last_packet_end_time_millis
-    global point_count, chan_data_count
+    global point_count, chan_data_count, pending_test
     assert isinstance(packet, DecodedLogPacket), f"Unexpected packet type: {type(packet)}"
     parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(packet.data)
     if first_packet_start_time is None:
@@ -134,6 +144,21 @@ def process_packet(packet: DecodedLogPacket):
             point_count += 1
             marker_type, marker_value = markers_config.classify_marker(marker_name)
             f.write(f"{millis_in_session},{marker_name},{marker_type},{marker_value}\n")
+            # Process test range extraction
+            if marker_type == "test_begin":
+                assert pending_test is None, f"No end marker for test {pending_test.test_name}"
+                assert marker_value, f"test_being marker has no test name"
+                pending_test = PendingTest(marker_value, millis_in_session)
+            elif marker_type == "test_end":
+                assert pending_test, f"Test end marker with no pending start marker: {marker_value}"
+                assert marker_value == pending_test.test_name, f"Test end name {marker_value} doesn't match start name {pending_test.test_name}"
+                tests_chan = chan_dict["TEST"]
+                tests_chan.file.write(
+                    f"{pending_test.test_name},{pending_test.test_start_time_ms},{millis_in_session}\n"
+                )
+                tests_chan.value_count += 1
+                pending_test = None
+
         point_count += chan_data.size()
         chan.value_count += chan_data.size()
 
@@ -150,7 +175,7 @@ def init_channel(chan_name: str, csv_header: str) -> None:
     # logger.info(f"Creating output file: {path}")
     f = open(path, "w")
     f.write(csv_header + "\n")
-    chan_dict[chan_name] = Channel(chan_name, path, f)
+    chan_dict[chan_name] = Channel(chan_name, path, f, 0)
 
 
 def main():
@@ -176,6 +201,9 @@ def main():
         init_channel(chan_name, f"T[ms],{chan_name}[adc],{chan_name}[R],{chan_name}[C]")
     chan_name = "MRKR"
     init_channel(chan_name, f"T[ms],{chan_name}[name],{chan_name}[type],{chan_name}[value]")
+    # A pseudo channel with tests start/end times extracted from the markers.
+    chan_name = "TEST"
+    init_channel(chan_name, f"Test,Start[ms],End[ms]")
 
     while (bfr := in_f.read(1000)):
         # Report progress every 2 secs.

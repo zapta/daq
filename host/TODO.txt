@@ -1,4 +1,4 @@
-
+Convert simple classes to dataclasses
 
 Change the marker configuration in sys config not to be restricted to begin/end.
 
