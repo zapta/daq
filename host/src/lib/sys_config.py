@@ -1,4 +1,4 @@
-from typing import Any, Dict, Tuple, Optional
+from typing import Any, Dict, Tuple, Optional, List
 import tomllib
 import logging
 import math
@@ -9,32 +9,44 @@ from PyQt6 import QtCore
 logger = logging.getLogger("sys_config")
 
 
-class MarkersConfig:
-    """Markers configuration."""
+class MarkerConfig:
+    """Config of a single marker type."""
 
-    def __init__(self, begin_marker_regex: str, end_marker_regex: str, begin_marker_pen: Any,
-                 end_marker_pen: Any, default_marker_pen: Any):
-        self.__begin_marker_regex = re.compile(begin_marker_regex, re.IGNORECASE)
-        self.__end_marker_regex = re.compile(end_marker_regex, re.IGNORECASE)
-        self.__begin_marker_pen = begin_marker_pen
-        self.__end_marker_pen = end_marker_pen
-        self.__default_marker_pen = default_marker_pen
+    def __init__(self, marker_type: str, marker_regex: str,regex_value_group: int, marker_pen: Any):
+        self.marker_type = marker_type
+        self.marker_regex = re.compile(marker_regex, re.IGNORECASE)
+        self.regex_value_group = regex_value_group
+        self.marker_pen = marker_pen
+
+
+class MarkersConfig:
+    """Configs of all marker types."""
+
+    def __init__(self):
+        self.__marker_configs: List[MarkerConfig] = []
+        self.__default_marker_pen = pg.mkPen(color="gray",
+                                             width=1,
+                                             style=QtCore.Qt.PenStyle.DashLine)
+
+    def append_marker(self, marker_config: MarkerConfig) -> None:
+        self.__marker_configs.append(marker_config)
 
     def pen_for_marker(self, marker_name: str) -> Any:
-        if self.__begin_marker_regex.match(marker_name):
-            return self.__begin_marker_pen
-        if self.__end_marker_regex.match(marker_name):
-            return self.__end_marker_pen
+        for marker_config in self.__marker_configs:
+            if marker_config.marker_regex.match(marker_name):
+                return marker_config.marker_pen
         return self.__default_marker_pen
 
     def classify_marker(self, marker_name: str) -> Tuple[str, str]:
         """Returns marker optional action and optional test name."""
-        match = self.__begin_marker_regex.match(marker_name)
-        if match:
-            return ("begin", match.group(1))
-        match = self.__end_marker_regex.match(marker_name)
-        if match:
-            return ("end", match.group(1))
+        for marker_config in self.__marker_configs:
+            match = marker_config.marker_regex.match(marker_name)
+            if match:
+                groups = match.groups("")
+                n = marker_config.regex_value_group
+                value = groups[n-1] if n > 0 else ""
+                return (marker_config.marker_type, value)
+        # The marker doesn't match any of the markers in sys_config
         return ("", "")
 
 
@@ -201,14 +213,15 @@ class SysConfig:
 
     def __populate_markers(self, toml: Dict[str, Any]) -> None:
         """Populates self.__markers_config from a toml sys_config."""
-        toml_markers = toml["markers"]
-        begin_marker_regex = toml_markers["begin_regex"]
-        end_marker_regex = toml_markers["end_regex"]
-        begin_marker_pen = self.__parse_toml_pen(toml_markers["begin_pen"])
-        end_marker_pen = self.__parse_toml_pen(toml_markers["end_pen"])
-        default_marker_pen = self.__parse_toml_pen(toml_markers["default_pen"])
-        self.__markers_config = MarkersConfig(begin_marker_regex, end_marker_regex,
-                                              begin_marker_pen, end_marker_pen, default_marker_pen)
+        self.__markers_config = MarkersConfig()
+        toml_markers = toml["marker"]
+        for marker_type, marker_config in toml_markers.items():
+            logger.info(f"Found marker config: {marker_type}")
+            marker_regex = marker_config["regex"]
+            regex_value_group = marker_config["value_group"]
+            marker_pen = self.__parse_toml_pen(marker_config["pen"])
+            marker_config = MarkerConfig(marker_type, marker_regex, regex_value_group, marker_pen)
+            self.__markers_config.append_marker(marker_config)
 
     def __str__(self):
         return f"SysConfig: {self.__toml_dict}"

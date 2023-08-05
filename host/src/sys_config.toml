@@ -33,11 +33,22 @@ color = "teal"
 adc = { open = 4196385, short = 150, calib = 466560, calib_r = 250 }
 thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25 }
 
-[markers]
-# Regex capturing value is the test name.
-begin_regex = "^begin[.](.*)$"
-end_regex = "^end[.](.*)$"
-begin_pen = {color="green", solid=true, width=2}
-end_pen = {color="red", solid=true, width=2}
-default_pen = {color="gray", solid=false, width=1}
+
+[marker.begin]
+# Second () captures the test name.
+regex = "^(begin|start)[.](.*)$"
+value_group = 2
+pen = {color="green", solid=true, width=2}
+
+[marker.end]
+# Second () captures the test name.
+regex = "^(end|stop)[.](.*)$"
+value_group = 2
+pen = {color="red", solid=true, width=2}
+
+[marker.poi]
+# Second () captures the optional value.
+regex = "^poi([.](.*))?$"
+value_group = 2
+pen = {color="purple", solid=false, width=2}
 
