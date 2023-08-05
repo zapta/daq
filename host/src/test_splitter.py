@@ -1,6 +1,6 @@
-#!python
+# A program that collect data from multiple tests.
 
-# To collect the test snippets.
+# TODO: Currently supports channel ldc1. Generalize using command line flags.
 
 from __future__ import annotations
 
@@ -9,11 +9,13 @@ import logging
 from typing import Tuple, Optional, List, Dict
 import os
 import pandas as pd
-from lib.sys_config import SysConfig
+from lib.data_utils import extract_test_data, load_test_ranges, TestRange
+# from lib.sys_config import SysConfig
 import matplotlib.pyplot as plt
+from dataclasses import dataclass
 
 # Initialized by main().
-sys_config: SysConfig = None
+# sys_config: SysConfig = None
 
 logging.basicConfig(
     level=logging.INFO,
@@ -34,18 +36,12 @@ parser.add_argument("--output_dir",
 args = parser.parse_args()
 
 
-class TestRange:
-
-    def __init__(self, test_name, start_ms, end_ms):
-        self.test_name = test_name
-        self.start_ms = start_ms
-        self.end_ms = end_ms
-
-    def __str__(self):
-        return f"Test \"{self.test_name}\" {self.start_ms} -> {self.end_ms} ({self.end_ms - self.start_ms} ms)"
-
-    def __repr__(self):
-        return str(self)
+# @dataclass
+# class TestRange:
+#     """Represent a single test time range"""
+#     test_name: str
+#     start_ms: int
+#     end_ms: int
 
 
 def input_file_path(basic_name: str) -> str:
@@ -60,57 +56,36 @@ def output_file_path(basic_name: str) -> str:
     return basic_name
 
 
-def load_test_ranges(markers_file_path: str) -> List[TestRange]:
-    """Extract the tests names and ranges from the markers file."""
-    logger.info(f"Loading test ranges from marker file [{markers_file_path}]")
-    df = pd.read_csv(markers_file_path, delimiter=',')
-    result = []
-    current_test_name = None
-    current_test_start_ms = None
-    for i, row in df.iterrows():
-        marker_time_ms = row["T[ms]"]
-        marker_type = row["MRKR[type]"]
-        marker_value = row["MRKR[value]"]
-        if marker_type == "test_begin":
-            assert marker_value, "Begin marker has an empty test name"
-            assert current_test_name is None, f"Missing end for test {current_test_name}"
-            current_test_name = marker_value
-            current_test_start_ms = marker_time_ms
-        elif marker_type == "test_end":
-            assert marker_value, "End marker has an empty test name"
-            assert current_test_name, "Missing start marker for test {marker_value}"
-            assert marker_value == current_test_name, "Test name mismatch"
-            result.append(TestRange(current_test_name, current_test_start_ms, marker_time_ms))
-            current_test_name = None
-            current_test_start_ms = None
-        else:
-            # Ignore other trypes.
-            continue
-
-    assert current_test_name is None, "Missing test end"
-    return result
+# def load_test_ranges(tests_file_path: str) -> List[TestRange]:
+#     """Extract the tests names and ranges from the markers file."""
+#     logger.info(f"Loading test ranges from tests file [{tests_file_path}]")
+#     df = pd.read_csv(tests_file_path, delimiter=',')
+#     result = []
+#     for i, row in df.iterrows():
+#         test_name = row["Test"]
+#         start_time_ms = row["Start[ms]"]
+#         end_time_ms = row["End[ms]"]
+#         result.append(TestRange(test_name, start_time_ms, end_time_ms))
+#     return result
 
 
-def extract_test_data(data_file_path: str, test_range: TestRange, original_value_column: str,
-                      new_value_column: str):
-    """Returns a dataframe with test time and value columns, normalized to test range."""
-    logger.info(f"Extracting test range from file [{data_file_path}]")
-    logger.info(f"Test range: {test_range}")
-    # Load original
-    df = pd.read_csv(data_file_path, delimiter=',')
-    # logger.info(f"\n{df}")
-    # Select columns of interest
-    df = df[['T[ms]', original_value_column]]
-    # Extract rows in range
-    df = df[df['T[ms]'].between(test_range.start_ms, test_range.end_ms)]
-    # logger.info(f"\n{df}")
-    # Substract test start time
-    df['T[ms]'] -= test_range.start_ms
-    # Rename the value column
-    df.rename(columns={original_value_column: new_value_column}, inplace=True)
-    # All done
-    # logger.info(f"\n{df}")
-    return df
+# def extract_test_data(data_file_path: str, test_range: TestRange, original_value_column: str,
+#                       new_value_column: str):
+#     """Extracts data of a single test range."""
+#     logger.info(f"Extracting test range from file [{data_file_path}]")
+#     logger.info(f"Test range: {test_range}")
+#     # Load original
+#     df = pd.read_csv(data_file_path, delimiter=',')
+#     # Select columns of interest
+#     df = df[['T[ms]', original_value_column]]
+#     # Extract rows in test range
+#     df = df[df['T[ms]'].between(test_range.start_ms, test_range.end_ms)]
+#     # Normalize time to test start time.
+#     df['T[ms]'] -= test_range.start_ms
+#     # Rename the value column
+#     df.rename(columns={original_value_column: new_value_column}, inplace=True)
+#     # All done
+#     return df
 
 
 def main():
@@ -118,39 +93,32 @@ def main():
 
     logger.info("Test Splitter started.")
 
-    sys_config = SysConfig()
-    sys_config.load_from_file("sys_config.toml")
-    # logger.info(f"Input dir : [{args.input_dir}]")
-    # logger.info(f"Output dir: [{args.output_dir}]")
+    # Load test ranges from tests file.
+    tests_file_path = input_file_path('_tests.csv')
+    test_ranges = load_test_ranges(tests_file_path)
 
-    # Load test ranges
-    markers_file_path = input_file_path('_channel_mrkr.csv')
-    test_ranges = load_test_ranges(markers_file_path)
-    logger.info(f"Found {len(test_ranges)} test ranges.")
+    # Extract the load cell data of each test.
+    channel_file_path = input_file_path('_channel_ldc1.csv')
+    logger.info(f"Using channel file [{channel_file_path}]")
+    channel_df = pd.read_csv(channel_file_path, delimiter=',')
+
+    tests_data = []
     for test_range in test_ranges:
-        logger.info(f"- {test_range}")
+        df = extract_test_data(channel_df, test_range, "Value[g]", test_range.test_name)
+        tests_data.append(df)
 
-    # Extract load cell data
-
-    load_cell_file_path = input_file_path('_channel_ldc1.csv')
-    test_datas = []
-    for test_range in test_ranges:
-        df = extract_test_data(load_cell_file_path, test_range, "LDC1[g]", test_range.test_name)
-        test_datas.append(df)
-
+    # Join the tests data to a single data frame with common time column.
     merged_df = None
-    for df in test_datas:
+    for df in tests_data:
         if merged_df is None:
             merged_df = df
         else:
             merged_df = pd.merge(merged_df, df, on='T[ms]', how='outer')
-    # logger.info(f"\n{merged_df}")
 
-    # Now that we merged, it's safe to switch to floating point
-    # time in secs.
+    # Convert the time from millis (ints) to secs (floats).
+    # We do it after the join to avoid floating point irregularities in the time matching.
     merged_df['T[ms]'] /= 1000
     merged_df.rename(columns={'T[ms]': 'T[s]'}, inplace=True)
-    # logger.info(f"\n{merged_df}")
 
     output_file = output_file_path("_tests_ldc1.csv")
     logger.info(f"Writing results to file [{output_file}]")

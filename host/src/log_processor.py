@@ -170,9 +170,9 @@ def report_status():
     )
 
 
-def init_channel(chan_name: str, csv_header: str) -> None:
-    path = os.path.join(args.output_dir, f"_channel_{chan_name.lower()}.csv")
-    # logger.info(f"Creating output file: {path}")
+def init_channel(chan_name: str, csv_header: str, file_base_name) -> None:
+    path = os.path.join(args.output_dir, f"{file_base_name}.csv")
+    logger.info(f"Creating output file: {path}")
     f = open(path, "w")
     f.write(csv_header + "\n")
     chan_dict[chan_name] = Channel(chan_name, path, f, 0)
@@ -196,14 +196,14 @@ def main():
 
     # Initialized channels and their output files.
     for chan_name in sys_config.load_cells_configs():
-        init_channel(chan_name, f"T[ms],{chan_name}[adc],{chan_name}[g]")
+        init_channel(chan_name, f"T[ms],Value[adc],Value[g]", f"_channel_{chan_name.lower()}")
     for chan_name in sys_config.temperature_configs():
-        init_channel(chan_name, f"T[ms],{chan_name}[adc],{chan_name}[R],{chan_name}[C]")
-    chan_name = "MRKR"
-    init_channel(chan_name, f"T[ms],{chan_name}[name],{chan_name}[type],{chan_name}[value]")
+        init_channel(chan_name, f"T[ms],Value[adc],Value[R],Value[C]", f"_channel_{chan_name.lower()}")
+    # chan_name = "MRKR"
+    init_channel("MRKR", f"T[ms],Name,Type,Value", "_markers")
     # A pseudo channel with tests start/end times extracted from the markers.
-    chan_name = "TEST"
-    init_channel(chan_name, f"Test,Start[ms],End[ms]")
+    # chan_name = "TEST"
+    init_channel("TEST", f"Test,Start[ms],End[ms]", "_tests")
 
     while (bfr := in_f.read(1000)):
         # Report progress every 2 secs.
