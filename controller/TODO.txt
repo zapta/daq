@@ -1,3 +1,5 @@
+Controller hang if trying twice to start recording without an sd card.
+
 Find a safe way to do continious RX (dma?)
 
 
