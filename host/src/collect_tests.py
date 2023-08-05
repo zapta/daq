@@ -35,14 +35,17 @@ args = parser.parse_args()
 
 
 class TestRange:
-  
-  def __init__(self, test_name, start_ms, end_ms):
-    self.name = test_name
-    self.start_ms = start_ms
-    self.end_ms = end_ms
-    
-    
 
+    def __init__(self, test_name, start_ms, end_ms):
+        self.name = test_name
+        self.start_ms = start_ms
+        self.end_ms = end_ms
+
+    def __str__(self):
+        return f"Test \"{self.name}\" {self.start_ms} -> {self.end_ms} ({self.end_ms - self.start_ms} ms)"
+      
+    def __repr__(self):
+       return str(self)
 
 def main():
     global sys_config
@@ -53,30 +56,31 @@ def main():
     logger.info(f"Output dir: [{args.output_dir}]")
 
     rows = pd.read_csv('_channel_mrkr.csv', delimiter=',')
+    tests = []
     current_test_name = None
     current_test_start_ms = None
     for i, row in rows.iterrows():
-        # Note: access row with ['col']
         marker_time_ms = row["T[ms]"]
         marker_type = row["MRKR[type]"]
         marker_value = row["MRKR[value]"]
-        # print(f"Row [{i}]: type [{marker_type}], value [{marker_value}]")
         if marker_type == "begin":
-          assert current_test_name is None, "Missing test end"
-          assert marker_value, "Begin marker has a empty test name"
-          current_test_name = marker_value
-          current_test_start_ms = marker_time_ms
+            assert marker_value, "Begin marker has an empty test name"
+            assert current_test_name is None, f"Missing end for test {current_test_name}"
+            current_test_name = marker_value
+            current_test_start_ms = marker_time_ms
         elif marker_type == "end":
-          assert current_test_name, "Missing test start"
-          assert marker_value == current_test_name, "Test name mismatch"
-          print(f"Test [{current_test_name}] {current_test_start_ms} -> {marker_time_ms}  ({marker_time_ms - current_test_start_ms })")
-          current_test_name = None
-          current_test_start_ms = None
+            assert marker_value, "End marker has an empty test name"
+            assert current_test_name, "Missing start marker for test {marker_value}"
+            assert marker_value == current_test_name, "Test name mismatch"
+            tests.append(TestRange(current_test_name, current_test_start_ms, marker_time_ms))
+            current_test_name = None
+            current_test_start_ms = None
         else:
-          # Ignore other trypes.
-          continue
-        
+            # Ignore other trypes.
+            continue
+
     assert current_test_name is None, "Missing test end"
+    print(tests)
     logger.info(f"All done.")
 
 
