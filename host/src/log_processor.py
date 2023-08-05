@@ -107,8 +107,8 @@ def process_packet(packet: DecodedLogPacket):
         point_count += chan_data.size()
         chan.value_count += chan_data.size()
 
-    # Process thermistor channels.
-    for chan_name, therm_config in sys_config.get_thermistors_configs().items():
+    # Process temperature channels.
+    for chan_name, temperature_config in sys_config.get_temperature_configs().items():
         chan_data = parsed_log_packet.channel(chan_name)
         if not chan_data:
             continue
@@ -116,8 +116,8 @@ def process_packet(packet: DecodedLogPacket):
         f = chan.file
         for time, value in chan_data.timed_values():
             millis_in_session = time - first_packet_start_time
-            r = therm_config.adc_reading_to_ohms(value)
-            c = therm_config.resistance_to_c(r)
+            r = temperature_config.adc_reading_to_ohms(value)
+            c = temperature_config.resistance_to_c(r)
             f.write(f"{millis_in_session/1000:.3f},{value},{r:.2f},{c:.3f}\n")
         point_count += chan_data.size()
         chan.value_count += chan_data.size()
@@ -170,7 +170,7 @@ def main():
     # Initialized channels and their output files.
     for chan_name in sys_config.get_load_cells_configs():
         init_channel(chan_name, f"T[s],{chan_name}[adc],{chan_name}[g]")
-    for chan_name in sys_config.get_thermistors_configs():
+    for chan_name in sys_config.get_temperature_configs():
         init_channel(chan_name, f"T[s],{chan_name}[adc],{chan_name}[R],{chan_name}[C]")
     chan_name = "MRKR"
     init_channel(chan_name, f"T[s],{chan_name}[name]")

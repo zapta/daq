@@ -156,12 +156,12 @@ class LogPacketsParser:
             chan_id = data.read_uint8()
             assert not data.read_error()
             if chan_id >= 0x11 and chan_id <= 0x14:
-                chan_name = f"LC{chan_id - 0x11 + 1}"
+                chan_name = f"LDC{chan_id - 0x11 + 1}"
                 timed_values = self._parse_int24_sequence(packet_start_time_millis, data)
                 # print(f"+++1 {chan_name}, {type(timed_values)}")
                 result.append_timed_values(chan_name, timed_values)
             elif chan_id >= 0x21 and chan_id <= 0x26:
-                chan_name = f"THRM{chan_id - 0x21 + 1}"
+                chan_name = f"TMP{chan_id - 0x21 + 1}"
                 timed_values = self._parse_int24_sequence(packet_start_time_millis, data)
                 result.append_timed_values(chan_name, timed_values)
             elif chan_id == 0x07:
