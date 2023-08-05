@@ -38,7 +38,7 @@ class MarkersConfig:
         return self.__default_marker_pen
 
     def classify_marker(self, marker_name: str) -> Tuple[str, str]:
-        """Returns marker optional action and optional test name."""
+        """Returns marker type value, both may be empty strings."""
         for marker_config in self.__marker_configs:
             match = marker_config.marker_regex.match(marker_name)
             if match:

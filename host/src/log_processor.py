@@ -132,8 +132,8 @@ def process_packet(packet: DecodedLogPacket):
         for time, marker_name in chan_data.timed_values():
             millis_in_session = time - first_packet_start_time
             point_count += 1
-            action, value = markers_config.classify_marker(marker_name)
-            f.write(f"{millis_in_session/1000:.3f},{marker_name},{action},{value}\n")
+            marker_type, marker_value = markers_config.classify_marker(marker_name)
+            f.write(f"{millis_in_session/1000:.3f},{marker_name},{marker_type},{marker_value}\n")
         point_count += chan_data.size()
         chan.value_count += chan_data.size()
 
@@ -175,7 +175,7 @@ def main():
     for chan_name in sys_config.temperature_configs():
         init_channel(chan_name, f"T[s],{chan_name}[adc],{chan_name}[R],{chan_name}[C]")
     chan_name = "MRKR"
-    init_channel(chan_name, f"T[s],{chan_name}[name],{chan_name}[action],{chan_name}[value]")
+    init_channel(chan_name, f"T[s],{chan_name}[name],{chan_name}[type],{chan_name}[value]")
 
     while (bfr := in_f.read(1000)):
         # Report progress every 2 secs.

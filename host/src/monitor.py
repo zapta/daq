@@ -237,8 +237,8 @@ async def message_async_callback(endpoint: int,
         if marker_data:
             for time_millis, marker_name in marker_data.timed_values():
                 time = time_millis / 1000
-                action, value  = markers_config.classify_marker(marker_name)
-                logger.info(f"Marker: [{marker_name}] action=[{action}] value[{value}] time={time:.3f}]")
+                marker_type, marker_value  = markers_config.classify_marker(marker_name)
+                logger.info(f"Marker: [{marker_name}] type=[{marker_type}] value[{marker_value}] time={time:.3f}]")
                 markers_history.append(time, marker_name, markers_config.pen_for_marker(marker_name))
 
         # All done. Update the display
