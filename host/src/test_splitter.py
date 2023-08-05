@@ -71,12 +71,12 @@ def load_test_ranges(markers_file_path: str) -> List[TestRange]:
         marker_time_ms = row["T[ms]"]
         marker_type = row["MRKR[type]"]
         marker_value = row["MRKR[value]"]
-        if marker_type == "begin":
+        if marker_type == "test_begin":
             assert marker_value, "Begin marker has an empty test name"
             assert current_test_name is None, f"Missing end for test {current_test_name}"
             current_test_name = marker_value
             current_test_start_ms = marker_time_ms
-        elif marker_type == "end":
+        elif marker_type == "test_end":
             assert marker_value, "End marker has an empty test name"
             assert current_test_name, "Missing start marker for test {marker_value}"
             assert marker_value == current_test_name, "Test name mismatch"
