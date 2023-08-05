@@ -11,7 +11,7 @@ port = "COM4"
 
 [channel.LDC1]
 color = "red"
-# grams = (adc_reading - offset) * scale
+# grams = (adc_reading - adc_offset) * scale
 adc_offset = 101552
 scale = 0.002671
 
@@ -19,7 +19,7 @@ scale = 0.002671
 color = "blueviolet"
 adc = { open = 4197520, short = 220, calib = 466550, calib_r = 250 }
 thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25 }
-# therm = {beta = 4725, c=7.06e-8, ref_r=301.6, ref_c=220}
+# thermistor = {beta = 4725, c=7.06e-8, ref_r=301.6, ref_c=220}
 
 
 [channel.TMP2]
