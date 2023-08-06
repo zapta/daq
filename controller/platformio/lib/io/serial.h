@@ -1,9 +1,9 @@
 // Serial driver. Interrupt driven, no worker tasks.
 #pragma once
 
-#include "common.h"
 #include "FreeRTOS.h"
 #include "circular_buffer.h"
+#include "common.h"
 #include "semphr.h"
 #include "static_binary_semaphore.h"
 #include "static_mutex.h"
@@ -122,7 +122,7 @@ class Serial {
       App_Error_Handler();
     }
     // Start the reception.
-    start_hal_rx();
+    start_hal_rx(true);
   }
 
  private:
@@ -165,21 +165,31 @@ class Serial {
       // Indicate that data is available.
       _rx_data_avail_sem.give_from_isr(task_woken);
     }
-    start_hal_rx();
+    start_hal_rx(false);
   }
 
-    // _huart->error_code indicates the error code.
-    // Search UART_Error_Definition for codes.
+  // _huart->error_code indicates the error code.
+  // Search UART_Error_Definition for codes.
   void uart_error_isr() {
     // TODO: Count errors by type. Some of the errors
     // are soft.
   }
 
-  // Called from a task (init) or from RX isr.
-  void start_hal_rx() {
-    const HAL_StatusTypeDef status = HAL_UARTEx_ReceiveToIdle_IT(
-        _huart, _rx_hal_buffer, sizeof(_rx_hal_buffer));
-    if (status != HAL_OK) {
+// Called from a task (init) or from RX isr.
+  void start_hal_rx(bool initializing) {
+    for (int i = 1;; i++) {
+      const HAL_StatusTypeDef status = HAL_UARTEx_ReceiveToIdle_IT(
+          _huart, _rx_hal_buffer, sizeof(_rx_hal_buffer));
+      if (status == HAL_OK) {
+        return;
+      }
+      // During initialization we try more than once, as a 
+      // workaround for a HAL problem with left over serial data (?).
+      // Especially noticeable when running in the debugger with 
+      // monitor program active.
+      if (initializing && i < 3) {
+        continue;
+      }
       App_Error_Handler();
     }
   }
