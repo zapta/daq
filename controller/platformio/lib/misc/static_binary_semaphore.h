@@ -1,9 +1,9 @@
 #pragma once
 
-#include "common.h"
 #include <FreeRTOS.h>
 #include <semphr.h>
 
+#include "common.h"
 
 // A binary sempahore and its static memory.
 class StaticBinarySemaphore {
@@ -27,18 +27,14 @@ class StaticBinarySemaphore {
     return xSemaphoreTake(_handle, timeout_millis);
   }
 
-  inline void give() {
-    const bool ok = xSemaphoreGive(_handle);
-    if (!ok) {
-      App_Error_Handler();
-    }
-  }
+  // Call from a thread only. Returns true if the semaphore changed
+  // count from 0 to 1. Else, was already at 1.
+  inline bool give() { return xSemaphoreGive(_handle); }
 
-  inline void give_from_isr(BaseType_t* task_woken) {
-    const bool ok = xSemaphoreGiveFromISR(_handle, task_woken);
-    if (!ok) {
-      App_Error_Handler();
-    }
+  // Call from interrupt handlers only. Returns true if the semaphore changed
+  // count from 0 to 1. Else, was already at 1.
+  inline bool give_from_isr(BaseType_t* task_woken) {
+    return xSemaphoreGiveFromISR(_handle, task_woken);
   }
 
  private:
