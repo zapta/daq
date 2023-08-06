@@ -1,8 +1,6 @@
 
 #include "main.h"
-
 #include <unistd.h>
-
 #include "FreeRTOS.h"
 #include "adc.h"
 #include "cdc_serial.h"
@@ -23,8 +21,7 @@
 
 // Tasks with static stack allocations.
 StaticTask<2000> host_link_rx_task(host_link::rx_task_body, "Host RX", 8);
-StaticTask<2000> printer_link_rx_task(printer_link::rx_task_body, "Printer RX",
-                                      5);
+StaticTask<2000> printer_link_rx_task(printer_link::rx_task_body, "Printer RX", 5);
 StaticTask<2000> adc_task(adc::adc_task_body, "ADC", 7);
 
 // Called from from the main FreeRTOS task.
@@ -35,8 +32,7 @@ void app_main() {
   serial::serial2.init();
 
   HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_1);
-  // Set TIM12 PWM to 40%. This signal acts as
-  // ADC ontinuos CS.
+  // Set TIM12 PWM to 40%. This signal acts as ADC ontinuos CS.
   __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_1, 400);
   HAL_TIM_Base_Start_IT(&htim12);
 
