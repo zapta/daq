@@ -3,7 +3,7 @@
 #include "main.h"
 
 #pragma GCC push_options
-#pragma GCC optimize("O0")
+#pragma GCC optimize("Og")
 
 void App_Error_Handler() { Error_Handler(); }
 
