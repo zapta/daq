@@ -5,6 +5,7 @@
 #include "serial_packets_client.h"
 #include "session.h"
 #include "static_mutex.h"
+#include "io.h"
 
 using host_link::HostPorts;
 
@@ -13,8 +14,8 @@ namespace controller {
 // Protects access to the variables below.
 static StaticMutex mutex;
 
-static data_recorder::RecordingName tmp_new_log_recording_name;
-static data_recorder::RecordingInfo tmp_recording_info;
+static data_recorder::RecordingName new_recording_name_buffer;
+static data_recorder::RecordingInfo recording_info_buffer;
 
 // Temp packet data. Used to encode log packets.
 static SerialPacketsData packet_data;
@@ -43,17 +44,17 @@ PacketStatus handle_control_command(const SerialPacketsData& command_data,
     case 0x02: {
       MutexScope scope(mutex);
       // Get recording id string.
-      command_data.read_str(&tmp_new_log_recording_name);
+      command_data.read_str(&new_recording_name_buffer);
       if (!command_data.all_read_ok()) {
         logger.error("START command: Invalid command data.");
         return PacketStatus::INVALID_ARGUMENT;
       }
       const bool had_old_recording = data_recorder::is_recording_active();
       const bool opened_ok =
-          data_recorder::start_recording(tmp_new_log_recording_name);
+          data_recorder::start_recording(new_recording_name_buffer);
       if (!opened_ok) {
         logger.error("START command: failed to create recording file for [%s]",
-                     tmp_new_log_recording_name.c_str());
+                     new_recording_name_buffer.c_str());
         return PacketStatus::GENERAL_ERROR;
       }
       response_data.write_uint8(had_old_recording ? 1 : 0);
@@ -80,16 +81,20 @@ PacketStatus handle_control_command(const SerialPacketsData& command_data,
         logger.error("STATUS command: Invalid command data.");
         return PacketStatus::INVALID_ARGUMENT;
       }
-      response_data.write_uint8(1);                     // Format version
-      response_data.write_uint32(session::id());        // Device session id.
+      // Device info.
+      response_data.write_uint8(1);  // Format version
+      response_data.write_uint32(session::id());  // Device session id.
       response_data.write_uint32(time_util::millis());  // Device time
-      data_recorder::get_recoding_info(&tmp_recording_info);
-      response_data.write_uint8(tmp_recording_info.recording_active ? 1 : 0);
-      if (tmp_recording_info.recording_active) {
-        response_data.write_uint32(tmp_recording_info.recording_time_millis);
-        response_data.write_str(tmp_recording_info.recording_name.c_str());
-        response_data.write_uint32(tmp_recording_info.writes_ok);
-        response_data.write_uint32(tmp_recording_info.write_failures);
+      // SD card presense.
+      response_data.write_uint8(io::SD_SWITCH.read() ? 1 : 0); 
+      // Recording info.
+      data_recorder::get_recoding_info(&recording_info_buffer);
+      response_data.write_uint8(recording_info_buffer.recording_active ? 1 : 0);
+      if (recording_info_buffer.recording_active) {
+        response_data.write_uint32(recording_info_buffer.recording_time_millis);
+        response_data.write_str(recording_info_buffer.recording_name.c_str());
+        response_data.write_uint32(recording_info_buffer.writes_ok);
+        response_data.write_uint32(recording_info_buffer.write_failures);
       }
       return PacketStatus::OK;
     } break;

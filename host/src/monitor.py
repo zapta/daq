@@ -471,7 +471,7 @@ def timer_handler():
         logger.info("Got response for START command")
         status, response_data = command_start_future.result()
         command_start_future = None
-        logger.info(f"START command status: {status}")
+        logger.info(f"START command status: {status}{' (Error)' if status != 0 else ''}")
         # set_status_line(f"START command status: {status}")
 
     if pending_stop_button_click:
@@ -511,6 +511,7 @@ def timer_handler():
             session_id = response_data.read_uint32()
             # logger.info(f"Session id: {session_id:08x}")
             device_time_millis = response_data.read_uint32()
+            sd_card_inserted = response_data.read_uint8()
             recording_active = response_data.read_uint8()
             if recording_active:
                 recording_millis = response_data.read_uint32()
@@ -523,7 +524,7 @@ def timer_handler():
                 errors_note = f" ERRORS: {write_failures}" if write_failures else ""
                 msg = f"  Recording [{name}] [{recording_millis/1000:.0f} secs] [{writes_ok} records]{errors_note}"
             else:
-                msg = "  Recording is off"
+                msg = "  Recording is off" if sd_card_inserted else "  No SD card"
             # logger.info(f"*** Available: {response_data.bytes_left_to_read()}")
             # assert not response_data.read_error()
             assert response_data.all_read_ok()

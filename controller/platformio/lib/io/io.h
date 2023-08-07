@@ -65,7 +65,8 @@ extern OutputPin TEST1;
 // High when pressed.
 extern InputPin USER_SWITCH;
 
-// High when SD card is inserted.
-// extern InputPin SD_SWITCH;
+// High when the SD card is inserted. This input also read
+// independently by the FatFS library.
+extern InputPin SD_SWITCH;
 
 }  // namespace io.
