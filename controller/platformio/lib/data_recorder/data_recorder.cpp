@@ -1,8 +1,5 @@
 #include "data_recorder.h"
 
-// #include <wchar.h>
-// #include <array>
-
 #include <cstring>
 
 #include "fatfs.h"
