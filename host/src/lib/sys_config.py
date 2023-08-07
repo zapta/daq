@@ -121,10 +121,11 @@ class ThermistorChannelConfig(TemperatureChannelConfig):
 
     def __init__(self, chan_name: str, color: str, adc_open: int, adc_short: int, adc_calib: int,
                  adc_calib_r: float, thermistor_beta: int, thermistor_c: float,
-                 thermistor_ref_r: float, thermistor_ref_c: int):
+                 thermistor_ref_r: float, thermistor_ref_c: float, thermistor_offset: float):
         super().__init__(chan_name, color, adc_open, adc_short, adc_calib, adc_calib_r)
         # coef_A/B/C are the coefficients of the Steinhart-Hart equation.
         # https://en.wikipedia.org/wiki/Steinhart%E2%80%93Hart_equation
+        self.__thermistor_offset = thermistor_offset
         self.__coef_C = thermistor_c
         self.__coef_B = 1.0 / thermistor_beta
         ln_Rref = math.log(thermistor_ref_r)
@@ -145,21 +146,20 @@ class ThermistorChannelConfig(TemperatureChannelConfig):
         ln_R = math.log(r)
         # The Steinhart-Hart equation.
         reciprocal_T = self.__coef_A + (self.__coef_B * ln_R) + (self.__coef_C * ln_R * ln_R * ln_R)
-        T = (1 / reciprocal_T) - 273.15
-        if T > 9999:
-            return 999
-        return T
+        T = (1 / reciprocal_T) - 273.15 + self.__thermistor_offset
+        return min(999, T)
 
 
 class RtdChannelConfig(TemperatureChannelConfig):
     """Configuration of a temperature channel of type RTD (e.g. PT1000)."""
 
     def __init__(self, chan_name: str, color: str, adc_open: int, adc_short: int, adc_calib: int,
-                 adc_calib_r: float, rtd_r0: float, rtd_t0: float, rtd_tcr: float):
+                 adc_calib_r: float, rtd_r0: float, rtd_t0: float, rtd_tcr: float, rtd_offset: float):
         super().__init__(chan_name, color, adc_open, adc_short, adc_calib, adc_calib_r)
         self.__rtd_r0 = rtd_r0  # Resistance in ohms at reference temp.
         self.__rtd_t0 = rtd_t0  # Reference temperature
         self.__rtd_tcr = rtd_tcr  # Resistance increase in PPM per C.
+        self.__rtd_offset = rtd_offset
         # Conversion formula: dT = dR * K.
         self.__k = 1e6 / (self.__rtd_r0 * self.__rtd_tcr)
 
@@ -170,7 +170,7 @@ class RtdChannelConfig(TemperatureChannelConfig):
         """RTD specific resistance to temperature function."""
         dR = r - self.__rtd_r0
         dT = dR * self.__k
-        t = self.__rtd_t0 + dT
+        t = self.__rtd_t0 + dT + self.__rtd_offset
         return min(t, 999)
 
 
@@ -219,23 +219,25 @@ class SysConfig:
                     rtd_r0 = rtd_config["r0"]
                     rtd_t0 = rtd_config["t0"]
                     rtd_tcr = rtd_config["tcr"]
+                    rtd_offset = rtd_config["offset"]
                     logger.info(f"RTD channel: {ch_name}, {rtd_r0},  {rtd_t0}, {rtd_tcr}")
                     self.__tmp_ch_configs[ch_name] = RtdChannelConfig(ch_name, color, adc_open,
                                                                       adc_short, adc_calib,
                                                                       adc_calib_r, rtd_r0, rtd_t0,
-                                                                      rtd_tcr)
+                                                                      rtd_tcr, rtd_offset)
                 else:
                     thermistor_config = ch_config["thermistor"]
                     thermistor_beta = thermistor_config["beta"]
                     thermistor_c = thermistor_config["c"]
                     thermistor_ref_r = thermistor_config["ref_r"]
                     thermistor_ref_c = thermistor_config["ref_c"]
+                    thermistor_offset = thermistor_config["offset"]
                     logger.info(
                         f"Thermistor channel: {ch_name}, {thermistor_beta},  {thermistor_c}, {thermistor_ref_r}, {thermistor_ref_c}"
                     )
                     self.__tmp_ch_configs[ch_name] = ThermistorChannelConfig(
                         ch_name, color, adc_open, adc_short, adc_calib, adc_calib_r,
-                        thermistor_beta, thermistor_c, thermistor_ref_r, thermistor_ref_c)
+                        thermistor_beta, thermistor_c, thermistor_ref_r, thermistor_ref_c, thermistor_offset)
             else:
                 raise RuntimeError(f"Unexpected channel name in sys_config: {ch_name}")
 
