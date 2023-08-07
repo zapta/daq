@@ -1,3 +1,4 @@
+Problem with auto library detection (and Unity)
 
 If removing sd while recording. Device doesn't recover and require reset.
 
