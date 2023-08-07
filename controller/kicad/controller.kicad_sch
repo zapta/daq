@@ -3491,6 +3491,11 @@
     (effects (font (size 3 3) (thickness 0.6) bold) (justify left bottom))
     (uuid c2e595b8-88c9-411e-bcf5-c579a1eb9cdf)
   )
+  (text "TODO: Add a SD LED that indicates recording in progress."
+    (at 127 271.78 0)
+    (effects (font (size 2.54 2.54) (color 255 0 0 1)) (justify left bottom))
+    (uuid ce311282-bd7c-4676-88eb-f33584ffcfa9)
+  )
   (text "MCU Module modifications:\n* Remove diode D10. This is the diode adjacent\n  to the red LED near the USB connector."
     (at 134.62 45.085 0)
     (effects (font (size 2.54 2.54)) (justify left bottom))
