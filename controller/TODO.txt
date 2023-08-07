@@ -1,6 +1,3 @@
-Add to cube_ide updater a flag to disable patching.
-
-Controller hang if trying twice to start recording without an sd card.
 
 If SD is out, show it in the monitor display.
 

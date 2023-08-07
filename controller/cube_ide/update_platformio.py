@@ -1,9 +1,24 @@
 #!python
 
-# Run the update ../platformio with regenerated cube_ide files.
+# A program to update the platformio/lib/cubde_ide library with the
+# latest cube_ide generated files.
+
+import argparse
+
+
 
 import shutil
 import os
+
+parser = argparse.ArgumentParser()
+# Run with --no-patch flag to disabled file patching.
+parser.add_argument('--patch',
+                    dest="patch",
+                    default=True,
+                    action=argparse.BooleanOptionalAction,
+                    help="Controls application of code patches.")
+
+args = parser.parse_args()
 
 
 def copy_and_overwrite_file(from_path, to_path):
@@ -137,10 +152,13 @@ copy_and_overwrite_file("STM32H750VBTX_FLASH.ld",
 copy_and_overwrite_file("cube_ide.pdf", "../docs/cube_ide_report.pdf")
 
 # Patch files.
-patch_newlib_lock_glue(f"{DST_LIB}/Core/ThreadSafe/newlib_lock_glue.c")
-patch_main_c(f"{DST_LIB}/Core/Src/main.c")
-patch_fatfs_platform_c(f"{DST_LIB}/FATFS/Target/fatfs_platform.c")
-patch_sd_diskio_c(f"{DST_LIB}/FATFS/Target/sd_diskio.c")
-patch_ff_c(f"{DST_LIB}/Middlewares/Third_Party/FatFs/src/ff.c")
+if args.patch:
+  patch_newlib_lock_glue(f"{DST_LIB}/Core/ThreadSafe/newlib_lock_glue.c")
+  patch_main_c(f"{DST_LIB}/Core/Src/main.c")
+  patch_fatfs_platform_c(f"{DST_LIB}/FATFS/Target/fatfs_platform.c")
+  patch_sd_diskio_c(f"{DST_LIB}/FATFS/Target/sd_diskio.c")
+  patch_ff_c(f"{DST_LIB}/Middlewares/Third_Party/FatFs/src/ff.c")
+else:
+  print("WARNING: File patching is disabled.")
 
 print("\nAll done ok.\n")
