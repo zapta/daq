@@ -11,16 +11,16 @@
 #include "static_mutex.h"
 #include "time_util.h"
 
-// Workarounds for CubeIDE FATFS issues. 
+// Workarounds for CubeIDE FATFS issues.
 // https://github.com/artlukm/STM32_FATFS_SDcard_remount
 // https://community.st.com/t5/stm32cubeide-mcu/wrong-returned-value-in-the-library-function-sd-initialize/m-p/580229#M19834
 extern Disk_drvTypeDef disk;
-extern FATFS *FatFs[_VOLUMES];
+extern FATFS* FatFs[_VOLUMES];
 
 static void force_sd_reset() {
-   FatFs[0] = 0;
-   disk.is_initialized[0] = 0;
-   memset(&SDFatFS, 0, sizeof(SDFatFS));
+  FatFs[0] = 0;
+  disk.is_initialized[0] = 0;
+  memset(&SDFatFS, 0, sizeof(SDFatFS));
 }
 
 namespace data_recorder {
@@ -221,7 +221,7 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
 
   // Check state.
   if (state != STATE_OPENED) {
-    write_failures ++;
+    write_failures++;
     logger.error("Can't write to recorder file, (state=%d)", state);
     return;
   }
@@ -229,7 +229,7 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
   // Determine packet size.
   const uint16_t packet_size = packet.size();
   if (packet_size == 0) {
-    write_failures ++;
+    write_failures++;
     logger.warning("Requested to write 0 bytes to SD.");
     return;
   }
@@ -243,13 +243,15 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
   // written now and the number of bytes that will stay pending for
   // a future write. We assume that pending bytes < _MAX_SS.
   const uint16_t total_bytes = pending_bytes + packet_size;
-  const uint16_t packet_bytes_left_over = (total_bytes >= _MAX_SS) ?
-      (total_bytes % _MAX_SS) : packet_size;
+  const uint16_t packet_bytes_left_over =
+      (total_bytes >= _MAX_SS) ? (total_bytes % _MAX_SS) : packet_size;
   const uint16_t packet_bytes_to_write = packet_size - packet_bytes_left_over;
 
-  logger.info("pending=%lu. This packet: size: %hu, packet_write: %hu, packet_left over: %hu",
-              pending_bytes, packet_size, packet_bytes_to_write, packet_bytes_left_over);
-
+  logger.info(
+      "pending=%lu. This packet: size: %hu, packet_write: %hu, packet_left "
+      "over: %hu",
+      pending_bytes, packet_size, packet_bytes_to_write,
+      packet_bytes_left_over);
 
   // Maybe write pending and packet part 1.
   packet.reset_reading();
