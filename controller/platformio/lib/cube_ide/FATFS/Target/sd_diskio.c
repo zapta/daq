@@ -152,6 +152,10 @@ DSTATUS SD_initialize(BYTE lun)
 
 #if !defined(DISABLE_SD_INIT)
 
+  // ### Auto patched.
+  // ### Added Stat variable initialization.
+  Stat = STA_NOINIT | STA_NODISK;
+
   if(BSP_SD_Init() == MSD_OK)
   {
     Stat = SD_CheckStatus(lun);

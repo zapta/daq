@@ -11,10 +11,17 @@
 #include "static_mutex.h"
 #include "time_util.h"
 
-// extern SD_HandleTypeDef hsd1;
-
-// Workaround per https://github.com/artlukm/STM32_FATFS_SDcard_remount
+// Workarounds for CubeIDE FATFS issues. 
+// https://github.com/artlukm/STM32_FATFS_SDcard_remount
+// https://community.st.com/t5/stm32cubeide-mcu/wrong-returned-value-in-the-library-function-sd-initialize/m-p/580229#M19834
 extern Disk_drvTypeDef disk;
+extern FATFS *FatFs[_VOLUMES];
+
+static void force_sd_reset() {
+   FatFs[0] = 0;
+   disk.is_initialized[0] = 0;
+   memset(&SDFatFS, 0, sizeof(SDFatFS));
+}
 
 namespace data_recorder {
 
@@ -101,7 +108,7 @@ static void internal_stop_recording() {
     // disk.is_initialized[SDFatFS.drv] = 0;
 
     // The 'NULL' cause to unmount.
-    f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
+    f_mount(&SDFatFS, (TCHAR const*)NULL, 1);
   }
 
   if (state == STATE_OPENED) {
@@ -114,6 +121,8 @@ static void internal_stop_recording() {
   write_failures = 0;
   recording_start_time_millis = 0;
   current_recording_name.clear();
+
+  force_sd_reset();
 }
 
 void stop_recording() {
@@ -140,7 +149,13 @@ bool start_recording(const RecordingName& new_session_name) {
     App_Error_Handler();
   }
 
-  FRESULT status = f_mount(&SDFatFS, (TCHAR const*)SDPath, 0);
+  force_sd_reset();
+
+  // Special case FR_NOT_READY
+  logger.info("Calling f_mount");
+  FRESULT status = f_mount(&SDFatFS, (TCHAR const*)SDPath, 1);
+  logger.info("f_mount status = (FRESULT) %d", status);
+
   if (status != FRESULT::FR_OK) {
     logger.error("SD f_mount failed. (FRESULT=%d)", status);
     internal_stop_recording();
