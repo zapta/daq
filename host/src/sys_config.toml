@@ -31,7 +31,7 @@ thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25 }
 [channel.TMP3]
 color = "teal"
 adc = { open = 4196385, short = 150, calib = 466560, calib_r = 250 }
-thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25 }
+rtd = { r0 = 1000.0, t0 = 0.0, tcr = 3850.0 }
 
 
 [marker.test_begin]

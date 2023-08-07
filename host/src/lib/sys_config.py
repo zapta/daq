@@ -12,7 +12,8 @@ logger = logging.getLogger("sys_config")
 class MarkerConfig:
     """Config of a single marker type."""
 
-    def __init__(self, marker_type: str, marker_regex: str,regex_value_group: int, marker_pen: Any):
+    def __init__(self, marker_type: str, marker_regex: str, regex_value_group: int,
+                 marker_pen: Any):
         self.marker_type = marker_type
         self.marker_regex = re.compile(marker_regex, re.IGNORECASE)
         self.regex_value_group = regex_value_group
@@ -44,7 +45,7 @@ class MarkersConfig:
             if match:
                 groups = match.groups("")
                 n = marker_config.regex_value_group
-                value = groups[n-1] if n > 0 else ""
+                value = groups[n - 1] if n > 0 else ""
                 return (marker_config.marker_type, value)
         # The marker doesn't match any of the markers in sys_config
         return ("", "")
@@ -150,6 +151,29 @@ class ThermistorChannelConfig(TemperatureChannelConfig):
         return T
 
 
+class RtdChannelConfig(TemperatureChannelConfig):
+    """Configuration of a temperature channel of type RTD (e.g. PT1000)."""
+
+    def __init__(self, chan_name: str, color: str, adc_open: int, adc_short: int, adc_calib: int,
+                 adc_calib_r: float, rtd_r0: float, rtd_t0: float, rtd_tcr: float):
+        super().__init__(chan_name, color, adc_open, adc_short, adc_calib, adc_calib_r)
+        self.__rtd_r0 = rtd_r0  # Resistance in ohms at reference temp.
+        self.__rtd_t0 = rtd_t0  # Reference temperature
+        self.__rtd_tcr = rtd_tcr  # Resistance increase in PPM per C.
+        # Conversion formula: dT = dR * K.
+        self.__k = 1e6 / (self.__rtd_r0 * self.__rtd_tcr)
+
+    def __str__(self):
+        return f"RTD {self.__chan_name}"
+
+    def resistance_to_c(self, r: float) -> float:
+        """RTD specific resistance to temperature function."""
+        dR = r - self.__rtd_r0
+        dT = dR * self.__k
+        t = self.__rtd_t0 + dT
+        return min(t, 999)
+
+
 class SysConfig:
     """System configuration from a TOML config file."""
 
@@ -188,16 +212,30 @@ class SysConfig:
                 adc_short = adc_config["short"]
                 adc_calib = adc_config["calib"]
                 adc_calib_r = adc_config["calib_r"]
-                # For now we support only one kind of a temperature channel, thermistor.
-                thermistor_config = ch_config["thermistor"]
-                thermistor_beta = thermistor_config["beta"]
-                thermistor_c = thermistor_config["c"]
-                thermistor_ref_r = thermistor_config["ref_r"]
-                thermistor_ref_c = thermistor_config["ref_c"]
-                # Construct.
-                self.__tmp_ch_configs[ch_name] = ThermistorChannelConfig(
-                    ch_name, color, adc_open, adc_short, adc_calib, adc_calib_r, thermistor_beta,
-                    thermistor_c, thermistor_ref_r, thermistor_ref_c)
+                # We expect the channel to have exactly one of thermistor or RTD specification.
+                rtd_config = ch_config.get("rtd", None)
+                if rtd_config:
+                    assert "thermistor" not in ch_config, "A channel cannot be both a thermistor and a RTD"
+                    rtd_r0 = rtd_config["r0"]
+                    rtd_t0 = rtd_config["t0"]
+                    rtd_tcr = rtd_config["tcr"]
+                    logger.info(f"RTD channel: {ch_name}, {rtd_r0},  {rtd_t0}, {rtd_tcr}")
+                    self.__tmp_ch_configs[ch_name] = RtdChannelConfig(ch_name, color, adc_open,
+                                                                      adc_short, adc_calib,
+                                                                      adc_calib_r, rtd_r0, rtd_t0,
+                                                                      rtd_tcr)
+                else:
+                    thermistor_config = ch_config["thermistor"]
+                    thermistor_beta = thermistor_config["beta"]
+                    thermistor_c = thermistor_config["c"]
+                    thermistor_ref_r = thermistor_config["ref_r"]
+                    thermistor_ref_c = thermistor_config["ref_c"]
+                    logger.info(
+                        f"Thermistor channel: {ch_name}, {thermistor_beta},  {thermistor_c}, {thermistor_ref_r}, {thermistor_ref_c}"
+                    )
+                    self.__tmp_ch_configs[ch_name] = ThermistorChannelConfig(
+                        ch_name, color, adc_open, adc_short, adc_calib, adc_calib_r,
+                        thermistor_beta, thermistor_c, thermistor_ref_r, thermistor_ref_c)
             else:
                 raise RuntimeError(f"Unexpected channel name in sys_config: {ch_name}")
 
