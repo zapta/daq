@@ -7,6 +7,8 @@
 #include "logger.h"
 #include "static_mutex.h"
 #include "time_util.h"
+#include "sdmmc.h"
+
 
 // Workarounds for CubeIDE FATFS issues.
 // https://github.com/artlukm/STM32_FATFS_SDcard_remount
@@ -18,6 +20,10 @@ static void force_sd_reset() {
   FatFs[0] = 0;
   disk.is_initialized[0] = 0;
   memset(&SDFatFS, 0, sizeof(SDFatFS));
+  const HAL_StatusTypeDef status = HAL_SD_DeInit(&hsd1);
+  if (status != HAL_OK) {
+    logger.error("HAL_SD_DeInit returned %d (HAL_StatusTypeDef)", status);
+  }
 }
 
 namespace data_recorder {
@@ -244,11 +250,11 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
       (total_bytes >= _MAX_SS) ? (total_bytes % _MAX_SS) : packet_size;
   const uint16_t packet_bytes_to_write = packet_size - packet_bytes_left_over;
 
-  logger.info(
-      "pending=%lu. This packet: size: %hu, packet_write: %hu, packet_left "
-      "over: %hu",
-      pending_bytes, packet_size, packet_bytes_to_write,
-      packet_bytes_left_over);
+  // logger.info(
+  //     "pending=%lu. This packet: size: %hu, packet_write: %hu, packet_left "
+  //     "over: %hu",
+  //     pending_bytes, packet_size, packet_bytes_to_write,
+  //     packet_bytes_left_over);
 
   // Maybe write pending and packet part 1.
   packet.reset_reading();
