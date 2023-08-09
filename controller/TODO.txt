@@ -1,7 +1,5 @@
 Problem with auto library detection (and Unity)
 
-Find a safe way to do continious RX (dma?)
-
 Merge the ADC and controller code that report log packets.
 
 Handle ERROR_HANDLER errors more gracefully, printing string and file name/line before hanging.

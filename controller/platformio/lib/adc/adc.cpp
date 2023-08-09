@@ -168,7 +168,7 @@ static void set_dma_request_generator(uint32_t num_transfers_per_sync) {
 
   // Set tx DMA request generator.
 
-  // A woraround to reset the request generator.
+  // A workaround to reset the request generator.
   CLEAR_BIT(hdma_spi1_tx.DMAmuxChannel->CCR, (DMAMUX_CxCR_SE));
 
   const uint32_t mask = DMAMUX_CxCR_NBREQ_Msk;
@@ -374,6 +374,7 @@ void start_continuos_DMA() {
   // Start the continusons DMA. It is set to transfer kDmaBytesPerPoint
   // bytes to the ADC SPI, on each high to low transition of TIM12 output
   // which acts as SPI CS.
+  static_assert(sizeof(rx_buffer) == sizeof(tx_buffer));
   const auto status = HAL_SPI_TransmitReceive_DMA(&hspi1, tx_buffer, rx_buffer,
                                                   sizeof(tx_buffer));
   if (HAL_OK != status) {

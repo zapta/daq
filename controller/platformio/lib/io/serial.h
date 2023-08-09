@@ -10,6 +10,9 @@
 #include "time_util.h"
 #include "usart.h"
 
+#pragma GCC push_options
+#pragma GCC optimize("Og")
+
 class Serial {
  public:
   Serial(UART_HandleTypeDef* huart) : _huart(huart) {}
@@ -113,85 +116,92 @@ class Serial {
                                             uart_TxCpltCallback)) {
       App_Error_Handler();
     }
-    if (HAL_OK != HAL_UART_RegisterCallback(_huart, HAL_UART_RX_COMPLETE_CB_ID,
-                                            uart_RxCpltCallback)) {
-      App_Error_Handler();
-    }
+    // if (HAL_OK != HAL_UART_RegisterCallback(_huart,
+    //                                         HAL_UART_RX_HALFCOMPLETE_CB_ID,
+    //                                         uart_RxHalfCompleteCallback)) {
+    //   App_Error_Handler();
+    // }
+    // if (HAL_OK != HAL_UART_RegisterCallback(_huart,
+    // HAL_UART_RX_COMPLETE_CB_ID,
+    //                                         uart_RxCpltCallback)) {
+    //   App_Error_Handler();
+    // }
     if (HAL_OK !=
         HAL_UART_RegisterRxEventCallback(_huart, uart_RxEventCallback)) {
       App_Error_Handler();
     }
+
+    // Start the continious circual RX DMA. We pass in the two halves.
+    // The UART RX is already specified as cirtucal in the cube_ide settings.
+    if (HAL_OK != HAL_UARTEx_ReceiveToIdle_DMA(_huart, _rx_dma_buffer,
+                                               sizeof(_rx_dma_buffer))) {
+      App_Error_Handler();
+    }
     // Start the reception.
-    start_hal_rx(true);
+    // start_hal_rx(true);
   }
 
  private:
+  // TODO: Consider to have two sizes, larger for tx and smaller for rx.
+  // static constexpr uint32_t kDmaRxHalfSize = 128;
+
   // For interrupt handling.
   static void uart_ErrorCallback(UART_HandleTypeDef* huart);
   static void uart_TxCpltCallback(UART_HandleTypeDef* huart);
-  static void uart_RxCpltCallback(UART_HandleTypeDef* huart);
+  // Called whenever new rx data is availble (idle, half and full complete).
   static void uart_RxEventCallback(UART_HandleTypeDef* huart, uint16_t Size);
 
   UART_HandleTypeDef* _huart;
-  // --- TX
+  // --- TX. Non Circular DMA.
   CircularBuffer<uint8_t, 5000> _tx_buffer;
   StaticMutex _tx_mutex;
-  uint8_t _tx_hal_buffer[20];
+  // This DMA buffer is non circual.
+  uint8_t _tx_dma_buffer[64];
 
-  // ---RX
+  // ---RX. Circular DMA.
   CircularBuffer<uint8_t, 5000> _rx_buffer;
   StaticMutex _rx_mutex;
   // Indicates that RX buffer has data. Allows to
   // avoid polling of the buffer.
   StaticBinarySemaphore _rx_data_avail_sem;
-  uint8_t _rx_hal_buffer[20];
+  // This DMA buffer is circular bytes are added by the DMA
+  // in a contingious circular fashion with wrap around.
+  uint8_t _rx_dma_buffer[256];
+  // One past the last position in _rx_dma_buffer where we
+  // consumed data. Modulu the buffer size.
+  uint16_t _rx_last_pos = 0;
 
   // Called in within mutex or from in interrupt. No need to protect access.
+  // The caller already verified that tx DMA is not in progress.
   void tx_next_chunk() {
+    // At most sizeof(_tx_dma_buffer)
     const uint16_t len =
-        _tx_buffer.read(_tx_hal_buffer, sizeof(_tx_hal_buffer));
+        _tx_buffer.read(_tx_dma_buffer, sizeof(_tx_dma_buffer));
     if (len > 0) {
-      HAL_UART_Transmit_IT(_huart, _tx_hal_buffer, len);
+      HAL_UART_Transmit_DMA(_huart, _tx_dma_buffer, len);
     }
   }
 
-  // Called from isr to accept new incoming data.
-  void rx_next_chunk_isr(uint16_t len, BaseType_t* task_woken) {
+  // Called from isr to accept new incoming data from the RX DMA buffer.
+  void rx_data_arrived_isr(const uint8_t* buffer, uint16_t len,
+                           BaseType_t* task_woken) {
     if (len) {
-      const bool ok = _rx_buffer.write(_rx_hal_buffer, len, true);
+      const bool ok = _rx_buffer.write(buffer, len, true);
       if (!ok) {
         App_Error_Handler();
       }
-      // Indicate that data is available.
+      // Indicate to the rx thread(s) that data is available.
       _rx_data_avail_sem.give_from_isr(task_woken);
     }
-    start_hal_rx(false);
   }
 
   // _huart->error_code indicates the error code.
-  // Search UART_Error_Definition for codes.
+  // Search UART_Error_Definition for codes. Errors can
+  // be soft, such as RX framing errors, so for now we
+  // ignore them.
   void uart_error_isr() {
     // TODO: Count errors by type. Some of the errors
     // are soft.
-  }
-
-// Called from a task (init) or from RX isr.
-  void start_hal_rx(bool initializing) {
-    for (int i = 1;; i++) {
-      const HAL_StatusTypeDef status = HAL_UARTEx_ReceiveToIdle_IT(
-          _huart, _rx_hal_buffer, sizeof(_rx_hal_buffer));
-      if (status == HAL_OK) {
-        return;
-      }
-      // During initialization we try more than once, as a 
-      // workaround for a HAL problem with left over serial data (?).
-      // Especially noticeable when running in the debugger with 
-      // monitor program active.
-      if (initializing && i < 3) {
-        continue;
-      }
-      App_Error_Handler();
-    }
   }
 };
 
@@ -201,3 +211,5 @@ extern Serial serial1;
 // Used by printer link.
 extern Serial serial2;
 }  // namespace serial
+
+#pragma GCC pop_options

@@ -32,7 +32,9 @@ class StaticBinarySemaphore {
   inline bool give() { return xSemaphoreGive(_handle); }
 
   // Call from interrupt handlers only. Returns true if the semaphore changed
-  // count from 0 to 1. Else, was already at 1.
+  // count from 0 to 1. Else, was already at 1. 
+  // Note that task_woken is commulative such that *task_woken is set
+  // but never cleared.
   inline bool give_from_isr(BaseType_t* task_woken) {
     return xSemaphoreGiveFromISR(_handle, task_woken);
   }
