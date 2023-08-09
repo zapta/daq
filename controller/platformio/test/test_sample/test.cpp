@@ -1,7 +1,4 @@
-// #include "FreeRTOS.h"
 #include "Unity.h"
-// #include "io.h"
-// #include "task.h"
 #include "../unity_util.h"
 
 void setUp() {}
