@@ -23,7 +23,7 @@ void stop_recording();
 
 // Ignored silently if recording is off.
 // Packet should be a serialized LOG packet with no write errors.
-void append_if_recording(const StuffedPacketBuffer& packet);
+void append_log_record_if_recording(const SerialPacketsData& packet_data);
 
 
 bool is_recording_active();

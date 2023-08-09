@@ -2,10 +2,10 @@
 
 #include "data_recorder.h"
 #include "host_link.h"
+#include "io.h"
 #include "serial_packets_client.h"
 #include "session.h"
 #include "static_mutex.h"
-#include "io.h"
 
 using host_link::HostPorts;
 
@@ -19,8 +19,6 @@ static data_recorder::RecordingInfo recording_info_buffer;
 
 // Temp packet data. Used to encode log packets.
 static SerialPacketsData packet_data;
-static SerialPacketsEncoder packet_encoder;
-static StuffedPacketBuffer stuffed_packet;
 
 PacketStatus handle_control_command(const SerialPacketsData& command_data,
                                     SerialPacketsData& response_data) {
@@ -82,11 +80,11 @@ PacketStatus handle_control_command(const SerialPacketsData& command_data,
         return PacketStatus::INVALID_ARGUMENT;
       }
       // Device info.
-      response_data.write_uint8(1);  // Format version
-      response_data.write_uint32(session::id());  // Device session id.
+      response_data.write_uint8(1);                     // Format version
+      response_data.write_uint32(session::id());        // Device session id.
       response_data.write_uint32(time_util::millis());  // Device time
       // SD card presense.
-      response_data.write_uint8(io::SD_SWITCH.read() ? 1 : 0); 
+      response_data.write_uint8(io::SD_SWITCH.read() ? 1 : 0);
       // Recording info.
       data_recorder::get_recoding_info(&recording_info_buffer);
       response_data.write_uint8(recording_info_buffer.recording_active ? 1 : 0);
@@ -146,19 +144,21 @@ void report_marker(const MarkerName& marker_name) {
     App_Error_Handler();
   }
 
-  // TODO: The adc has similar logic for marker logging. Consider
-  // to refactor to a common place that dispatches the packets to client
-  // and SD.
-
-  // Send data to host.
-  host_link::client.sendMessage(HostPorts::LOG_REPORT_MESSAGE, packet_data);
-
-  // Store data on SD card.
-  packet_encoder.encode_log_packet(packet_data, &stuffed_packet);
-  data_recorder::append_if_recording(stuffed_packet);
+  // Report to monitor and maybe to SD.
+  report_log_data(packet_data);
 
   // TODO: Implementing logging and reporting in status.
   logger.info("Marker: [%s]", marker_name.c_str());
+}
+
+void report_log_data(const SerialPacketsData& data) {
+  // logger.info("Controller, data = %hu", data.size());
+  io::TEST1.high();
+  // Send to monitor.
+  host_link::client.sendMessage(HostPorts::LOG_REPORT_MESSAGE, data);
+  // Send to SD.
+  data_recorder::append_log_record_if_recording(data);
+  io::TEST1.low();
 }
 
 }  // namespace controller

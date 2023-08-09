@@ -5,10 +5,11 @@
 #include "fatfs.h"
 #include "io.h"
 #include "logger.h"
+#include "sdmmc.h"
+#include "serial_packets_data.h"
+#include "serial_packets_encoder.h"
 #include "static_mutex.h"
 #include "time_util.h"
-#include "sdmmc.h"
-
 
 // Workarounds for CubeIDE FATFS issues.
 // https://github.com/artlukm/STM32_FATFS_SDcard_remount
@@ -30,6 +31,10 @@ namespace data_recorder {
 
 // All vars are protected by the mutex.
 StaticMutex mutex;
+
+// For encoding log packets before writing to SD.
+static SerialPacketsEncoder packet_encoder;
+static StuffedPacketBuffer stuffed_packet;
 
 enum State {
   // Session off
@@ -209,13 +214,9 @@ bool start_recording(const RecordingName& new_session_name) {
   return true;
 }
 
-void append_if_recording(const StuffedPacketBuffer& packet) {
+void append_log_record_if_recording(const SerialPacketsData& packet_data) {
   MutexScope scope(mutex);
 
-  if (packet.had_write_errors()) {
-    logger.error("Trying to record a log record with write errors");
-    return;
-  }
 
   if (state == STATE_IDLE) {
     // Not recording. Ignore silently.
@@ -229,25 +230,37 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
     return;
   }
 
-  // Determine packet size.
-  const uint16_t packet_size = packet.size();
-  if (packet_size == 0) {
+  // Data should not have any errors.
+  if (packet_data.had_write_errors()) {
     write_failures++;
-    logger.warning("Requested to write 0 bytes to SD.");
+    logger.error("Log data has write errors.");
     return;
   }
 
+  // Encode the data as a log packet. We don't expect this to fail.
+  if (!packet_encoder.encode_log_packet(packet_data, &stuffed_packet)) {
+    write_failures++;
+    logger.error("Error encoding the log packet.");
+    return;
+  }
+
+  // Determine the stuffed packet size.
+  const uint16_t packet_size = stuffed_packet.size();
   if (pending_bytes + packet_size > sizeof(write_buffer)) {
-    // Should not happen since we derive buffer size from max packet size.
+    // Should not happen since we derive buffer size from max stuffed packet
+    // size.
     App_Error_Handler();
   }
 
-  // Split the packet into two parts, the number of bytes that will be
-  // written now and the number of bytes that will stay pending for
-  // a future write. We assume that pending bytes < _MAX_SS.
+  // Split the packet into two parts, the bytes that will be
+  // written now together with the pending bytes, and the of bytes that
+  // will stay pending for a future write. We assume that pending bytes <
+  // _MAX_SS.
   const uint16_t total_bytes = pending_bytes + packet_size;
   const uint16_t packet_bytes_left_over =
       (total_bytes >= _MAX_SS) ? (total_bytes % _MAX_SS) : packet_size;
+  // If packet bytes to write is zero, the existing pending bytes stay
+  // as pending bytes.
   const uint16_t packet_bytes_to_write = packet_size - packet_bytes_left_over;
 
   // logger.info(
@@ -257,11 +270,12 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
   //     packet_bytes_left_over);
 
   // Maybe write pending and packet part 1.
-  packet.reset_reading();
+  stuffed_packet.reset_reading();
   if (packet_bytes_to_write) {
     // Append part 1 to the pending bytes.
-    packet.read_bytes(&write_buffer[pending_bytes], packet_bytes_to_write);
-    if (packet.had_read_errors()) {
+    stuffed_packet.read_bytes(&write_buffer[pending_bytes],
+                              packet_bytes_to_write);
+    if (stuffed_packet.had_read_errors()) {
       // Should not happen since we verified the size.
       App_Error_Handler();
     }
@@ -273,15 +287,16 @@ void append_if_recording(const StuffedPacketBuffer& packet) {
 
   // If there are left over bytes, store as pending bytes.
   if (packet_bytes_left_over) {
-    packet.read_bytes(&write_buffer[pending_bytes], packet_bytes_left_over);
-    if (packet.had_read_errors()) {
+    stuffed_packet.read_bytes(&write_buffer[pending_bytes],
+                              packet_bytes_left_over);
+    if (stuffed_packet.had_read_errors()) {
       // Should not happen since we derived from packet size.
       App_Error_Handler();
     }
     pending_bytes += packet_bytes_left_over;
   }
 
-  if (!packet.all_read_ok()) {
+  if (!stuffed_packet.all_read_ok()) {
     // Should not happen since we derived from packet size.
     App_Error_Handler();
   }

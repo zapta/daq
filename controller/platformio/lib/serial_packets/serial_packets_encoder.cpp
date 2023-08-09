@@ -119,6 +119,7 @@ bool SerialPacketsEncoder::encode_message_packet(uint8_t endpoint,
   return byte_stuffing(_tmp_data, out);
 }
 
+// Encode byte stuffed log packet with given data. Returns trur IFF ok.
 bool SerialPacketsEncoder::encode_log_packet(const SerialPacketsData& data,
                                              StuffedPacketBuffer* out) {
   // Encode packet in _tmp_data.
