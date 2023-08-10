@@ -1,0 +1,6 @@
+pyqtgraph
+PyQt6
+serial_packets
+pandas
+matplotlib
+
