@@ -39,6 +39,11 @@ class StaticBinarySemaphore {
     return xSemaphoreGiveFromISR(_handle, task_woken);
   }
 
+  // For debugging.
+  inline uint32_t count() {
+    return uxSemaphoreGetCount( _handle );
+  }
+
  private:
   StaticSemaphore_t _semaphore_buffer;
   SemaphoreHandle_t const _handle;
