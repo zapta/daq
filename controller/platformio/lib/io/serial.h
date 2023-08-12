@@ -116,35 +116,31 @@ class Serial {
                                             uart_TxCpltCallback)) {
       App_Error_Handler();
     }
-    // if (HAL_OK != HAL_UART_RegisterCallback(_huart,
-    //                                         HAL_UART_RX_HALFCOMPLETE_CB_ID,
-    //                                         uart_RxHalfCompleteCallback)) {
-    //   App_Error_Handler();
-    // }
-    // if (HAL_OK != HAL_UART_RegisterCallback(_huart,
-    // HAL_UART_RX_COMPLETE_CB_ID,
-    //                                         uart_RxCpltCallback)) {
-    //   App_Error_Handler();
-    // }
+
     if (HAL_OK !=
         HAL_UART_RegisterRxEventCallback(_huart, uart_RxEventCallback)) {
       App_Error_Handler();
     }
 
-    // Start the continious circual RX DMA. We pass in the two halves.
-    // The UART RX is already specified as cirtucal in the cube_ide settings.
-    if (HAL_OK != HAL_UARTEx_ReceiveToIdle_DMA(_huart, _rx_dma_buffer,
-                                               sizeof(_rx_dma_buffer))) {
+    // Start the continious RX DMA.
+    if (!start_rx_dma()) {
       App_Error_Handler();
     }
-    // Start the reception.
-    // start_hal_rx(true);
+  }
+
+  // Celled from a task during initialization or from an ISR in case
+  // of an RX error that requires restart. Return true iff OK.
+  bool start_rx_dma() {
+    // Start the continious circual RX DMA. We pass in the two halves.
+    // The UART RX is already specified as cirtucal in the cube_ide settings.
+    _rx_last_pos = 0;
+    const auto status = HAL_UARTEx_ReceiveToIdle_DMA(_huart, _rx_dma_buffer,
+                                                     sizeof(_rx_dma_buffer));
+    return status == HAL_OK;
+    // App_Error_Handler();
   }
 
  private:
-  // TODO: Consider to have two sizes, larger for tx and smaller for rx.
-  // static constexpr uint32_t kDmaRxHalfSize = 128;
-
   // For interrupt handling.
   static void uart_ErrorCallback(UART_HandleTypeDef* huart);
   static void uart_TxCpltCallback(UART_HandleTypeDef* huart);
@@ -202,6 +198,23 @@ class Serial {
   void uart_error_isr() {
     // TODO: Count errors by type. Some of the errors
     // are soft.
+
+    // Do nothing if RX still active.
+    if (_huart->RxState == HAL_UART_STATE_BUSY_RX) {
+      return;
+    }
+
+    // If idle, try to restart.
+    if (_huart->RxState == HAL_UART_STATE_READY) {
+      for (int i = 0; i < 10; i++) {
+        if (start_rx_dma()) {
+          return;
+        }
+      }
+    }
+
+    // TODO: Anything we should do to recover? E.g. abort and then restart?
+    App_Error_Handler();
   }
 };
 
