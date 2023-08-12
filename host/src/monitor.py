@@ -278,7 +278,7 @@ def update_display():
 
     # Update plot 2 with temperature channels
     for ch_name, temperature_chan in sorted(temperature_channels.items()):
-        lc_chan.display_series.delete_older_than(latest_log_time - plot2_x_span)
+        temperature_chan.display_series.delete_older_than(latest_log_time - plot2_x_span)
         x = temperature_chan.display_series.relative_times(latest_log_time)
         y = temperature_chan.display_series.values()
         color = temperature_chan.temperature_config.color()
