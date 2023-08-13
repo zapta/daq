@@ -20,7 +20,7 @@ scale = 0.002671
 [channel.TMP1]
 color = "blueviolet"
 adc = { open = 4197520, short = 220, calib = 466550, calib_r = 250 }
-rtd = { r0 = 1000.0, t0 = 0.0, tcr = 3850.0, offset=0.0 }
+rtd = { r0 = 1000.0, offset=0.00 }
 
 
 [channel.TMP2]

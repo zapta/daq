@@ -5,6 +5,8 @@ import math
 import re
 import pyqtgraph as pg
 from PyQt6 import QtCore
+from UliEngineering.Physics.RTD import pt1000_temperature, ptx_temperature
+import functools
 
 logger = logging.getLogger("sys_config")
 
@@ -154,23 +156,20 @@ class RtdChannelConfig(TemperatureChannelConfig):
     """Configuration of a temperature channel of type RTD (e.g. PT1000)."""
 
     def __init__(self, chan_name: str, color: str, adc_open: int, adc_short: int, adc_calib: int,
-                 adc_calib_r: float, rtd_r0: float, rtd_t0: float, rtd_tcr: float, rtd_offset: float):
+                 adc_calib_r: float, rtd_r0: float, rtd_offset: float):
         super().__init__(chan_name, color, adc_open, adc_short, adc_calib, adc_calib_r)
-        self.__rtd_r0 = rtd_r0  # Resistance in ohms at reference temp.
-        self.__rtd_t0 = rtd_t0  # Reference temperature
-        self.__rtd_tcr = rtd_tcr  # Resistance increase in PPM per C.
         self.__rtd_offset = rtd_offset
-        # Conversion formula: dT = dR * K.
-        self.__k = 1e6 / (self.__rtd_r0 * self.__rtd_tcr)
+        self.__converter = functools.partial(ptx_temperature, rtd_r0)
+
 
     def __str__(self):
         return f"RTD {self.__chan_name}"
 
     def resistance_to_c(self, r: float) -> float:
         """RTD specific resistance to temperature function."""
-        dR = r - self.__rtd_r0
-        dT = dR * self.__k
-        t = self.__rtd_t0 + dT + self.__rtd_offset
+        # See example at 
+        # https://techoverflow.net/2016/01/02/accurate-calculation-of-pt100pt1000-temperature-from-resistance/
+        t = self.__rtd_offset + self.__converter(r)
         return min(t, 999)
 
 
@@ -217,14 +216,11 @@ class SysConfig:
                 if rtd_config:
                     assert "thermistor" not in ch_config, "A channel cannot be both a thermistor and a RTD"
                     rtd_r0 = rtd_config["r0"]
-                    rtd_t0 = rtd_config["t0"]
-                    rtd_tcr = rtd_config["tcr"]
                     rtd_offset = rtd_config["offset"]
-                    logger.info(f"RTD channel: {ch_name}, {rtd_r0},  {rtd_t0}, {rtd_tcr}")
+                    logger.info(f"RTD channel: {ch_name}, {rtd_r0}")
                     self.__tmp_ch_configs[ch_name] = RtdChannelConfig(ch_name, color, adc_open,
                                                                       adc_short, adc_calib,
-                                                                      adc_calib_r, rtd_r0, rtd_t0,
-                                                                      rtd_tcr, rtd_offset)
+                                                                      adc_calib_r, rtd_r0, rtd_offset)
                 else:
                     thermistor_config = ch_config["thermistor"]
                     thermistor_beta = thermistor_config["beta"]
