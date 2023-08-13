@@ -1,8 +1,10 @@
+
+
 Handle ERROR_HANDLER errors more gracefully, printing string and file name/line before hanging.
 
 Problem with auto library detection (and Unity)
 
-
+ADC, consider to rewrite static regs.
 
 -------
 
