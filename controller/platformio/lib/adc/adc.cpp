@@ -32,28 +32,26 @@ namespace adc {
 // * Half (buffer) - half of a DMA tx or rx buffer. We use double buffering,
 //   transfering one half while processing the results in the other
 //   half.
-// * Point - a SPI transaction that reads the previous value and starts
-//   the next conversion.
-// * Slot, pair of consecutive points (conversions) which are performed
-//   for each channel. By performing two conversions (points) and reading
-//   only the second value, we reduce internal cross talk between the
-//   thermistors and the load cell channels. Ideally, we should offload
-//   the thermistor channels to a seperate card.
-// * Cycle - the sequence of slots in this order:
-//   [LC1, T1, LC1, T2, LC1, T3]..., where LC = a load cell point, and Ti is
-//   a point of the respective thermistor channel. This pattern is optimized
-//   for high load cell rate and low thermistor rate. Remember that each slot
-//   has two conversions for the same channel, such that we have 12 points
-//   in each cycle.
+// * Point - A single ADC conversion.
+// * Slot - A consecutive group of points where we read the load cell
+//   channel N times and the next temperature channel one time. We read the
+//   load cell N times and use only the last value as a workaround for noise
+//   that is injected by switching the ADC between input channels.
+// * Cycle - A group of slots in which we read each of the temperaute channels
+//   once.
+//
+// Examples of cycle points when reading the load cell three times. The
+// '*' indicates the values we actually use.
+// (LC, LC, *Lc, *T1), (LC, LC, *LC, *T2), (LC, LC, *LC, *T3)
 
-constexpr uint32_t kDmaBytesPerPoint = 13;
-constexpr uint32_t kDmaNumThermistorChans = 3;
-// We read each channel using two consecutive points and take
-// only the second channel, to reduce cross talk between the
-// channels.
-constexpr uint32_t kDmaSlotsPerCycle = 2 * kDmaNumThermistorChans;
-constexpr uint32_t kDmaPointsPerSlot = 2;
-constexpr uint32_t kDmaPointsPerCycle = kDmaPointsPerSlot * kDmaSlotsPerCycle;
+constexpr uint32_t kDmaBytesPerPoint = 16;
+constexpr uint32_t kDmaNumTemperatureChans = 3;
+// We read the load cell N times and use only the last value.
+constexpr uint32_t kDmaConsecutiveLcPoints = 3;
+
+constexpr uint32_t kDmaPointsPerSlot = kDmaConsecutiveLcPoints + 1;
+constexpr uint32_t kDmaSlotsPerCycle = kDmaNumTemperatureChans;
+constexpr uint32_t kDmaPointsPerCycle = kDmaSlotsPerCycle * kDmaPointsPerSlot;
 constexpr uint32_t kDmaBytesPerCycle = kDmaPointsPerCycle * kDmaBytesPerPoint;
 constexpr uint32_t kDmaCyclesPerHalf = 40;
 constexpr uint32_t kDmaSlotsPerHalf = kDmaSlotsPerCycle * kDmaCyclesPerHalf;
@@ -62,12 +60,15 @@ constexpr uint32_t kDmaBytesPerHalf = kDmaPointsPerHalf * kDmaBytesPerPoint;
 
 // The offset of the 3 bytes conversion data within the
 // kBytesPerPoint bytes of a single point SPI transfer.
-constexpr uint32_t kRxDataOffsetInPoint = 2;
+constexpr uint32_t kDmaRxDataOffsetInPoint = 2;
+
+// The byte offset of the register reading value in each point.
+constexpr uint32_t kDmaRegValOffsetInPoint = 7;
 
 // This is the frequency of TIM2 which generates the points time
 // base. The effective sampling rate of the load cell is this
-// value divided by 4, and for each thermistor, this value divided
-// by 12.
+// value divided by 3, and for each temp channel, this value
+// divided by 9.
 constexpr uint16_t kDmaPointsPerSec = 2000;
 
 // Each of tx/rx buffer contains two halves that are used
@@ -77,24 +78,24 @@ static uint8_t rx_buffer[2 * kDmaBytesPerHalf] = {};
 
 static SerialPacketsData packet_data;
 
-// For encoding the data as packets for logging to SD card.
-// static SerialPacketsEncoder packet_encoder;
-// static StuffedPacketBuffer stuffed_packet;
-
+// Represent the type of an event that is passed from the ISR handlers to the
+// worker thread.
 enum IrqEventId {
   EVENT_HALF_COMPLETE = 1,
   EVENT_FULL_COMPLETE = 2,
 };
 
+// The event itself.
 struct IrqEvent {
   IrqEventId id;
   uint32_t isr_millis;
 };
 
+// The completion ISRs pass event to the worker thread using
+// this queue.
 static StaticQueue<IrqEvent, 5> irq_event_queue;
 
-// TODO: Add a state and support to transition from CONTINUOS to
-// IDLE.
+// The state of the DMA operation.
 enum DmaState {
   // DMA not active.
   DMA_STATE_IDLE,
@@ -113,6 +114,46 @@ static volatile uint32_t irq_full_count = 0;
 static volatile uint32_t irq_error_count = 0;
 static volatile uint32_t event_half_count = 0;
 static volatile uint32_t event_full_count = 0;
+
+// A static register is an ADS1261 register that is initialized
+// once and doesn't change value through the execution of the
+// continious ADC sampling.
+enum RegisterType { STAT, INFO, DYNM };
+
+struct RegisterInfo {
+  const uint8_t idx;
+  const RegisterType type;
+  const uint8_t val;
+};
+
+// The table of the static registers and their values.
+static const RegisterInfo regs_info[] = {
+    {.idx = 0x00, .type = INFO},
+    {.idx = 0x01, .type = INFO},
+    {.idx = 0x02, .type = STAT, .val = 0x6C},  // 14400 SPS, (Sinc5)
+    {.idx = 0x03, .type = STAT, .val = 0x11},  // One shot, 50us delay
+    {.idx = 0x04, .type = STAT, .val = 0x00},  // GPIO 0-3 disconnected
+    {.idx = 0x05, .type = STAT, .val = 0x00},  // Disable CRC and status.
+    {.idx = 0x06, .type = DYNM},
+    {.idx = 0x07, .type = STAT, .val = 0x00},  // No offset calibration
+    {.idx = 0x08, .type = STAT, .val = 0x00},  // No offset calibration
+    {.idx = 0x09, .type = STAT, .val = 0x00},  // No offset calibration
+    {.idx = 0x0a, .type = STAT, .val = 0x00},  // No scale calibration
+    {.idx = 0x0b, .type = STAT, .val = 0x00},  // No scale calibration
+    {.idx = 0x0c, .type = STAT, .val = 0x40},  // No sclae calibration
+    {.idx = 0x0d, .type = STAT, .val = 0xff},  // No current injection
+    {.idx = 0x0e, .type = STAT, .val = 0x00},  // No current injection
+    {.idx = 0x0f, .type = INFO},
+    {.idx = 0x10, .type = DYNM},
+    {.idx = 0x11, .type = DYNM},
+    {.idx = 0x12, .type = STAT, .val = 0x00},  // No burnout detection
+};
+
+static constexpr size_t kNumRegsInfo = sizeof(regs_info) / sizeof(regs_info[0]);
+
+// For diagnostics. Used to verify that the static registers
+// in the ADC where not mutated, e.g. due to noise on the bus.
+static uint8_t regs_values[kNumRegsInfo] = {};
 
 // Called when the first half of rx_buffer is ready for processing.
 void spi_TxRxHalfCpltCallbackIsr(SPI_HandleTypeDef *hspi) {
@@ -272,78 +313,77 @@ void start_continuos_DMA() {
     App_Error_Handler();
   }
 
-  // Confirm the assumptions of the code below.
-  static_assert(kDmaNumThermistorChans == 3);
-  static_assert(kDmaBytesPerPoint == 13);
-  static_assert(kRxDataOffsetInPoint == 2);
+  // Confirm the assumptions used the code below.
+  static_assert(kDmaNumTemperatureChans == 3);
+  static_assert(kDmaBytesPerPoint == 16);
+  static_assert(kDmaRxDataOffsetInPoint == 2);
+  static_assert(kDmaRegValOffsetInPoint == 7);
   static_assert(kDmaCyclesPerHalf * kDmaPointsPerCycle * kDmaBytesPerPoint ==
                 kDmaBytesPerHalf);
   static_assert(2 * kDmaBytesPerHalf == sizeof(tx_buffer));
   static_assert(sizeof(tx_buffer) == sizeof(rx_buffer));
 
   uint8_t *p = tx_buffer;
-  // for (uint32_t h = 0; h < 2; h++) {
   // Populate the first half of the TX buffer.
   for (uint32_t cycle = 0; cycle < kDmaCyclesPerHalf; cycle++) {
-    for (uint32_t pt = 0; pt < kDmaPointsPerCycle; pt++) {
-      // Every consecutive points are a slot, in which we read the
-      // same channel twice.
-      const uint32_t slot = pt / kDmaPointsPerSlot;
-      const uint32_t iter = pt % kDmaPointsPerSlot;
+    for (uint32_t slot = 0; slot < kDmaSlotsPerCycle; slot++) {
+      for (uint32_t pt = 0; pt < kDmaPointsPerSlot; pt++) {
+        // On each point, we also read the next register. For diagnostic.
+        const uint32_t pt_global_index =
+            (cycle * kDmaPointsPerCycle) + (slot * kDmaPointsPerSlot) + pt;
+        const uint8_t reg_index = pt_global_index % kNumRegsInfo;
 
-      // for (uint32_t iter = 0; iter < 2; iter++) {
-      // Since we set the ADC for convertion that we will
-      // read on next SPI transaction, we use the next point.
-      // Next point index:
-      // 0, 2, 4 -> load cell.
-      // 1, 3, 5 -> thermistor 1, 2, 3, respectivly.
-      const uint32_t next_slot =
-          (iter == 0) ? slot : (slot + 1) % (kDmaSlotsPerCycle);
-      const bool next_slot_is_loadcell = ((next_slot & 0x01) == 0);
+        // Determine if next point is a load cell or temp.
+        const bool next_point_is_loadcell = pt != (kDmaPointsPerSlot - 2);
 
-      // Reference selection.
-      // Load cell: (ain0 - ain1)
-      // Thermistors: (avdd - avss)
-      const uint8_t reg_0x06_val = next_slot_is_loadcell ? 0x0a : 0x05;
+        // Reference selection.
+        // Load cell: (ain0 - ain1)
+        // Temperature: (avdd - avss)
+        const uint8_t reg_0x06_val = next_point_is_loadcell ? 0x0a : 0x05;
 
-      // PGA selection.
-      // Load cell: x128 gain.
-      // Thermistors: disabled.
-      const uint8_t reg_0x10_val = next_slot_is_loadcell ? 0x07 : 0x00;
+        // PGA selection.
+        // Load cell: x128 gain.
+        // Temperature: disabled.
+        const uint8_t reg_0x10_val = next_point_is_loadcell ? 0x07 : 0x00;
 
-      // Input selection.
-      // Load cell: (ain1 - ain0)
-      // Thermistor 1: (ain4 - ain5)
-      // Thermistor 2: (ain6 - ain7)
-      // Thermistor 3: (ain8 - ain9)
-      const uint8_t reg_0x11_val = next_slot_is_loadcell ? 0x34
-                                   : (next_slot == 1)    ? 0x56
-                                   : (next_slot == 3)    ? 0x78
-                                                         : 0x9a;
+        // Input selection.
+        // Load cell: (ain1 - ain0)
+        // Temperature 1: (ain4 - ain5)
+        // Temperature 2: (ain6 - ain7)
+        // Temperature 3: (ain8 - ain9)
 
-      // RDATA: Read data of previous conversion.
-      *p++ = 0x12;
-      *p++ = 0x00;  // Dummy.
-      *p++ = 0x00;  // Read data byte 1 (MSB) (kRxDataOffsetInPoint)
-      *p++ = 0x00;  // Read data byte 2
-      *p++ = 0x00;  // Read data byte 3 (LSB)
+        const uint8_t reg_0x11_val = next_point_is_loadcell ? 0x34
+                                     : (slot == 0)          ? 0x56
+                                     : (slot == 1)          ? 0x78
+                                                            : 0x9a;
 
-      // Set and start next converstion.
-      // WREG: Write to reg 0x06 (reference selection)
-      *p++ = (uint8_t)0x40 | 0x06;
-      *p++ = reg_0x06_val;
-      // WREG:  Write to reg 0x10 (gain selection)
-      *p++ = (uint8_t)0x40 | 0x10;
-      *p++ = reg_0x10_val;  //
-      // WREG: Write to reg 0x11 (input selection)
-      *p++ = (uint8_t)0x40 | 0x11;
-      *p++ = reg_0x11_val;
-      // START: Start next conversion.
-      *p++ = 0x08;
-      *p++ = 0x00;  // Dummy byte.
-      // }
+        // RDATA: Read data of previous conversion.
+        *p++ = 0x12;
+        *p++ = 0x00;  // Dummy.
+        *p++ = 0x00;  // Read data byte 1 (MSB) (kRxDataOffsetInPoint)
+        *p++ = 0x00;  // Read data byte 2
+        *p++ = 0x00;  // Read data byte 3 (LSB)
+
+        // Read the next static register, for diagnostic.
+        *p++ = (uint8_t)0x20 | reg_index;
+        *p++ = 0x00;  // Dummy byte
+        *p++ = 0x00;  // Read value
+
+        // Set and start next converstion.
+        // WREG: Write to reg 0x06 (reference selection)
+        *p++ = (uint8_t)0x40 | 0x06;
+        *p++ = reg_0x06_val;
+        // WREG:  Write to reg 0x10 (gain selection)
+        *p++ = (uint8_t)0x40 | 0x10;
+        *p++ = reg_0x10_val;  //
+        // WREG: Write to reg 0x11 (input selection)
+        *p++ = (uint8_t)0x40 | 0x11;
+        *p++ = reg_0x11_val;
+        // START: Start next conversion.
+        *p++ = 0x08;
+        *p++ = 0x00;  // Dummy byte.
+      }
     }
-    // }
   }
 
   // We expect to be here exactly past the first half.
@@ -415,12 +455,23 @@ static void setup() {
 
   logger.info("ADC device id: 0x%02hx", cmd_read_register(0));
 
-  cmd_write_register(0x01, 0x00);  // Clear CRC and RESET flags.
-  cmd_write_register(0x02, 0x6C);  // 14400 SPS, (implicit Sinc5 filter)
-  cmd_write_register(0x03, 0x11);  // 50us start delay, one shot.
+  // Reset ADC status.
+  cmd_write_register(0x01, 0x00);
 
-  // These are temporary values. The real values are set later,
-  // per each ADC conversion, by the continuos DMA.
+  // Init static registers
+  for (uint8_t i = 0; i < kNumRegsInfo; i++) {
+    const RegisterInfo &reg_info = regs_info[i];
+    // Verify index consistency.
+    if (i != reg_info.idx) {
+      App_Error_Handler();
+    }
+    if (reg_info.type == STAT) {
+      cmd_write_register(reg_info.idx, reg_info.val);
+    }
+  }
+
+  // Initialize dynamic registers. They also also modified
+  // as part of the continious ADC/DMA sampling.
   cmd_write_register(0x06, 0x09);  // Ref Ain0 - Ain1
   cmd_write_register(0x10, 0x07);  // PGA = x128
   cmd_write_register(0x11, 0x34);  // Ain1 = positive, Ain0 = Negative.
@@ -467,35 +518,32 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
     packet_data.write_uint8(0x11);
     // Offset of first value relative to packet start time.
     packet_data.write_uint16(0);
-    // Num of load cell points in this packet.
-    static_assert(kDmaSlotsPerHalf % 2 == 0);
-    // Only half of the slots are of load cell. The rest are
-    // thermistor channles.
-    packet_data.write_uint16(kDmaSlotsPerHalf / 2);
-    // Millis between values. We don't allow truncation.
-    static_assert(kDmaPointsPerHalf / 4 > 1);
-    static_assert(kDmaPointsPerSec % 4 == 0);
-    static_assert((4 * 1000) % kDmaPointsPerSec == 0);
-    // Every fourth point is a loadcell reading.
-    packet_data.write_uint16((kDmaPointsPerSlot * 2 * 1000) / kDmaPointsPerSec);
+    // Num of load cell points in this packet. One per slot.
+    packet_data.write_uint16(kDmaSlotsPerHalf);
+    // Millis between load cell values. We don't allow truncation.
+    static_assert(kDmaPointsPerSec % kDmaPointsPerSlot == 0);
+    static_assert((kDmaPointsPerSlot * 1000) % kDmaPointsPerSec == 0);
+    // Every slot has a single loadcell reading.
+    packet_data.write_uint16((kDmaPointsPerSlot * 1000) / kDmaPointsPerSec);
     // Write the values. They are already in big endian order.
-    // We collect from the second point of each load cell slot.
-    for (uint32_t i = 1; i < kDmaPointsPerHalf; i += 4) {
+    // We collect last load cell point of each slot.
+    for (uint32_t i = kDmaConsecutiveLcPoints - 1; i < kDmaPointsPerHalf;
+         i += kDmaPointsPerSlot) {
       packet_data.write_bytes(
-          &bfr[(i * kDmaBytesPerPoint) + kRxDataOffsetInPoint], 3);
+          &bfr[(i * kDmaBytesPerPoint) + kDmaRxDataOffsetInPoint], 3);
     }
   }
 
   // Output each of the temperature channels. Each channel has a single slot
   // in each cycle.
-  for (uint32_t i = 0; i < kDmaNumThermistorChans; i++) {
-    // Thermistor channel id.
+  for (uint32_t i = 0; i < kDmaNumTemperatureChans; i++) {
+    // Temperature channel id.
     packet_data.write_uint8(0x21 + i);
     // First item offset in ms from packet base time. Truncation of
     // a fraction of a ms is ok.
-    const uint32_t first_pt_index = 3 + i * 4;
+    const uint32_t first_pt_index = kDmaConsecutiveLcPoints + i * kDmaPointsPerSlot;
     packet_data.write_uint16((1000 * first_pt_index) / kDmaPointsPerSec);
-    // Number of values in this channel report. Each thermistor channel
+    // Number of values in this channel report. Each temperature channel
     // has a single slot in each cycle.
     packet_data.write_uint16(kDmaCyclesPerHalf);
     // Millis between values. We don't allow truncation.
@@ -503,12 +551,12 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
     static_assert((1000 * kDmaPointsPerCycle) % kDmaPointsPerSec == 0);
     packet_data.write_uint16((1000 * kDmaPointsPerCycle) / kDmaPointsPerSec);
     // Write the values. They are already in big endian order.
-    const uint32_t data_offset_in_cycle =
-        (first_pt_index * kDmaBytesPerPoint) + kRxDataOffsetInPoint;
+    uint32_t byte_index =
+        (first_pt_index * kDmaBytesPerPoint) + kDmaRxDataOffsetInPoint;
     for (uint32_t cycle = 0; cycle < kDmaCyclesPerHalf; cycle++) {
-      const uint32_t data_offset_in_bfr =
-          (cycle * kDmaBytesPerCycle) + data_offset_in_cycle;
-      packet_data.write_bytes(&bfr[data_offset_in_bfr], 3);
+
+      packet_data.write_bytes(&bfr[byte_index], 3);
+      byte_index += kDmaBytesPerCycle;
     }
   }
 
@@ -517,19 +565,42 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
     App_Error_Handler();
   }
 
+  // For diagnostics. Capture the values of the static registers as
+  // we read as part of the continious DMA (one static reg value per
+  // point)
+  for (uint32_t i = 0; i < kNumRegsInfo; i++) {
+    regs_values[i] = bfr[i * kDmaBytesPerPoint + kDmaRegValOffsetInPoint];
+  }
+
   // Send to monitor and maybe to SD.
   controller::report_log_data(packet_data);
 
   // Debugging info.
   if (true) {
     logger.info(
-        "ADC %d: %ld, %ld, %ld", id, decode_int24(&bfr[kRxDataOffsetInPoint]),
-        decode_int24(&bfr[kRxDataOffsetInPoint + 2 * kDmaBytesPerPoint]),
-        decode_int24(&bfr[kRxDataOffsetInPoint + 4 * kDmaBytesPerPoint]));
+        "ADC %d: %ld, %ld, %ld", id,
+        decode_int24(&bfr[kDmaRxDataOffsetInPoint]),
+        decode_int24(&bfr[kDmaRxDataOffsetInPoint + 2 * kDmaBytesPerPoint]),
+        decode_int24(&bfr[kDmaRxDataOffsetInPoint + 4 * kDmaBytesPerPoint]));
   }
 
   if (false) {
     logger.info("ADC processed in %lu ms", time_util::millis() - isr_millis);
+  }
+}
+
+// TODO: Once we confirm that static regs change value (e.g. bus noise when
+// shacking the ADC card), change the static regs reads to writes restore
+// the desired values.
+void verify_registers_vals() {
+  logger.info("ADC id reg: 0x%02hx", regs_values[0x00]);
+  logger.info("ADC status reg: 0x%02hx", regs_values[0x01]);
+  for (uint32_t i = 0; i < kNumRegsInfo; i++) {
+    const RegisterInfo &reg_info = regs_info[i];
+    if (reg_info.type == STAT && regs_values[i] != reg_info.val) {
+      logger.error("ADC Reg %02hx: %02hx -> %02hx", reg_info.idx, reg_info.val,
+                   regs_values[i]);
+    }
   }
 }
 

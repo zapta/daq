@@ -14,6 +14,7 @@ namespace adc {
 
   void dump_state();
 
-
+  // For diagnostics.
+  void verify_registers_vals();
 
 }  // namespace adc

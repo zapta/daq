@@ -32,8 +32,9 @@ void app_main() {
   serial::serial2.init();
 
   HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_1);
-  // Set TIM12 PWM to 40%. This signal acts as ADC ontinuos CS.
-  __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_1, 400);
+  // Set TIM12 PWM 200 ticks high, 300 ticks down. Acts
+  // as CS for the ADC SPI.
+  __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_1, 200);
   HAL_TIM_Base_Start_IT(&htim12);
 
   // Init host link.
@@ -70,6 +71,7 @@ void app_main() {
                     recording_info.recording_time_millis);
       }
       logger.info("Session id: [%08lx]", session::id());
+      adc::verify_registers_vals();
     }
 
     time_util::delay_millis(100);
