@@ -486,7 +486,7 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
     }
   }
 
-  // Output each of the thermistor channels. Each channel has a single slot
+  // Output each of the temperature channels. Each channel has a single slot
   // in each cycle.
   for (uint32_t i = 0; i < kDmaNumThermistorChans; i++) {
     // Thermistor channel id.
