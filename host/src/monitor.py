@@ -98,26 +98,18 @@ class MarkerHistory:
                 items_to_delete = i
                 break
         if items_to_delete:
-            self.markers = self.markers[items_to_delete:]
+            del self.markers[0:items_to_delete]
 
-    # def keep_at_most(self, max_len: int):
-    #     n = len(self.markers)
-    #     if max_len <= 0:
-    #         self.markers = []
-    #     elif max_len > n:
-    #         self.markers = self.markers[-max_len:]
+
 
 
 @dataclass(frozen=True)
 class LoadCellChannel:
-    # def __init__(self, chan_name: str, lc_config: LoadCellChannelConfig):
     chan_name: str
     lc_config: LoadCellChannelConfig
     display_series: DisplaySeries
 
-    # self.chan_name = chan_name
-    # self.lc_config = lc_config
-    # self.display_series = DisplaySeries()
+
 
 
 @dataclass(frozen=True)
@@ -126,10 +118,7 @@ class TemperatureChannel:
     temperature_config: TemperatureChannelConfig
     display_series: DisplaySeries
 
-    # def __init__(self, chan_name: str, temperature_config: TemperatureChannelConfig):
-    #     self.chan_name = chan_name
-    #     self.temperature_config = temperature_config
-    #     self.display_series = DisplaySeries()
+
 
 
 # Initialized later.
