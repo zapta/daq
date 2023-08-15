@@ -5,8 +5,6 @@ import math
 import re
 import pyqtgraph as pg
 from PyQt6 import QtCore
-from UliEngineering.Physics.RTD import pt1000_temperature, ptx_temperature
-import functools
 
 logger = logging.getLogger("sys_config")
 
@@ -152,25 +150,64 @@ class ThermistorChannelConfig(TemperatureChannelConfig):
         return min(999, T)
 
 
+# PT1000 C -> R in 10C increments.
+#
+PT1000_TABLE = [[-50, 803.1], [-40, 842.7], [-30, 882.2], [-20, 921.6], [-10, 960.9], [0, 1000.0],
+                [10, 1039.0], [20, 1077.9], [30, 1116.7], [40, 1155.4], [50, 1194.0], [60, 1232.4],
+                [70, 1270.8], [80, 1309.0], [90, 1347.1], [100, 1385.1], [110, 1422.9],
+                [120, 1460.7], [130, 1498.3], [140, 1535.8], [150, 1573.3], [160, 1610.5],
+                [170, 1647.7], [180, 1684.8], [190, 1721.7], [200, 1758.6], [210, 1795.3],
+                [220, 1831.9], [230, 1868.4], [240, 1904.7], [250, 1941.0], [260, 1977.1],
+                [270, 2013.1], [280, 2049.0], [290, 2084.8], [300, 2120.5], [310, 2156.1],
+                [320, 2191.5], [330, 2226.8], [340, 2262.1], [350, 2297.2], [360, 2332.1],
+                [370, 2367.0], [380, 2401.8], [390, 2436.4], [400, 2470.9], [410, 2505.3],
+                [420, 2539.6], [430, 2573.8], [440, 2607.8], [450, 2641.8], [460, 2675.6],
+                [470, 2709.3], [480, 2742.9], [490, 2776.4], [500, 2809.8]]
+
+PT1000_MIN_R = PT1000_TABLE[0][1]
+PT1000_MAX_R = PT1000_TABLE[-1][1]
+
+
 class RtdChannelConfig(TemperatureChannelConfig):
     """Configuration of a temperature channel of type RTD (e.g. PT1000)."""
 
     def __init__(self, chan_name: str, color: str, adc_open: int, adc_short: int, adc_calib: int,
                  adc_calib_r: float, rtd_r0: float, rtd_offset: float):
         super().__init__(chan_name, color, adc_open, adc_short, adc_calib, adc_calib_r)
+        self.__rtd_r0 = rtd_r0
         self.__rtd_offset = rtd_offset
-        self.__converter = functools.partial(ptx_temperature, rtd_r0)
-
+        self.__last_index = 0
 
     def __str__(self):
         return f"RTD {self.__chan_name}"
 
+    def __interoplate__(self, i, pt1000_r):
+        e0 = PT1000_TABLE[i]
+        e1 = PT1000_TABLE[i + 1]
+        dt = e1[0] - e0[0]
+        dr = e1[1] - e0[1]
+        fraction = (pt1000_r - e0[1]) / dr
+        t = e0[0] + fraction * dt
+        return self.__rtd_offset + t
+
     def resistance_to_c(self, r: float) -> float:
         """RTD specific resistance to temperature function."""
-        # See example at 
-        # https://techoverflow.net/2016/01/02/accurate-calculation-of-pt100pt1000-temperature-from-resistance/
-        t = self.__rtd_offset + self.__converter(r)
-        return min(t, 999)
+        # Normalize r for 1000 at 0C.
+        pt1000_r = r * 1000 / self.__rtd_r0
+        # First try the cached bucket, to avoid linear search.
+        if pt1000_r >= PT1000_TABLE[self.__last_index][1] and pt1000_r <= PT1000_TABLE[self.__last_index + 1][1]:
+            return self.__interoplate__(i)
+        # R is not in cached bucket. Compute from scratch.
+        if pt1000_r < PT1000_MIN_R:
+            return -273.15
+        if pt1000_r > PT1000_MAX_R:
+            return 999
+        for i in range(len(PT1000_TABLE) - 1):
+            if pt1000_r >= PT1000_TABLE[i][1]:
+                self.__last_index = i
+                return self.__interoplate__(i)
+        # This should never happen.
+        raise RuntimeError(f"Can't find temperature for r={r} ({pt1000_r})")
 
 
 class SysConfig:
@@ -220,7 +257,8 @@ class SysConfig:
                     logger.info(f"RTD channel: {ch_name}, {rtd_r0}")
                     self.__tmp_ch_configs[ch_name] = RtdChannelConfig(ch_name, color, adc_open,
                                                                       adc_short, adc_calib,
-                                                                      adc_calib_r, rtd_r0, rtd_offset)
+                                                                      adc_calib_r, rtd_r0,
+                                                                      rtd_offset)
                 else:
                     thermistor_config = ch_config["thermistor"]
                     thermistor_beta = thermistor_config["beta"]
@@ -233,7 +271,8 @@ class SysConfig:
                     )
                     self.__tmp_ch_configs[ch_name] = ThermistorChannelConfig(
                         ch_name, color, adc_open, adc_short, adc_calib, adc_calib_r,
-                        thermistor_beta, thermistor_c, thermistor_ref_r, thermistor_ref_c, thermistor_offset)
+                        thermistor_beta, thermistor_c, thermistor_ref_r, thermistor_ref_c,
+                        thermistor_offset)
             else:
                 raise RuntimeError(f"Unexpected channel name in sys_config: {ch_name}")
 
