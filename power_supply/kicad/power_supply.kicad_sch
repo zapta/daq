@@ -1895,6 +1895,10 @@
     (effects (font (size 3 3) (thickness 0.6) bold) (justify left bottom))
     (uuid e22a057f-c5b0-48b1-b687-773bce116e55)
   )
+  (text "TODO: Added silk screen area for serial number." (at 137.795 43.815 0)
+    (effects (font (size 2.54 2.54) (color 255 0 0 1)) (justify left bottom))
+    (uuid f5087dec-ae5b-4c9e-a86f-c260064e6bee)
+  )
 
   (label "VIN+" (at 95.25 58.42 0) (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left bottom))

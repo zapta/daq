@@ -3740,6 +3740,11 @@
     (uuid fff664e0-5ce5-4ae6-ad4d-dadf4589500e)
   )
 
+  (text "TODO: Add silk screen to mark serial number." (at 123.825 36.195 0)
+    (effects (font (size 2.54 2.54) (color 255 0 0 1)) (justify left bottom))
+    (uuid fdb0e399-3143-446d-9417-2e7ca0b80dd8)
+  )
+
   (label "A29" (at 149.86 134.62 180) (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right bottom))
     (uuid 0023f04b-db60-482e-ba6b-0ddc587d84d1)
