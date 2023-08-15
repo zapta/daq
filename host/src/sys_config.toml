@@ -7,8 +7,8 @@
 # https://www.mouser.com/datasheet/2/362/P18_NT_Thermistor-1535133.pdf
 
 [data_link]
-#port = "COM4"
-port = "COM9"
+port = "COM4"
+#port = "COM9"
 
 
 [channel.LDC1]
