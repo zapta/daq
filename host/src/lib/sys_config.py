@@ -1,4 +1,4 @@
-from typing import Any, Dict, Tuple, Optional, List
+from typing import Any, Dict, Tuple, List, Optional
 import tomllib
 import logging
 import math
@@ -147,7 +147,7 @@ class ThermistorChannelConfig(TemperatureChannelConfig):
         # The Steinhart-Hart equation.
         reciprocal_T = self.__coef_A + (self.__coef_B * ln_R) + (self.__coef_C * ln_R * ln_R * ln_R)
         T = (1 / reciprocal_T) - 273.15 + self.__thermistor_offset
-        return min(999, T)
+        return min(999.0, T)
 
 
 # PT1000 [T[C], R[Ohms]] data points.
@@ -195,9 +195,8 @@ class RtdChannelConfig(TemperatureChannelConfig):
         # Normalize r for 1000 at 0C.
         pt1000_r = r * 1000 / self.__rtd_r0
         # First try the cached bucket, to avoid linear search.
-        if pt1000_r >= PT1000_TABLE[self.__last_index][1] and pt1000_r <= PT1000_TABLE[
-                self.__last_index + 1][1]:
-            return self.__interoplate__(i, pt1000_r)
+        if PT1000_TABLE[self.__last_index][1] <= pt1000_r <= PT1000_TABLE[self.__last_index + 1][1]:
+            return self.__interoplate__(self.__last_index, pt1000_r)
         # R is not in cached bucket. Compute from scratch.
         if pt1000_r < PT1000_MIN_R:
             return -273.15
@@ -216,12 +215,10 @@ class SysConfig:
 
     def __init__(self):
         """Constructor."""
-        # self.__toml_dict: Dict[str, Any] = None
-        # self.__channels: Dict[str, Any] = None
-        self.__com_port: str = None
-        self.__ldc_ch_configs: Dict[str, LoadCellChannelConfig] = None
-        self.__tmp_ch_configs: Dict[str, TemperatureChannelConfig] = None
-        self.__markers_config: MarkersConfig = None
+        self.__com_port: Optional[str] = None
+        self.__ldc_ch_configs: Optional[Dict[str, LoadCellChannelConfig]] = None
+        self.__tmp_ch_configs: Optional[Dict[str, TemperatureChannelConfig]] = None
+        self.__markers_config: Optional[MarkersConfig] = None
 
     def __populate_com_port(self, toml: Dict[str, Any]) -> None:
         """Populates self.__com_port"""
@@ -298,9 +295,6 @@ class SysConfig:
             marker_pen = self.__parse_toml_pen(marker_config["pen"])
             marker_config = MarkerConfig(marker_type, marker_regex, regex_value_group, marker_pen)
             self.__markers_config.append_marker(marker_config)
-
-    def __str__(self):
-        return f"SysConfig: {self.__toml_dict}"
 
     def load_from_file(self, file_path: str) -> None:
         with open(file_path, "rb") as f:
