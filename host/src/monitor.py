@@ -101,8 +101,6 @@ class MarkerHistory:
             del self.markers[0:items_to_delete]
 
 
-
-
 @dataclass(frozen=True)
 class LoadCellChannel:
     chan_name: str
@@ -110,15 +108,11 @@ class LoadCellChannel:
     display_series: DisplaySeries
 
 
-
-
 @dataclass(frozen=True)
 class TemperatureChannel:
     chan_name: str
     temperature_config: TemperatureChannelConfig
     display_series: DisplaySeries
-
-
 
 
 # Initialized later.
@@ -241,7 +235,6 @@ def set_display_status_line(msg: str) -> None:
 
 
 def update_display():
-
     global lc_channels, temperature_channels, plot1, plot2, sys_config, latest_log_time
 
     # logger.info(f"Update display(), latest_log_time = {latest_log_time}")
@@ -511,7 +504,7 @@ def timer_handler():
                 writes_ok = response_data.read_uint32()
                 write_failures = response_data.read_uint32()
                 errors_note = f" ERRORS: {write_failures}" if write_failures else ""
-                msg = f"  Recording [{name}] [{recording_millis/1000:.0f} secs] [{writes_ok} records]{errors_note}"
+                msg = f"  Recording [{name}] [{recording_millis / 1000:.0f} secs] [{writes_ok} records]{errors_note}"
             else:
                 msg = "  Recording is off" if sd_card_inserted else "  No SD card"
             # logger.info(f"*** Available: {response_data.bytes_left_to_read()}")
