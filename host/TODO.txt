@@ -1,2 +1,1 @@
 
-* Max resistrnace when rtd is open results in a warning from Uri's library
