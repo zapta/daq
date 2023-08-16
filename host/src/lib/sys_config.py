@@ -197,7 +197,7 @@ class RtdChannelConfig(TemperatureChannelConfig):
         # First try the cached bucket, to avoid linear search.
         if pt1000_r >= PT1000_TABLE[self.__last_index][1] and pt1000_r <= PT1000_TABLE[
                 self.__last_index + 1][1]:
-            return self.__interoplate__(i)
+            return self.__interoplate__(i, pt1000_r)
         # R is not in cached bucket. Compute from scratch.
         if pt1000_r < PT1000_MIN_R:
             return -273.15
@@ -206,7 +206,7 @@ class RtdChannelConfig(TemperatureChannelConfig):
         for i in range(len(PT1000_TABLE) - 1):
             if pt1000_r >= PT1000_TABLE[i][1]:
                 self.__last_index = i
-                return self.__interoplate__(i)
+                return self.__interoplate__(i, pt1000_r)
         # This should never happen.
         raise RuntimeError(f"Can't find temperature for r={r} ({pt1000_r})")
 
