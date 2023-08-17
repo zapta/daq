@@ -13,7 +13,7 @@ import sys
 sys.path.insert(0, "..")
 # sys.path.insert(0, "../src/lib")
 
-from src.lib.sys_config import SysConfig
+from lib.sys_config import SysConfig
 
 
 # from sys_config import SysConfig

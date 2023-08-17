@@ -2,6 +2,7 @@
 
 # A python program to monitor and control the data acquisition.
 
+
 import argparse
 import asyncio
 import logging
@@ -13,13 +14,17 @@ import statistics
 from PyQt6 import QtWidgets
 from pyqtgraph import LabelItem
 from typing import Optional, List, Dict, Any
+from dataclasses import dataclass, field
+from serial_packets.client import SerialPacketsClient
+from serial_packets.packets import PacketStatus, PacketData
+
+# Local imports
+sys.path.insert(0, "..")
 from lib.log_parser import LogPacketsParser, ChannelData, ParsedLogPacket
 from lib.sys_config import SysConfig, MarkersConfig, LoadCellChannelConfig, TemperatureChannelConfig, SignalFilter
 from lib.display_series import DisplaySeries
-from dataclasses import dataclass, field
 
-from serial_packets.client import SerialPacketsClient
-from serial_packets.packets import PacketStatus, PacketData
+
 
 # Allows to stop the program by typing ctrl-c.
 signal.signal(signal.SIGINT, lambda number, frame: sys.exit())

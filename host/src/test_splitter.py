@@ -6,15 +6,15 @@ from __future__ import annotations
 
 import argparse
 import logging
-from typing import Tuple, Optional, List, Dict
 import os
+import sys
 import pandas as pd
-from lib.data_utils import extract_test_data, load_test_ranges, TestRange
 import matplotlib.pyplot as plt
-from dataclasses import dataclass
 
-# Initialized by main().
-# sys_config: SysConfig = None
+# Local imports
+sys.path.insert(0, "..")
+from lib.data_utils import extract_test_data, load_test_ranges
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -37,13 +37,13 @@ args = parser.parse_args()
 
 def input_file_path(basic_name: str) -> str:
     if args.input_dir:
-        return os.join(args.input_dir, basic_name)
+        return os.path.join(args.input_dir, basic_name)
     return basic_name
 
 
 def output_file_path(basic_name: str) -> str:
     if args.output_dir:
-        return os.join(args.output_dir, basic_name)
+        return os.path.join(args.output_dir, basic_name)
     return basic_name
 
 

@@ -13,21 +13,21 @@ import sys
 import os
 import glob
 from dataclasses import dataclass
+
+
+# Local imports.
+sys.path.insert(0, "..")
 from lib.log_parser import LogPacketsParser, ParsedLogPacket
 from lib.sys_config import SysConfig
+
 
 # For using the local version of serial_packet. Comment out if
 # using serial_packets package installed by pip.
 # sys.path.insert(0, "../../../../serial_packets_py/repo/src")
-
 # print(f"sys.path: {sys.path}", flush=True)
 
-from serial_packets.client import SerialPacketsClient
-from serial_packets.packets import PacketStatus, PacketsEvent, PacketData
 from serial_packets.packet_decoder import PacketDecoder, DecodedLogPacket
 
-# ADC_TICKS_ZERO_OFFSET = 37127
-# GRAMS_PER_ADC_TICK = 0.008871875
 
 # Initialized by main().
 sys_config: SysConfig = None
