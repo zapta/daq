@@ -7,22 +7,16 @@ import asyncio
 import logging
 import signal
 import sys
-import os
 import time
 import pyqtgraph as pg
 import statistics
-from PyQt6 import QtWidgets, QtCore
-from pyqtgraph import PlotWidget, plot, LabelItem
-from typing import Tuple, Optional, List, Dict, Any
+from PyQt6 import QtWidgets
+from pyqtgraph import LabelItem
+from typing import Optional, List, Dict, Any
 from lib.log_parser import LogPacketsParser, ChannelData, ParsedLogPacket
-from lib.sys_config import SysConfig, MarkersConfig, LoadCellChannelConfig, TemperatureChannelConfig
+from lib.sys_config import SysConfig, MarkersConfig, LoadCellChannelConfig, TemperatureChannelConfig, SignalFilter
 from lib.display_series import DisplaySeries
 from dataclasses import dataclass, field
-
-# A workaround to avoid auto formatting.
-# For using the local version of serial_packet. Comment out if
-# using serial_packets package installed by pip.
-# sys.path.insert(0, "../../../../serial_packets_py/repo/src")
 
 from serial_packets.client import SerialPacketsClient
 from serial_packets.packets import PacketStatus, PacketData
@@ -45,7 +39,7 @@ args = parser.parse_args()
 
 # X spans, in secs, of the two plots.
 # TODO: Make these command line flags.
-# TODO: Add a control of LC channel down sampling for display.
+# TODO: Add a flag to perform down sampling of the LC channel, for display only.
 plot1_x_span = 2.0
 plot2_x_span = 70.0
 max_plot_x_span = max(plot1_x_span, plot2_x_span)
@@ -56,7 +50,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("main")
 
-# We use a single event loop for all asyncio operatios.
+# We use a single event loop for all asyncio operations.
 main_event_loop = asyncio.get_event_loop()
 
 # TODO: Move to a common place.
@@ -83,11 +77,11 @@ class MarkerHistory:
     def clear(self):
         self.markers.clear()
 
-    def append(self, time: float, name: str, pen: Any) -> None:
+    def append(self, marker_time: float, name: str, pen: Any) -> None:
         # Make sure time is monotonic. Time is in secs.
         if self.markers:
-            assert self.markers[-1].marker_time <= time
-        self.markers.append(MarkerEntry(time, name, pen))
+            assert self.markers[-1].marker_time <= marker_time
+        self.markers.append(MarkerEntry(marker_time, name, pen))
 
     def prune_older_than(self, min_time: float):
         """Delete prefix of marker older than min_time"""
@@ -105,6 +99,8 @@ class LoadCellChannel:
     chan_name: str
     lc_config: LoadCellChannelConfig
     display_series: DisplaySeries
+    signal_filter: Optional[SignalFilter]
+    filtered_display_series: DisplaySeries
 
 
 @dataclass(frozen=True)
@@ -165,7 +161,8 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
         # Ignore packet if it's a left over from a previous device session (before reboot).
         if parsed_log_packet.session_id() != device_session_id:
             logger.warning(
-                f"Session id mismatch ({parsed_log_packet.session_id():08x} vs {device_session_id:08x}), ignoring packet"
+                f"Session id mismatch ({parsed_log_packet.session_id():08x} vs "
+                f"{device_session_id:08x}), ignoring packet"
             )
             return
         packet_end_time = parsed_log_packet.end_time()
@@ -186,9 +183,13 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
                 values_g.append(lc_chan.lc_config.adc_reading_to_grams(adc_value))
                 adc_values_sum += adc_value
             lc_chan.display_series.extend(times_secs, values_g)
-            avg_adc_value = adc_values_sum / len(times_secs)
+            if lc_chan.signal_filter:
+                filtered_values_g = lc_chan.signal_filter.filter(values_g)
+                lc_chan.filtered_display_series.extend(times_secs, filtered_values_g)
             if args.calibration:
-                lc_chan.lc_config.dump_lc_calibration(round(avg_adc_value))
+                avg_adc_value = round(adc_values_sum / len(times_secs))
+                lc_chan.lc_config.dump_lc_calibration(avg_adc_value)
+
         # Process temperature channels
         for temperature_chan_name in temperature_channels.keys():
             # Process temperature channel. We compute the average of the readings
@@ -215,12 +216,12 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
         markers_config: MarkersConfig = sys_config.markers_config()
         if marker_data:
             for time_millis, marker_name in marker_data.timed_values():
-                time = time_millis / 1000
+                marker_time = time_millis / 1000
                 marker_type, marker_value = markers_config.classify_marker(marker_name)
                 logger.info(
-                    f"Marker: [{marker_name}] type=[{marker_type}] value[{marker_value}] time={time:.3f}]"
+                    f"Marker: [{marker_name}] type=[{marker_type}] value[{marker_value}] time={marker_time:.3f}]"
                 )
-                markers_history.append(time, marker_name,
+                markers_history.append(marker_time, marker_name,
                                        markers_config.pen_for_marker(marker_name))
 
         # All done. Update the display
@@ -249,12 +250,21 @@ def update_display():
 
     # Update plot 1 with load_cells
     for ch_name, lc_chan in sorted(lc_channels.items()):
-        lc_chan.display_series.delete_older_than(latest_log_time - plot1_x_span)
+        cleanup_time = latest_log_time - plot1_x_span
+        lc_chan.display_series.delete_older_than(cleanup_time)
         x = lc_chan.display_series.relative_times(latest_log_time)
+        # Draw the actual values ('below' on the display)
         y = lc_chan.display_series.values()
         color = lc_chan.lc_config.color()
         plot1.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name, antialias=True)
-        # logger.info(f"{ch_name}: {lc_chan.display_series.mean_value():.3f}")
+        # Draw first the optional low pass version ('above' on the display)
+        if lc_chan.filtered_display_series:
+            lc_chan.filtered_display_series.delete_older_than(cleanup_time)
+            y = lc_chan.filtered_display_series.values()
+            color = lc_chan.lc_config.filtered_signal_color()
+            plot1.plot(x, y, pen=pg.mkPen(color=color, width=2),
+                       name=ch_name + "-LP", antialias=True)
+
 
     # Update plot 2 with temperature channels
     for ch_name, temperature_chan in sorted(temperature_channels.items()):
@@ -275,7 +285,7 @@ def update_display():
 
 
 async def connection_task():
-    """Continuos task that tries to reconnect if needed."""
+    """A continues task that tries to reconnect if needed."""
     global serial_packets_client
     while True:
         if not serial_packets_client.is_connected():
@@ -305,6 +315,7 @@ async def init_serial_packets_client() -> None:
     assert connected, f"Could not open port {serial_port}"
     # We are good. Create a continuous task that will try to reconnect
     # if the serial connection disconnected (e.g. USB plug is removed).
+    # noinspection PyUnusedLocal
     reconnection_task = asyncio.create_task(connection_task(), name="connection_task")
 
 
@@ -330,7 +341,10 @@ def init_display():
 
     lc_channels = {}
     for chan_name, lc_config in sys_config.load_cells_configs().items():
-        lc_channels[chan_name] = LoadCellChannel(chan_name, lc_config, DisplaySeries())
+        lc_filter = lc_config.new_filter()
+        filtered_display_series = DisplaySeries() if lc_filter else None
+        lc_channels[chan_name] = LoadCellChannel(chan_name, lc_config, DisplaySeries(), lc_filter,
+                                                 filtered_display_series)
 
     temperature_channels = {}
     for chan_name, temperature_config in sys_config.temperature_configs().items():
@@ -409,7 +423,7 @@ last_command_status_time = time.time() - 10
 device_session_id = 0
 
 
-# Resets the session. E.g. when the devices was detected
+# Resets the session. E.g. when the devices were detected
 # to go through reset.
 def reset_display():
     global latest_log_time
@@ -480,24 +494,20 @@ def timer_handler():
         logger.debug("Got response for STATUS command")
         status, response_data = command_status_future.result()
         command_status_future = None
-        if (status != PacketStatus.OK.value):
+        if status != PacketStatus.OK.value:
             logger.error(f"STATUS command failed with status: {status}")
             msg = f"ERROR: Device not available (status {status})"
         else:
-            # print(response_data.hex_str(), flush=True)
+            # noinspection PyUnusedLocal
             version = response_data.read_uint8()
-            # assert(version == 1)
             session_id = response_data.read_uint32()
-            # logger.info(f"Session id: {session_id:08x}")
+            # noinspection PyUnusedLocal
             device_time_millis = response_data.read_uint32()
             sd_card_inserted = response_data.read_uint8()
             recording_active = response_data.read_uint8()
             if recording_active:
                 recording_millis = response_data.read_uint32()
                 name = response_data.read_str()
-                # name_bytes = response_data.read_bytes(name_len)
-                # logger.info(f"Name bytes: [{name_bytes}]")
-                # name = name_bytes.decode("utf-8")
                 writes_ok = response_data.read_uint32()
                 write_failures = response_data.read_uint32()
                 errors_note = f" ERRORS: {write_failures}" if write_failures else ""
@@ -516,16 +526,21 @@ def timer_handler():
         set_display_status_line(msg)
 
 
-sys_config = SysConfig()
-sys_config.load_from_file(args.sys_config)
-init_display()
-main_event_loop.run_until_complete(init_serial_packets_client())
+def main():
+    global sys_config
 
-timer = pg.QtCore.QTimer()
-timer.timeout.connect(timer_handler)
+    sys_config = SysConfig()
+    sys_config.load_from_file(args.sys_config)
+    init_display()
+    main_event_loop.run_until_complete(init_serial_packets_client())
 
-# NOTE: The argument 1 is delay in millis between invocations.
-timer.start(1)
+    timer = pg.QtCore.QTimer()
+    timer.timeout.connect(timer_handler)
+
+    # NOTE: The argument 1 is delay in millis between invocations.
+    timer.start(1)
+    pg.exec()
+
 
 if __name__ == '__main__':
-    pg.exec()
+    main()

@@ -3,3 +3,4 @@ PyQt6
 serial_packets
 pandas
 matplotlib
+scipy
