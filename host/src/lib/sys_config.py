@@ -75,7 +75,7 @@ class LoadCellChannelConfig:
 
 
 class TemperatureChannelConfig:
-    """Configuration of a temperature channel. Should be subclassed for each sensor type.."""
+    """Configuration of a temperature channel. Should be subclassed for each sensor type."""
 
     def __init__(self, chan_name: str, color: str, adc_open: int, adc_short: int, adc_calib: int,
                  adc_calib_r: float):
@@ -128,11 +128,11 @@ class ThermistorChannelConfig(TemperatureChannelConfig):
         self.__thermistor_offset = thermistor_offset
         self.__coef_C = thermistor_c
         self.__coef_B = 1.0 / thermistor_beta
-        ln_Rref = math.log(thermistor_ref_r)
-        ln_Rref_cube = ln_Rref * ln_Rref * ln_Rref
+        ln_rref = math.log(thermistor_ref_r)
+        ln_rref_cube = ln_rref * ln_rref * ln_rref
         # We compute A by solving for T = therm_ref_c.
         self.__coef_A = 1.0 / (thermistor_ref_c +
-                               273.15) - self.__coef_B * ln_Rref - self.__coef_C * ln_Rref_cube
+                               273.15) - self.__coef_B * ln_rref - self.__coef_C * ln_rref_cube
 
     def __str__(self):
         return f"Thermistor {self.__chan_name}"
@@ -143,11 +143,11 @@ class ThermistorChannelConfig(TemperatureChannelConfig):
             return -273.15
         if r <= 1.0:
             return 999
-        ln_R = math.log(r)
+        ln_r = math.log(r)
         # The Steinhart-Hart equation.
-        reciprocal_T = self.__coef_A + (self.__coef_B * ln_R) + (self.__coef_C * ln_R * ln_R * ln_R)
-        T = (1 / reciprocal_T) - 273.15 + self.__thermistor_offset
-        return min(999.0, T)
+        reciprocal_t = self.__coef_A + (self.__coef_B * ln_r) + (self.__coef_C * ln_r * ln_r * ln_r)
+        t = (1 / reciprocal_t) - 273.15 + self.__thermistor_offset
+        return min(999.0, t)
 
 
 # PT1000 [T[C], R[Ohms]] data points.
@@ -181,7 +181,7 @@ class RtdChannelConfig(TemperatureChannelConfig):
     def __str__(self):
         return f"RTD {self.__chan_name}"
 
-    def __interoplate__(self, i, pt1000_r):
+    def __interpolate__(self, i, pt1000_r):
         e0 = PT1000_TABLE[i]
         e1 = PT1000_TABLE[i + 1]
         dt = e1[0] - e0[0]
@@ -196,7 +196,7 @@ class RtdChannelConfig(TemperatureChannelConfig):
         pt1000_r = r * 1000 / self.__rtd_r0
         # First try the cached bucket, to avoid linear search.
         if PT1000_TABLE[self.__last_index][1] <= pt1000_r <= PT1000_TABLE[self.__last_index + 1][1]:
-            return self.__interoplate__(self.__last_index, pt1000_r)
+            return self.__interpolate__(self.__last_index, pt1000_r)
         # R is not in cached bucket. Compute from scratch.
         if pt1000_r < PT1000_MIN_R:
             return -273.15
@@ -205,7 +205,7 @@ class RtdChannelConfig(TemperatureChannelConfig):
         for i in range(len(PT1000_TABLE) - 1):
             if pt1000_r >= PT1000_TABLE[i][1]:
                 self.__last_index = i
-                return self.__interoplate__(i, pt1000_r)
+                return self.__interpolate__(i, pt1000_r)
         # This should never happen.
         raise RuntimeError(f"Can't find temperature for r={r} ({pt1000_r})")
 
@@ -265,7 +265,8 @@ class SysConfig:
                     thermistor_ref_c = thermistor_config["ref_c"]
                     thermistor_offset = thermistor_config["offset"]
                     logger.info(
-                        f"Thermistor channel: {ch_name}, {thermistor_beta},  {thermistor_c}, {thermistor_ref_r}, {thermistor_ref_c}"
+                        f"Thermistor channel: {ch_name}, {thermistor_beta},  {thermistor_c},"
+                        f" {thermistor_ref_r}, {thermistor_ref_c}"
                     )
                     self.__tmp_ch_configs[ch_name] = ThermistorChannelConfig(
                         ch_name, color, adc_open, adc_short, adc_calib, adc_calib_r,
