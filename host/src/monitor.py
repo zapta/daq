@@ -430,6 +430,8 @@ def reset_display():
     latest_log_time = None
     for chan in lc_channels.values():
         chan.display_series.clear()
+        if chan.filtered_display_series:
+            chan.filtered_display_series.clear()
     for chan in temperature_channels.values():
         chan.display_series.clear()
     markers_history.clear()
