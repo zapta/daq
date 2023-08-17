@@ -23,7 +23,7 @@ class TestSysConfig(unittest.TestCase):
 
     def setUp(self):
         self.sys_config = SysConfig()
-        self.sys_config.load_from_file("./test_sys_config.toml")
+        self.sys_config.load_from_file("./test_data/sys_config.toml")
         assert self.sys_config
 
     def test_rtd_r2t_conversion(self):
