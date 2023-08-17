@@ -14,12 +14,10 @@ port = "COM4"
 
 
 [channel.LDC1]
-color = "blue"
+color = "red"
 # grams = (adc_reading - adc_offset) * scale
 adc_offset = 101470
 scale = 0.002671
-# Experimental filter for monitor display only. Comment out to disable.
-low_pass = {f_sampling=500, f_cutoff=10, color="red"}
 
 
 [channel.TMP1]

@@ -21,7 +21,7 @@ from serial_packets.packets import PacketStatus, PacketData
 # Local imports
 sys.path.insert(0, "..")
 from lib.log_parser import LogPacketsParser, ChannelData, ParsedLogPacket
-from lib.sys_config import SysConfig, MarkersConfig, LoadCellChannelConfig, TemperatureChannelConfig, SignalFilter
+from lib.sys_config import SysConfig, MarkersConfig, LoadCellChannelConfig, TemperatureChannelConfig
 from lib.display_series import DisplaySeries
 
 
@@ -104,8 +104,8 @@ class LoadCellChannel:
     chan_name: str
     lc_config: LoadCellChannelConfig
     display_series: DisplaySeries
-    signal_filter: Optional[SignalFilter]
-    filtered_display_series: DisplaySeries
+    # signal_filter: Optional[SignalFilter]
+    # filtered_display_series: DisplaySeries
 
 
 @dataclass(frozen=True)
@@ -188,9 +188,9 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
                 values_g.append(lc_chan.lc_config.adc_reading_to_grams(adc_value))
                 adc_values_sum += adc_value
             lc_chan.display_series.extend(times_secs, values_g)
-            if lc_chan.signal_filter:
-                filtered_values_g = lc_chan.signal_filter.filter(values_g)
-                lc_chan.filtered_display_series.extend(times_secs, filtered_values_g)
+            # if lc_chan.signal_filter:
+            #     filtered_values_g = lc_chan.signal_filter.filter(values_g)
+            #     lc_chan.filtered_display_series.extend(times_secs, filtered_values_g)
             if args.calibration:
                 avg_adc_value = round(adc_values_sum / len(times_secs))
                 lc_chan.lc_config.dump_lc_calibration(avg_adc_value)
@@ -263,12 +263,12 @@ def update_display():
         color = lc_chan.lc_config.color()
         plot1.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name, antialias=True)
         # Draw first the optional low pass version ('above' on the display)
-        if lc_chan.filtered_display_series:
-            lc_chan.filtered_display_series.delete_older_than(cleanup_time)
-            y = lc_chan.filtered_display_series.values()
-            color = lc_chan.lc_config.filtered_signal_color()
-            plot1.plot(x, y, pen=pg.mkPen(color=color, width=2),
-                       name=ch_name + "-LP", antialias=True)
+        # if lc_chan.filtered_display_series:
+        #     lc_chan.filtered_display_series.delete_older_than(cleanup_time)
+        #     y = lc_chan.filtered_display_series.values()
+        #     color = lc_chan.lc_config.filtered_signal_color()
+        #     plot1.plot(x, y, pen=pg.mkPen(color=color, width=2),
+        #                name=ch_name + "-LP", antialias=True)
 
 
     # Update plot 2 with temperature channels
@@ -346,10 +346,9 @@ def init_display():
 
     lc_channels = {}
     for chan_name, lc_config in sys_config.load_cells_configs().items():
-        lc_filter = lc_config.new_filter()
-        filtered_display_series = DisplaySeries() if lc_filter else None
-        lc_channels[chan_name] = LoadCellChannel(chan_name, lc_config, DisplaySeries(), lc_filter,
-                                                 filtered_display_series)
+        # lc_filter = lc_config.new_filter()
+        # filtered_display_series = DisplaySeries() if lc_filter else None
+        lc_channels[chan_name] = LoadCellChannel(chan_name, lc_config, DisplaySeries())
 
     temperature_channels = {}
     for chan_name, temperature_config in sys_config.temperature_configs().items():
@@ -435,8 +434,8 @@ def reset_display():
     latest_log_time = None
     for chan in lc_channels.values():
         chan.display_series.clear()
-        if chan.filtered_display_series:
-            chan.filtered_display_series.clear()
+        # if chan.filtered_display_series:
+        #     chan.filtered_display_series.clear()
     for chan in temperature_channels.values():
         chan.display_series.clear()
     markers_history.clear()

@@ -11,41 +11,41 @@ from dataclasses import dataclass
 logger = logging.getLogger("sys_config")
 
 
-@dataclass(frozen=True)
-class LowPassFilterConfig:
-    """Describes low pass filter configuration"""
-    f_sampling: float
-    f_cutoff: float
-    color: str
+# @dataclass(frozen=True)
+# class LowPassFilterConfig:
+#     """Describes low pass filter configuration"""
+#     f_sampling: float
+#     f_cutoff: float
+#     color: str
 
 
-class SignalFilter:
-    """Abstract calss for signal filters."""
+# class SignalFilter:
+#     """Abstract calss for signal filters."""
+#
+#     def filter(self, values: List[float]) -> List[float]:
+#         """Accepts one or more input values and returns their filtered values."""
+#         # Should be implemented by all subclasses.
+#         raise NotImplemented("filter() not implemented.")
 
-    def filter(self, values: List[float]) -> List[float]:
-        """Accepts one or more input values and returns their filtered values."""
-        # Should be implemented by all subclasses.
-        raise NotImplemented("filter() not implemented.")
 
-
-class LowPassFilter(SignalFilter):
-    """A low pass implementation of SignalFilter."""
-
-    def __init__(self, filter_spec: LowPassFilterConfig):
-        assert filter_spec.f_cutoff > 0
-        assert filter_spec.f_sampling > filter_spec.f_cutoff
-        f_nyquist = filter_spec.f_sampling / 2
-        f_ratio = filter_spec.f_cutoff / f_nyquist
-        assert 0 < f_ratio < 1.0, f"f_ratio={f_ratio}, f_sampling={filter_spec.f_sampling}, f_cutoff={filter_spec.f_cutoff}, f_nyquist={f_nyquist}"
-        b, a = scipy.signal.butter(2, [f_ratio], 'lowpass', analog=False)
-        self.__a = a
-        self.__b = b
-        # zi is the internal state of the filter.
-        self.__zi = scipy.signal.lfilter_zi(b, a)
-
-    def filter(self, values: List[float]) -> List[float]:
-        result, self.__zi = scipy.signal.lfilter(self.__b, self.__a, values, zi=self.__zi)
-        return result
+# class LowPassFilter(SignalFilter):
+#     """A low pass implementation of SignalFilter."""
+#
+#     def __init__(self, filter_spec: LowPassFilterConfig):
+#         assert filter_spec.f_cutoff > 0
+#         assert filter_spec.f_sampling > filter_spec.f_cutoff
+#         f_nyquist = filter_spec.f_sampling / 2
+#         f_ratio = filter_spec.f_cutoff / f_nyquist
+#         assert 0 < f_ratio < 1.0, f"f_ratio={f_ratio}, f_sampling={filter_spec.f_sampling}, f_cutoff={filter_spec.f_cutoff}, f_nyquist={f_nyquist}"
+#         b, a = scipy.signal.butter(2, [f_ratio], 'lowpass', analog=False)
+#         self.__a = a
+#         self.__b = b
+#         # zi is the internal state of the filter.
+#         self.__zi = scipy.signal.lfilter_zi(b, a)
+#
+#     def filter(self, values: List[float]) -> List[float]:
+#         result, self.__zi = scipy.signal.lfilter(self.__b, self.__a, values, zi=self.__zi)
+#         return result
 
 
 class MarkerConfig:
@@ -93,13 +93,12 @@ class MarkersConfig:
 class LoadCellChannelConfig:
     """Configuration of a load cell channel."""
 
-    def __init__(self, chan_name: str, color: str, offset: int, scale: float,
-                 low_pass_config: Optional[LowPassFilterConfig]):
+    def __init__(self, chan_name: str, color: str, offset: int, scale: float):
         self.__chan_name = chan_name
         self.__color = color
         self.__offset = offset
         self.__scale = scale
-        self.__low_pass_config = low_pass_config
+        # self.__low_pass_config = low_pass_config
 
     def __str__(self):
         return f"Load cell {self.__chan_name} ({self.__color}): offset={self.__offset}, scale={self.__scale}"
@@ -111,14 +110,14 @@ class LoadCellChannelConfig:
         grams = self.adc_reading_to_grams(adc_reading)
         logger.info(f"{self.__chan_name:5s} adc {adc_reading:7d} -> {grams:7.1f} grams")
 
-    def new_filter(self) -> Optional[SignalFilter]:
-        if self.__low_pass_config:
-            return LowPassFilter(self.__low_pass_config)
-        return None
+    # def new_filter(self) -> Optional[SignalFilter]:
+    #     if self.__low_pass_config:
+    #         return LowPassFilter(self.__low_pass_config)
+    #     return None
 
-    def filtered_signal_color(self):
-        assert self.__low_pass_config, "Load cell channel has no filter."
-        return self.__low_pass_config.color
+    # def filtered_signal_color(self):
+    #     assert self.__low_pass_config, "Load cell channel has no filter."
+    #     return self.__low_pass_config.color
 
     def color(self) -> str:
         return self.__color
@@ -286,15 +285,15 @@ class SysConfig:
                 color = ch_config["color"]
                 offset = ch_config["adc_offset"]
                 scale = ch_config["scale"]
-                low_pass_config = None
-                low_pass = ch_config.get("low_pass", None)
-                if low_pass:
-                    lp_f_sampling = low_pass["f_sampling"]
-                    lp_f_cutoff = low_pass["f_cutoff"]
-                    lp_color = low_pass["color"]
-                    low_pass_config = LowPassFilterConfig(lp_f_sampling, lp_f_cutoff, lp_color)
+                # low_pass_config = None
+                # low_pass = ch_config.get("low_pass", None)
+                # if low_pass:
+                #     lp_f_sampling = low_pass["f_sampling"]
+                #     lp_f_cutoff = low_pass["f_cutoff"]
+                #     lp_color = low_pass["color"]
+                #     low_pass_config = LowPassFilterConfig(lp_f_sampling, lp_f_cutoff, lp_color)
                 self.__ldc_ch_configs[ch_name] = LoadCellChannelConfig(
-                    ch_name, color, offset, scale, low_pass_config)
+                    ch_name, color, offset, scale)
             elif ch_name.startswith("TMP"):
                 assert ch_name not in self.__tmp_ch_configs
                 color = ch_config["color"]
