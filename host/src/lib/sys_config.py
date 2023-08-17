@@ -6,7 +6,7 @@ import re
 import pyqtgraph as pg
 from PyQt6 import QtCore
 import scipy
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 logger = logging.getLogger("sys_config")
 
@@ -253,7 +253,7 @@ class RtdChannelConfig(TemperatureChannelConfig):
         if pt1000_r > PT1000_MAX_R:
             return 999
         for i in range(len(PT1000_TABLE) - 1):
-            if pt1000_r >= PT1000_TABLE[i][1]:
+            if pt1000_r <= PT1000_TABLE[i+1][1]:
                 self.__last_index = i
                 return self.__interpolate__(i, pt1000_r)
         # This should never happen.
