@@ -68,7 +68,7 @@ class LoadCellChannelConfig:
 
     def dump_lc_calibration(self, adc_reading: int) -> None:
         grams = self.adc_reading_to_grams(adc_reading)
-        logger.info(f"{self.__chan_name:5s} adc {adc_reading:7.0f} -> {grams:7.1f} grams")
+        logger.info(f"{self.__chan_name:5s} adc {adc_reading:7d} -> {grams:7.1f} grams")
 
     def color(self) -> str:
         return self.__color

@@ -10,8 +10,7 @@ import sys
 import os
 import time
 import pyqtgraph as pg
-import numpy as np
-import re
+import statistics
 from PyQt6 import QtWidgets, QtCore
 from pyqtgraph import PlotWidget, plot, LabelItem
 from typing import Tuple, Optional, List, Dict, Any
@@ -116,14 +115,14 @@ class TemperatureChannel:
 
 
 # Initialized later.
-sys_config: SysConfig = None
-serial_port: str = None
-serial_packets_client: SerialPacketsClient = None
+sys_config: Optional[SysConfig] = None
+serial_port: Optional[str] = None
+serial_packets_client: Optional[SerialPacketsClient] = None
 # serial_reconnection_task = None
 
 # Initialized later. Keys are channel names.
-lc_channels: Dict[str, LoadCellChannel] = None
-temperature_channels: Dict[str, TemperatureChannel] = None
+lc_channels: Optional[Dict[str, LoadCellChannel]] = None
+temperature_channels: Optional[Dict[str, TemperatureChannel]] = None
 
 markers_history = MarkerHistory()
 
@@ -139,11 +138,11 @@ initial_window_width = 800
 initial_window_height = 500
 window_title = "DAQ Monitor"
 
-plot1: pg.PlotItem = None
-plot2: pg.PlotItem = None
-button1: QtWidgets.QPushButton = None
-button2: QtWidgets.QPushButton = None
-status_label: LabelItem = None
+plot1: Optional[pg.PlotItem] = None
+plot2: Optional[pg.PlotItem] = None
+button1: Optional[QtWidgets.QPushButton] = None
+button2: Optional[QtWidgets.QPushButton] = None
+status_label: Optional[LabelItem] = None
 app = None
 app_view = None
 
@@ -154,10 +153,10 @@ temperature_configs = {}
 
 # Device time in secs. Represent the time of last
 # known info.
-latest_log_time = None
+latest_log_time: Optional[float] = None
 
 
-async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, PacketData]:
+async def message_async_callback(endpoint: int, data: PacketData) -> None:
     """Callback from the serial packets clients for incoming messages."""
     global lc_channels, temperature_channels, latest_log_time
     logger.debug(f"Received message: [%d] %s", endpoint, data.hex_str(max_bytes=10))
@@ -189,7 +188,7 @@ async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, 
             lc_chan.display_series.extend(times_secs, values_g)
             avg_adc_value = adc_values_sum / len(times_secs)
             if args.calibration:
-                lc_chan.lc_config.dump_lc_calibration(avg_adc_value)
+                lc_chan.lc_config.dump_lc_calibration(round(avg_adc_value))
         # Process temperature channels
         for temperature_chan_name in temperature_channels.keys():
             # Process temperature channel. We compute the average of the readings
@@ -198,20 +197,19 @@ async def message_async_callback(endpoint: int, data: PacketData) -> Tuple[int, 
             if not temperature_data:
                 # This packet has no data for this channel.
                 break
-            lc_chan: LoadCellChannel = lc_channels[lc_ch_name]
             temperature_chan: TemperatureChannel = temperature_channels[temperature_chan_name]
             times_millis = []
             adc_values = []
             for time_millis, adc_value in temperature_data.timed_values():
                 times_millis.append(time_millis)
                 adc_values.append(adc_value)
-            avg_times_millis = np.mean(times_millis)
-            avg_adc_value = np.mean(adc_values)
+            avg_times_millis = statistics.mean(times_millis)
+            avg_adc_value = statistics.mean(adc_values)
             temperature_chan.display_series.extend(
                 [avg_times_millis / 1000],
-                [temperature_chan.temperature_config.adc_reading_to_c(avg_adc_value)])
+                [temperature_chan.temperature_config.adc_reading_to_c(round(avg_adc_value))])
             if args.calibration:
-                temperature_chan.temperature_config.dump_temperature_calibration(avg_adc_value)
+                temperature_chan.temperature_config.dump_temperature_calibration(round(avg_adc_value))
         # Process marker channel.
         marker_data: ChannelData = parsed_log_packet.channel("MRKR")
         markers_config: MarkersConfig = sys_config.markers_config()
@@ -241,7 +239,7 @@ def update_display():
     plot1.clear()
     plot2.clear()
 
-    if not latest_log_time:
+    if latest_log_time is None:
         logger.info("No log base time to update graphs")
         markers_history.clear()
         return
@@ -312,7 +310,7 @@ async def init_serial_packets_client() -> None:
 
 async def do_nothing():
     """ A dummy async method. """
-    None
+    pass
 
 
 def on_start_button():
@@ -440,7 +438,7 @@ def timer_handler():
     if pending_start_button_click:
         recording_name = time.strftime("%y%m%d-%H%M%S")
         logger.info(f"Will start a recording {recording_name}")
-        recording_name_bytes = recording_name.encode()
+        recording_name_bytes = bytearray(recording_name.encode())
         cmd = PacketData()
         cmd.add_uint8(0x02)  # Command = START
         cmd.add_uint8(len(recording_name_bytes))  # str len
@@ -457,7 +455,6 @@ def timer_handler():
         # set_status_line(f"START command status: {status}")
 
     if pending_stop_button_click:
-        logger.info(f"Will stop recording, if any.")
         cmd = PacketData()
         cmd.add_uint8(0x03)  # Command = STOP
         logger.info(f"STOP command: {cmd.hex_str(max_bytes=5)}")
