@@ -1,7 +1,3 @@
 .run.sh
 .log.sh
-.*.swp
 _*.csv
-__pycache__
-venv
-.idea

@@ -234,6 +234,7 @@ class RtdChannelConfig(TemperatureChannelConfig):
     def __interpolate__(self, i, pt1000_r):
         e0 = PT1000_TABLE[i]
         e1 = PT1000_TABLE[i + 1]
+        assert e0[1] <= pt1000_r <= e1[1]
         dt = e1[0] - e0[0]
         dr = e1[1] - e0[1]
         fraction = (pt1000_r - e0[1]) / dr
