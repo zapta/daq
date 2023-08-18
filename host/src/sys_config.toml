@@ -13,28 +13,28 @@ port = "COM4"
 #port = "COM9"
 
 
+# grams = (adc_reading - adc_offset) * scale
 [channel.LDC1]
 color = "red"
-# grams = (adc_reading - adc_offset) * scale
-adc_offset = 101470
+adc_offset = 104551  
 scale = 0.002671
 
 
 [channel.TMP1]
 color = "blueviolet"
-adc = { open = 4196416, short = 220, calib = 466640, calib_r = 250 }
+adc = { open = 4196416, short = 300, calib = 466640, calib_r = 250 }
 rtd = { r0 = 1000.0, offset=0.00 }
 
 
 [channel.TMP2]
 color = "blue"
-adc = { open = 4197817, short = 170, calib = 466648, calib_r = 250 }
+adc = { open = 4197817, short = 100, calib = 466648, calib_r = 250 }
 thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25, offset=0.00 }
 
 
 [channel.TMP3]
 color = "teal"
-adc = { open = 4196623, short = 150, calib = 466460, calib_r = 250 }
+adc = { open = 4196623, short = 245, calib = 466460, calib_r = 250 }
 thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25 , offset=0.0}
 
 
