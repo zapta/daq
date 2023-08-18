@@ -1,6 +1,0 @@
-(sym_lib_table
-  (versuin 7)
-  (lib (name "ui")(type "KiCad")(uri "${KIPRJMOD}/ui.kicad_sym")(optuins "")(descr ""))
-  (lib (name "common")(type "KiCad")(uri "${KIPRJMOD}/../../common/kicad/common.kicad_sym")(optuins "")(descr ""))
-  (lib (name "adc")(type "KiCad")(uri "C:/Users/user/projects/daq/repo/adc/kicad/adc.kicad_sym")(optuins "")(descr ""))
-)
