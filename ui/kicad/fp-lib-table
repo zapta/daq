@@ -1,0 +1,6 @@
+(fp_lib_table
+  (versuin 7)
+  (lib (name "ui")(type "KiCad")(uri "${KIPRJMOD}/ui.pretty")(optuins "")(descr ""))
+  (lib (name "common")(type "KiCad")(uri "/Users/user/projects/daq/repo/common/kicad/common.pretty")(optuins "")(descr ""))
+  (lib (name "ble")(type "KiCad")(uri "/Users/user/projects/ble_stepper_motor_analyzer/repo/kicad/stepper_monitor.pretty")(optuins "")(descr ""))
+)
