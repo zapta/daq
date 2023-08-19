@@ -12,7 +12,7 @@
 Logger logger;
 
 // We use a shared static buffer, protected by a semaphore.
-static char tmp_buffer[120];
+static char line_buffer[200];
 static StaticMutex mutex;
 
 void Logger::_vlog(const char* level_str, const char* format,
@@ -21,14 +21,14 @@ void Logger::_vlog(const char* level_str, const char* format,
   {
     MutexScope mutex_scope(mutex);
 
-    strcpy(tmp_buffer, level_str);
-    strcat(tmp_buffer, ": ");
-    const int prefix_len = strlen(tmp_buffer);
+    strcpy(line_buffer, level_str);
+    strcat(line_buffer, ": ");
+    const int prefix_len = strlen(line_buffer);
     // We reserve two bytes for \n and null terminator, potentially truncating
     // the message.
     const int msg_len =
-        vsnprintf(tmp_buffer + prefix_len, sizeof(tmp_buffer) - prefix_len - 2, format, args);
-    strcpy(&tmp_buffer[prefix_len + msg_len], "\n");
-    cdc_serial::write_str(tmp_buffer);
+        vsnprintf(line_buffer + prefix_len, sizeof(line_buffer) - prefix_len - 2, format, args);
+    strcpy(&line_buffer[prefix_len + msg_len], "\n");
+    cdc_serial::write_str(line_buffer);
   }
 }

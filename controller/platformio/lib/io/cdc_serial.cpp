@@ -52,7 +52,8 @@ void logger_task_body(void* argument) {
     if (bytes_to_send) {
       for (;;) {
         const uint8_t rc = CDC_Transmit_FS(tx_buffer, bytes_to_send);
-        // Exit on error or ok.
+        // Exit on error or ok. 
+        // NOTE: We ignored silentcy the errors USBD_EMEM and USBD_FAIL.
         if (rc != USBD_BUSY) {
           break;
         }

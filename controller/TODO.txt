@@ -1,13 +1,8 @@
 
+Problem with auto library detection (and Unity)
+
 
 Handle ERROR_HANDLER errors more gracefully, printing string and file name/line before hanging.
 
-Problem with auto library detection (and Unity)
-
-ADC, consider to rewrite static regs.
-
--------
-
-Revisit the error handling in the serial and CDC logger drivers. Should we send to a trap?
 
 
