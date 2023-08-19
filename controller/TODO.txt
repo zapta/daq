@@ -1,8 +1,8 @@
 
-Problem with auto library detection (and Unity)
+Problem with auto library detection.
 
 
-Handle ERROR_HANDLER errors more gracefully, printing string and file name/line before hanging.
+Handle ERROR_HANDLER errors more gracefully, using the display card.
 
 
 
