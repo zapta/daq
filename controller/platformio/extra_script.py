@@ -20,20 +20,13 @@ env.Append(
   ]
 )
 
-# References:
-#   https://community.platformio.org/t/specifying-test-port-breaks-the-test/35344
-#   https://docs.platformio.org/en/latest/scripting/actions.html
-def after_upload(source, target, env):
-    # NOTE: Run 'pio test -vv' to make the print() messages visible in testing.
-    print(f"(extra_scripts.py): after_reload() called.")
-    build_type = env.GetProjectOption("build_type")
-    print(f"(extra_scripts.py): build_type = [{build_type}].")
-    if build_type == "debug":
-      print(f"(extra_scripts.py): Build type is debug, delaying...")
-      time.sleep(1)
-    else:
-      print(f"(extra_scripts.py): Build type is not debug.")
-
+# Per https://community.platformio.org/t/specifying-test-port-breaks-the-test/35344
+# The print messages are available only if running pio with -vv
+build_type = env.GetBuildType()
+print(f"** (extra_script.py): build type = [{build_type}]")
+if "test" in build_type:
+    print(f"** (extra_script.py): adding a post upload delay.")
+    env.AddPostAction("upload", lambda *_, **__: time.sleep(2))
+else:
+    print(f"** (extra_script.py): Not adding a post upload delay.")
     
-env.AddPostAction("upload", after_upload)
-
