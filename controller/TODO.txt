@@ -1,5 +1,4 @@
 
-Move logger and error_handler to libs of their own.
 
 Handle ERROR_HANDLER errors more gracefully, using the display card.
 
