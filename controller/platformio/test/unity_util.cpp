@@ -3,7 +3,7 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
-#include "io.h"
+#include "gpio_pins.h"
 #include "time_util.h"
 
 namespace unity_util {
@@ -16,7 +16,7 @@ void common_start() {
 void common_end() {
   for (;;) {
     time_util::delay_millis(100);
-    io::LED.toggle();
+    gpio_pins::LED.toggle();
   }
 }
 

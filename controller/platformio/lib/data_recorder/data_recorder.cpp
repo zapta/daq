@@ -3,7 +3,7 @@
 #include <cstring>
 
 #include "fatfs.h"
-#include "io.h"
+// #include "gpio_pins.h"
 #include "logger.h"
 #include "sdmmc.h"
 #include "serial_packets_data.h"

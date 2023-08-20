@@ -1,8 +1,5 @@
 #include "serial_packets_crc.h"
-// #include <Arduino.h>
-#include "io.h"
-
-// #include "io.h"
+// #include "gpio_pins.h"
 
 // From
 // https://stackoverflow.com/questions/17196743/crc-ccitt-implementation#17196947

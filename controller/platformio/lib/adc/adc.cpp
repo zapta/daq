@@ -11,7 +11,7 @@
 #include "data_recorder.h"
 #include "dma.h"
 #include "host_link.h"
-#include "io.h"
+// #include "gpio_pins.h"
 #include "serial_packets_client.h"
 #include "session.h"
 #include "spi.h"

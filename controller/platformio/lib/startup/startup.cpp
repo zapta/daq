@@ -6,7 +6,7 @@
 #include "dma.h"
 #include "fatfs.h"
 #include "gpio.h"
-#include "io.h"
+// #include "gpio_pins.h"
 #include "logger.h"
 #include "main.h"
 #include "sdmmc.h"

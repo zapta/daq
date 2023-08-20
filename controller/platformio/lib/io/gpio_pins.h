@@ -2,6 +2,9 @@
 
 // TODO: Consider to skip the HAL and access gpio registers directly.
 
+// NOTE: We do not call this file 'gpio.h' to avoid a conflict with the
+// cube_ide file of same name.
+
 #include "main.h"
 
 class OutputPin {
@@ -55,7 +58,7 @@ class InputPin {
   const uint16_t _gpio_pin;
 };
 
-namespace io {
+namespace gpio_pins {
 
 // Port E3. Not available on PCIE.
 extern OutputPin LED;
@@ -69,4 +72,4 @@ extern InputPin USER_SWITCH;
 // independently by the FatFS library.
 extern InputPin SD_SWITCH;
 
-}  // namespace io.
+}  // namespace gpio_pins.
