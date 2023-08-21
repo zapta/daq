@@ -21,7 +21,6 @@
 #include "cmsis_os.h"
 #include "dma.h"
 #include "fatfs.h"
-#include "i2c.h"
 #include "rng.h"
 #include "sdmmc.h"
 #include "spi.h"
@@ -111,7 +110,6 @@ int _ignored_main(void)
   MX_FATFS_Init();
   MX_USART2_UART_Init();
   MX_RNG_Init();
-  MX_I2C4_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */

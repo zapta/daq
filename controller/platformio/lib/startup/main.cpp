@@ -10,7 +10,6 @@
 #include "dma.h"
 #include "fatfs.h"
 #include "gpio.h"
-#include "i2c.h"
 #include "logger.h"
 #include "main.h"
 #include "rng.h"
@@ -85,7 +84,6 @@ int main(void) {
   MX_FATFS_Init();
   MX_USART2_UART_Init();
   MX_RNG_Init();
-  MX_I2C4_Init();
 
   if (!main_task.start()) {
     App_Error_Handler();
