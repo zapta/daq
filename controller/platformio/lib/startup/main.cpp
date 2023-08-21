@@ -6,18 +6,18 @@
 #include "dma.h"
 #include "fatfs.h"
 #include "gpio.h"
+#include "i2c.h"
 #include "logger.h"
 #include "main.h"
+#include "rng.h"
 #include "sdmmc.h"
 #include "serial.h"
 #include "spi.h"
 #include "static_task.h"
 #include "tim.h"
-#include "rng.h"
 #include "usart.h"
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
-#include "i2c.h"
 
 void app_main();
 
@@ -68,7 +68,7 @@ int main(void) {
   SystemClock_Config();
   PeriphCommonClock_Config();
 
-  // This should match the initialization in 
+  // This should match the initialization in
   // lib/cube_ide/Core/src/main.c which we do not use.
   MX_GPIO_Init();
   MX_DMA_Init();
@@ -80,8 +80,6 @@ int main(void) {
   MX_USART2_UART_Init();
   MX_RNG_Init();
   MX_I2C4_Init();
-
-
 
   if (!main_task.start()) {
     App_Error_Handler();
