@@ -16,7 +16,8 @@ port = "COM4"
 # grams = (adc_reading - adc_offset) * scale
 [channel.LDC1]
 color = "red"
-adc_offset = 104551  
+adc_offset = 673281  
+#adc_offset = 104551  
 scale = 0.002671
 
 
