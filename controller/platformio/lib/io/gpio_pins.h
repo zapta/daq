@@ -7,6 +7,8 @@
 
 #include "main.h"
 
+// An abstraction class for pins that were defined in cube_ide
+// as gpio output pins.
 class OutputPin {
  public:
   OutputPin(GPIO_TypeDef* gpio_port, uint16_t gpio_pin, bool initial_value)
@@ -14,7 +16,9 @@ class OutputPin {
     set(initial_value);
   }
 
-  inline void set_high() { HAL_GPIO_WritePin(_gpio_port, _gpio_pin, GPIO_PIN_SET); }
+  inline void set_high() {
+    HAL_GPIO_WritePin(_gpio_port, _gpio_pin, GPIO_PIN_SET);
+  }
 
   inline void set_low() {
     HAL_GPIO_WritePin(_gpio_port, _gpio_pin, GPIO_PIN_RESET);
@@ -33,6 +37,8 @@ class OutputPin {
   // const bool _inverted;
 };
 
+// An abstraction class for pins that were defined in cube_ide
+// as gpio input pins.
 class InputPin {
  public:
   InputPin(GPIO_TypeDef* gpio_port, uint16_t gpio_pin)
@@ -47,21 +53,6 @@ class InputPin {
   GPIO_TypeDef* const _gpio_port;
   const uint16_t _gpio_pin;
 };
-
-// class InputOutuptPin {
-//   enum Mode { OUTPUT_LOW, OUTPUT_HIGH, INPUT_PULLDOWN, INPUT_PULLUP };
-
-//   InputOutuptPin(GPIO_TypeDef* gpio_port, uint16_t gpio_pin, Mode mode)
-//       : _gpio_port(gpio_port), _gpio_pin(gpio_pin) {}
-
-//   inline bool read() {...}
-//   inline void write(bool value) {...}
-//   inline void set_mode(Mode mode) {...}
-
-//  private:
-//   GPIO_TypeDef* const _gpio_port;
-//   const uint16_t _gpio_pin;
-// };
 
 namespace gpio_pins {
 
