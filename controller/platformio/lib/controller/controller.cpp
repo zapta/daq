@@ -84,7 +84,7 @@ PacketStatus handle_control_command(const SerialPacketsData& command_data,
       response_data.write_uint32(session::id());        // Device session id.
       response_data.write_uint32(time_util::millis());  // Device time
       // SD card presense.
-      response_data.write_uint8(gpio_pins::SD_SWITCH.read() ? 1 : 0);
+      response_data.write_uint8(gpio_pins::SD_SWITCH.is_high() ? 1 : 0);
       // Recording info.
       data_recorder::get_recoding_info(&recording_info_buffer);
       response_data.write_uint8(recording_info_buffer.recording_active ? 1 : 0);
@@ -153,12 +153,12 @@ void report_marker(const MarkerName& marker_name) {
 
 void report_log_data(const SerialPacketsData& data) {
   // logger.info("Controller, data = %hu", data.size());
-  gpio_pins::TEST1.high();
+  gpio_pins::TEST1.set_high();
   // Send to monitor.
   host_link::client.sendMessage(HostPorts::LOG_REPORT_MESSAGE, data);
   // Send to SD.
   data_recorder::append_log_record_if_recording(data);
-  gpio_pins::TEST1.low();
+  gpio_pins::TEST1.set_low();
 }
 
 }  // namespace controller
