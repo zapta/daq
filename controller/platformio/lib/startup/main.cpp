@@ -1,3 +1,7 @@
+// This file contains the startup code which initializes
+// the cube_ide defined peripherals and starts the main thread
+// of FREERTOS which calls app_main(). app_main() can be the 
+// application main code or a unit test when testing with Unity.
 
 #include <unistd.h>
 
@@ -19,6 +23,8 @@
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
 
+// There are several implementations of app_main(). One for the 
+// app (for release or debug modes) and one for each unit test.
 void app_main();
 
 // Implemented in cube ide generated main.c.
