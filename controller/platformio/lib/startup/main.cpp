@@ -49,7 +49,7 @@ void main_task_body(void* argument) {
   MX_USB_DEVICE_Init();
   HAL_Delay(1000);  // Let it connect.
   if (!cdc_logger_task.start()) {
-    App_Error_Handler();
+    error_handler::Panic();
   }
   logger.set_level(LOG_INFO);
   logger.info("Serial USB started");
@@ -59,7 +59,7 @@ void main_task_body(void* argument) {
 
   // Should not return.
   app_main();
-  App_Error_Handler();
+  error_handler::Panic();
 }
 
 // Based on lib/autogen_core/main.c.ignore
@@ -86,10 +86,10 @@ int main(void) {
   MX_RNG_Init();
 
   if (!main_task.start()) {
-    App_Error_Handler();
+    error_handler::Panic();
   }
 
   // Should not return.
   vTaskStartScheduler();
-  App_Error_Handler();
+  error_handler::Panic();
 }

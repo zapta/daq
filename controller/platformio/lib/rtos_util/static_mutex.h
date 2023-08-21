@@ -29,7 +29,7 @@ class StaticMutex {
   inline void give() {
     const bool ok = xSemaphoreGive(_handle);
     if (!ok) {
-      App_Error_Handler();
+      error_handler::Panic();
     }
   }
 

@@ -3,13 +3,22 @@
 #include "gpio_pins.h"
 #include "main.h"
 
+// IMPORTANT: This file should be compiled with optimization off.
+// Enabling the optimization will affect the error code signaling
+// speed.
 #pragma GCC push_options
-#pragma GCC optimize("Og")
+#pragma GCC optimize("O0")
 
-static constexpr uint64_t kDelayUint = 25000000;
+
+namespace error_handler {
+
+static constexpr uint64_t kDelayUint = 2500000;
+
 
 // Busy loop delay, in units of one beat.
-static void delay(float t) {
+ void signaling_delay(float t) {
+  // HAL_GetTick();
+
   const uint64_t l = kDelayUint * t;
   for (uint64_t i = 0; i < l; i++) {
     asm("nop");
@@ -24,16 +33,16 @@ static void send_digit(uint8_t n) {
   if (n > 9) {
     n = 9;
   }
-  delay(7);  // pre digit space
+  signaling_delay(7);  // pre digit space
   for (int i = 0; i < n; i++) {
     gpio_pins::LED.set_high();
-    delay(0.4);
+    signaling_delay(0.4);
     gpio_pins::LED.set_low();
-    delay(1.6);
+    signaling_delay(1.6);
   }
 }
 
- void App_Error_Handler(uint32_t e) {
+ void Panic(uint32_t e) {
   __disable_irq();
 
   for (;;) {
@@ -48,9 +57,9 @@ static void send_digit(uint8_t n) {
 
     // Start marker (long pulse)
     gpio_pins::LED.set_low();
-    delay(8.0);  // Pre sycle space
+    signaling_delay(8.0);  // Pre sycle space
     gpio_pins::LED.set_high();
-    delay(10.0);
+    signaling_delay(10.0);
     gpio_pins::LED.set_low();
 
     // Emit the digits
@@ -65,10 +74,14 @@ static void send_digit(uint8_t n) {
 }
 
 
+
+} // namespace error_handler
+
+
 // Error_Handler() is declared by the clube_ide file main.h.
 // This is also called by HAL and the cube_ide libraries.
 void Error_Handler() {
-  App_Error_Handler(3);
+  error_handler::Panic(3);
 
   // __disable_irq();
   // // TODO: Blink LEDs or something.
@@ -77,4 +90,6 @@ void Error_Handler() {
   // }
 }
 
+
 #pragma GCC pop_options
+

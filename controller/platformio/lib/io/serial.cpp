@@ -18,7 +18,7 @@ Serial *get_serial_by_huart(UART_HandleTypeDef *huart) {
   }
   // Not found.
   for (;;) {
-    App_Error_Handler();
+    error_handler::Panic();
   }
 }
 
