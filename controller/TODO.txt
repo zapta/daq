@@ -1,6 +1,5 @@
 
-
-Handle ERROR_HANDLER errors more gracefully, using the display card.
+Assign error codes to calls to error_handler::Panic().
 
 
 
