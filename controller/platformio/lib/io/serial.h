@@ -76,7 +76,7 @@ class Serial {
       const bool ok = _rx_data_avail_sem.take(portMAX_DELAY);
       if (!ok) {
         // We don't expect a timeout since we block forever.
-        error_handler::Panic();
+        error_handler::Panic(61);
       }
 
       // Try to read the  data from the rx buffer.
@@ -110,21 +110,21 @@ class Serial {
     // Register callback handlers.
     if (HAL_OK != HAL_UART_RegisterCallback(_huart, HAL_UART_ERROR_CB_ID,
                                             uart_ErrorCallback)) {
-      error_handler::Panic();
+      error_handler::Panic(62);
     }
     if (HAL_OK != HAL_UART_RegisterCallback(_huart, HAL_UART_TX_COMPLETE_CB_ID,
                                             uart_TxCpltCallback)) {
-      error_handler::Panic();
+      error_handler::Panic(63);
     }
 
     if (HAL_OK !=
         HAL_UART_RegisterRxEventCallback(_huart, uart_RxEventCallback)) {
-      error_handler::Panic();
+      error_handler::Panic(64);
     }
 
     // Start the continious RX DMA.
     if (!start_rx_dma()) {
-      error_handler::Panic();
+      error_handler::Panic(65);
     }
   }
 
@@ -137,7 +137,7 @@ class Serial {
     const auto status = HAL_UARTEx_ReceiveToIdle_DMA(_huart, _rx_dma_buffer,
                                                      sizeof(_rx_dma_buffer));
     return status == HAL_OK;
-    // error_handler::Panic();
+    // error_handler::Panic(66);
   }
 
  private:
@@ -184,7 +184,7 @@ class Serial {
     if (len) {
       const bool ok = _rx_buffer.write(buffer, len, true);
       if (!ok) {
-        error_handler::Panic();
+        error_handler::Panic(67);
       }
       // Indicate to the rx thread(s) that data is available.
       _rx_data_avail_sem.give_from_isr(task_woken);
@@ -214,7 +214,7 @@ class Serial {
     }
 
     // TODO: Anything we should do to recover? E.g. abort and then restart?
-    error_handler::Panic();
+    error_handler::Panic(68);
   }
 };
 

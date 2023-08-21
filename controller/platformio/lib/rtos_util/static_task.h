@@ -15,7 +15,7 @@ class StaticTask {
 
   ~StaticTask() {
     // Static tasks should not be finalized.
-    error_handler::Panic();
+    error_handler::Panic(85);
   }
 
   bool start() {

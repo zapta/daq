@@ -45,13 +45,13 @@ void app_main() {
 
   // Start tasks.
   if (!host_link_rx_task.start()) {
-    error_handler::Panic();
+    error_handler::Panic(86);
   }
   if (!printer_link_rx_task.start()) {
-    error_handler::Panic();
+    error_handler::Panic(87);
   }
   if (!adc_task.start()) {
-    error_handler::Panic();
+    error_handler::Panic(88);
   }
 
   Elappsed report_timer;

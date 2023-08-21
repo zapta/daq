@@ -14,7 +14,7 @@ void setup() {
   }
   auto status = HAL_RNG_GenerateRandomNumber(&hrng, &session_id);
   if (status != HAL_OK || session_id == 0) {
-    error_handler::Panic();
+    error_handler::Panic(78);
   }
   logger.info("Random session id: [%08lx]", session_id);
 }
@@ -22,7 +22,7 @@ void setup() {
 uint32_t id() {
   // Make sure session is initialized.
   if (session_id == 0) {
-    error_handler::Panic();
+    error_handler::Panic(79);
   }
   return session_id;
 }

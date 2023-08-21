@@ -1,5 +1,4 @@
 
-Assign error codes to calls to error_handler::Panic().
 
 
 

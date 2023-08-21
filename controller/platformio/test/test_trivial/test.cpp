@@ -1,6 +1,6 @@
 #include "Unity.h"
 #include "time_util.h"
-#include "io.h"
+#include "gpio_pins.h"
 
 void setUp() {}
 
@@ -18,6 +18,6 @@ void app_main() {
 
   for (;;) {
     time_util::delay_millis(100);
-    io::LED.toggle();
+    gpio_pins::LED.toggle();
   }
 }

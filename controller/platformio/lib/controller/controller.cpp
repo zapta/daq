@@ -141,7 +141,7 @@ void report_marker(const MarkerName& marker_name) {
 
   // Verify writing was OK.
   if (packet_data.had_write_errors()) {
-    error_handler::Panic();
+    error_handler::Panic(77);
   }
 
   // Report to monitor and maybe to SD.

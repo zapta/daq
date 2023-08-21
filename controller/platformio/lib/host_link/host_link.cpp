@@ -16,7 +16,7 @@ void setup(Serial& serial) {
 void rx_task_body(void* argument) {
   // This method doesn't return.
   client.rx_task_body();
-  error_handler::Panic();
+  error_handler::Panic(81);
 }
 
 }  // namespace host_link

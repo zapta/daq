@@ -204,7 +204,7 @@ void spi_ErrorCallbackIsr(SPI_HandleTypeDef *hspi) {
 // sync which we use as a repeating ADC CS.
 static void set_dma_request_generator(uint32_t num_transfers_per_sync) {
   if (state != DMA_STATE_IDLE) {
-    error_handler::Panic();
+    error_handler::Panic(31);
   }
 
   // Set tx DMA request generator.
@@ -223,14 +223,14 @@ static void set_dma_request_generator(uint32_t num_transfers_per_sync) {
 // in rx_buffer.
 static void spi_send_one_shot(const uint8_t *cmd, uint16_t num_bytes) {
   if (state != DMA_STATE_IDLE) {
-    error_handler::Panic();
+    error_handler::Panic(32);
   }
 
   // time_util::delay_millis(50);
 
   logger.info("Sending SPI one shot (%hu bytes)", num_bytes);
   if (num_bytes > sizeof(rx_buffer)) {
-    error_handler::Panic();
+    error_handler::Panic(33);
   }
 
   // For determinism.
@@ -246,23 +246,23 @@ static void spi_send_one_shot(const uint8_t *cmd, uint16_t num_bytes) {
   const HAL_StatusTypeDef status =
       HAL_SPI_TransmitReceive_DMA(&hspi1, cmd, rx_buffer, num_bytes);
   if (status != HAL_StatusTypeDef::HAL_OK) {
-    error_handler::Panic();
+    error_handler::Panic(34);
   }
 
   IrqEvent event;
   if (!irq_event_queue.consume_from_task(&event, 300)) {
-    error_handler::Panic();
+    error_handler::Panic(35);
   }
 
   // We expect the IRQ handler that aborted the DMA to also
   // set the state to IDLE.
   if (state != DMA_STATE_IDLE) {
-    error_handler::Panic();
+    error_handler::Panic(36);
   }
 
   // logger.info("IRQ event: %d", event.id);
   if (event.id != IrqEventId::EVENT_FULL_COMPLETE) {
-    error_handler::Panic();
+    error_handler::Panic(37);
   }
 }
 
@@ -277,7 +277,7 @@ void cmd_reset() {
 
 uint8_t cmd_read_register(uint8_t reg_index) {
   if (reg_index > 18) {
-    error_handler::Panic();
+    error_handler::Panic(38);
   }
   const uint8_t cmd_code = (uint8_t)0x20 | reg_index;
   const uint8_t cmd[] = {cmd_code, 0x0, 0x0};
@@ -287,7 +287,7 @@ uint8_t cmd_read_register(uint8_t reg_index) {
 
 void cmd_write_register(uint8_t reg_index, uint8_t val) {
   if (reg_index > 18) {
-    error_handler::Panic();
+    error_handler::Panic(39);
   }
   const uint8_t cmd_code = (uint8_t)0x40 | reg_index;
   const uint8_t cmd[] = {cmd_code, val};
@@ -310,7 +310,7 @@ int32_t decode_int24(const uint8_t *bfr3) {
 // Assuming cs is pulsing.
 void start_continuos_DMA() {
   if (state != DMA_STATE_IDLE) {
-    error_handler::Panic();
+    error_handler::Panic(41);
   }
 
   // Confirm the assumptions used the code below.
@@ -388,7 +388,7 @@ void start_continuos_DMA() {
 
   // We expect to be here exactly past the first half.
   if (p != (&tx_buffer[kDmaBytesPerHalf])) {
-    error_handler::Panic();
+    error_handler::Panic(42);
   }
 
   // Copy the first half to second half.
@@ -419,7 +419,7 @@ void start_continuos_DMA() {
                                                   sizeof(tx_buffer));
   if (HAL_OK != status) {
     // dma_active = false;
-    error_handler::Panic();
+    error_handler::Panic(43);
   }
 
   logger.info("ADC: continuos DMA started.");
@@ -427,7 +427,7 @@ void start_continuos_DMA() {
 
 static void setup() {
   if (!state == DMA_STATE_IDLE) {
-    error_handler::Panic();
+    error_handler::Panic(44);
   }
 
   // Register interrupt handler. These handler are marked in
@@ -436,15 +436,15 @@ static void setup() {
   if (HAL_OK != HAL_SPI_RegisterCallback(&hspi1,
                                          HAL_SPI_TX_RX_HALF_COMPLETE_CB_ID,
                                          spi_TxRxHalfCpltCallbackIsr)) {
-    error_handler::Panic();
+    error_handler::Panic(45);
   }
   if (HAL_OK != HAL_SPI_RegisterCallback(&hspi1, HAL_SPI_TX_RX_COMPLETE_CB_ID,
                                          spi_TxRxCpltCallbackIsr)) {
-    error_handler::Panic();
+    error_handler::Panic(46);
   }
   if (HAL_OK != HAL_SPI_RegisterCallback(&hspi1, HAL_SPI_ERROR_CB_ID,
                                          spi_ErrorCallbackIsr)) {
-    error_handler::Panic();
+    error_handler::Panic(47);
   }
 
   // Per the ADS1261 sample code, since we don't monitor the READY
@@ -463,7 +463,7 @@ static void setup() {
     const RegisterInfo &reg_info = regs_info[i];
     // Verify index consistency.
     if (i != reg_info.idx) {
-      error_handler::Panic();
+      error_handler::Panic(48);
     }
     if (reg_info.type == STAT) {
       cmd_write_register(reg_info.idx, reg_info.val);
@@ -562,7 +562,7 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
 
   // Verify writing was OK.
   if (packet_data.had_write_errors()) {
-    error_handler::Panic();
+    error_handler::Panic(49);
   }
 
   // For diagnostics. Capture the values of the static registers as
@@ -624,7 +624,7 @@ void adc_task_body(void *argument) {
       process_rx_dma_half_buffer(1, event.isr_millis,
                                  &rx_buffer[kDmaBytesPerHalf]);
     } else {
-      error_handler::Panic();
+      error_handler::Panic(51);
     }
   }
 }

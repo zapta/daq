@@ -10,7 +10,7 @@ namespace error_handler {
 // the digit 0.
 // App code should call this function rather than then Error_Handler
 // which is used by HAL and cube_ide libraries.
-void Panic(uint32_t e = 5);
+void Panic(uint32_t e);
 
 
 // Exposed for unit testing only.
