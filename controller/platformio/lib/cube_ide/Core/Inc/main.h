@@ -77,6 +77,10 @@ void Error_Handler(void);
 #define TEST1_GPIO_Port GPIOD
 #define SD_SWITCH_Pin GPIO_PIN_4
 #define SD_SWITCH_GPIO_Port GPIOD
+#define DISPLAY_SCL_Pin GPIO_PIN_8
+#define DISPLAY_SCL_GPIO_Port GPIOB
+#define DISPLAY_SDA_Pin GPIO_PIN_9
+#define DISPLAY_SDA_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

@@ -6,7 +6,6 @@
 #include "dma.h"
 #include "fatfs.h"
 #include "gpio.h"
-// #include "gpio_pins.h"
 #include "logger.h"
 #include "main.h"
 #include "sdmmc.h"
@@ -18,6 +17,7 @@
 #include "usart.h"
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
+#include "i2c.h"
 
 void app_main();
 
@@ -79,6 +79,8 @@ int main(void) {
   MX_FATFS_Init();
   MX_USART2_UART_Init();
   MX_RNG_Init();
+  MX_I2C4_Init();
+
 
 
   if (!main_task.start()) {
