@@ -7,6 +7,8 @@ import os
 import sys
 import pandas as pd
 import matplotlib.pyplot as plt
+import janitor
+
 
 # Local imports
 sys.path.insert(0, "..")
