@@ -1,4 +1,2 @@
 
-Handle interpolation at the begining and end of the tests.
 
-Resampled to a consistent 1ms interval.
