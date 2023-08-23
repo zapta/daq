@@ -110,9 +110,9 @@ def main():
     # Create a subsample for display. We pick only the 50th row.
     # TODO: Select automatically the optimal subsampling factor
     logger.info("Down sampling data.")
-    sub_sample = merged_df.iloc[::50, :]
+    # sub_sample = merged_df.iloc[::50, :]
     logger.info("Plotting data.")
-    sub_sample.plot(x="T[s]", xlabel="Seconds")
+    merged_df.plot(x="T[s]", xlabel="Seconds")
     plt.show()
 
     logger.info(f"All done.")
