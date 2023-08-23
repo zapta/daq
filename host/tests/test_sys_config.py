@@ -24,7 +24,7 @@ class TestSysConfig(unittest.TestCase):
         assert self.sys_config
 
     def test_rtd_r2t_conversion(self):
-        rtd_config = self.sys_config.temperature_config("TMP1")
+        rtd_config = self.sys_config.temperature_config("tm1")
         assert rtd_config
         self.assertIsInstance(rtd_config, RtdChannelConfig)
         self.assertAlmostEqual(0.0, rtd_config.resistance_to_c(1000.0), places=4)
@@ -33,7 +33,7 @@ class TestSysConfig(unittest.TestCase):
         self.assertAlmostEqual(200.0, rtd_config.resistance_to_c(1758.6), places=4)
 
     def test_thermistor_r2t_conversion(self):
-        thermistor_config = self.sys_config.temperature_config("TMP2")
+        thermistor_config = self.sys_config.temperature_config("tm2")
         assert thermistor_config
         self.assertIsInstance(thermistor_config, ThermistorChannelConfig)
         self.assertAlmostEqual(25.0, thermistor_config.resistance_to_c(100000.0), places=4)

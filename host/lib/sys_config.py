@@ -5,47 +5,8 @@ import math
 import re
 import pyqtgraph as pg
 from PyQt6 import QtCore
-import scipy
-from dataclasses import dataclass
 
 logger = logging.getLogger("sys_config")
-
-
-# @dataclass(frozen=True)
-# class LowPassFilterConfig:
-#     """Describes low pass filter configuration"""
-#     f_sampling: float
-#     f_cutoff: float
-#     color: str
-
-
-# class SignalFilter:
-#     """Abstract calss for signal filters."""
-#
-#     def filter(self, values: List[float]) -> List[float]:
-#         """Accepts one or more input values and returns their filtered values."""
-#         # Should be implemented by all subclasses.
-#         raise NotImplemented("filter() not implemented.")
-
-
-# class LowPassFilter(SignalFilter):
-#     """A low pass implementation of SignalFilter."""
-#
-#     def __init__(self, filter_spec: LowPassFilterConfig):
-#         assert filter_spec.f_cutoff > 0
-#         assert filter_spec.f_sampling > filter_spec.f_cutoff
-#         f_nyquist = filter_spec.f_sampling / 2
-#         f_ratio = filter_spec.f_cutoff / f_nyquist
-#         assert 0 < f_ratio < 1.0, f"f_ratio={f_ratio}, f_sampling={filter_spec.f_sampling}, f_cutoff={filter_spec.f_cutoff}, f_nyquist={f_nyquist}"
-#         b, a = scipy.signal.butter(2, [f_ratio], 'lowpass', analog=False)
-#         self.__a = a
-#         self.__b = b
-#         # zi is the internal state of the filter.
-#         self.__zi = scipy.signal.lfilter_zi(b, a)
-#
-#     def filter(self, values: List[float]) -> List[float]:
-#         result, self.__zi = scipy.signal.lfilter(self.__b, self.__a, values, zi=self.__zi)
-#         return result
 
 
 class MarkerConfig:
@@ -253,7 +214,7 @@ class RtdChannelConfig(TemperatureChannelConfig):
         if pt1000_r > PT1000_MAX_R:
             return 999
         for i in range(len(PT1000_TABLE) - 1):
-            if pt1000_r <= PT1000_TABLE[i+1][1]:
+            if pt1000_r <= PT1000_TABLE[i + 1][1]:
                 self.__last_index = i
                 return self.__interpolate__(i, pt1000_r)
         # This should never happen.
@@ -280,7 +241,7 @@ class SysConfig:
         self.__tmp_ch_configs = {}
         toml_channels = toml["channel"]
         for ch_name, ch_config in toml_channels.items():
-            if ch_name.startswith("LDC"):
+            if ch_name.startswith("lc"):
                 assert ch_name not in self.__ldc_ch_configs
                 color = ch_config["color"]
                 offset = ch_config["adc_offset"]
@@ -294,7 +255,7 @@ class SysConfig:
                 #     low_pass_config = LowPassFilterConfig(lp_f_sampling, lp_f_cutoff, lp_color)
                 self.__ldc_ch_configs[ch_name] = LoadCellChannelConfig(
                     ch_name, color, offset, scale)
-            elif ch_name.startswith("TMP"):
+            elif ch_name.startswith("tm"):
                 assert ch_name not in self.__tmp_ch_configs
                 color = ch_config["color"]
                 # Get ADC specific params.

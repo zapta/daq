@@ -7,6 +7,7 @@ import os
 import sys
 import pandas as pd
 import matplotlib.pyplot as plt
+# noinspection PyUnresolvedReferences
 import janitor
 
 
@@ -62,11 +63,11 @@ def main():
         channel_df.interpolate(method='polynomial', order=2, inplace=True)
         channel_df.reset_index(inplace=True)
 
-        # Here channel_df contains the T[ms] column with 1 ms increments and
+        # Here channel_df contains the T[ms] column with 1 ms increments
         # and missing values are interpolated.
 
         for test_info in test_infos:
-            print(f"{test_info.test_name}-{channel_info.channel_name}")
+            # print(f"{test_info.test_name}-{channel_info.channel_name}")
             new_column_name = f"{channel_info.channel_name}/{test_info.test_name}"
 
             # df = extract_test_data(channel_df, test_info, channel_info.field_name, new_column_name)
@@ -95,7 +96,7 @@ def main():
     # merged_df.round(3)
 
     # Write out the file
-    csv_output_file = os.path.join(args.output_dir, "_combined_test_data.csv")
+    csv_output_file = os.path.join(args.output_dir, "_tests_data.csv")
     logger.info(f"Writing results to file [{csv_output_file}]")
     merged_df.to_csv(csv_output_file, index=False, float_format="%.3f", header=True)
 

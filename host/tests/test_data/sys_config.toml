@@ -3,23 +3,23 @@
 [data_link]
 port = "COM4"
 
-[channel.LDC1]
+[channel.lc1]
 color = "blue"
 adc_offset = 101470
 scale = 0.002671
 low_pass = {f_sampling=500, f_cutoff=10, color="red"}
 
-[channel.TMP1]
+[channel.tm1]
 color = "blueviolet"
 adc = { open = 4196416, short = 220, calib = 466640, calib_r = 250 }
 rtd = { r0 = 1000.0, offset=0.00 }
 
-[channel.TMP2]
+[channel.tm2]
 color = "blue"
 adc = { open = 4197817, short = 170, calib = 466648, calib_r = 250 }
 thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25, offset=0.00 }
 
-[channel.TMP3]
+[channel.tm3]
 color = "teal"
 adc = { open = 4196623, short = 150, calib = 466460, calib_r = 250 }
 thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25 , offset=0.0}

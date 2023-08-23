@@ -1,9 +1,9 @@
-from typing import Optional, List, Tuple, Literal, Any, Dict
-import sys
+from typing import Optional, List, Tuple, Any, Dict
 from collections import OrderedDict
 
 # For using the local version of serial_packet. Comment out if
 # using serial_packets package installed by pip.
+# import sys
 # sys.path.insert(0, "../../../../serial_packets_py/repo/src")
 
 from serial_packets.packets import PacketData
@@ -22,7 +22,7 @@ class ChannelData:
     def chan_name(self) -> str:
         return self.__chan_name
 
-    def timed_values(self) -> Tuple[int, Any]:
+    def timed_values(self) -> List[Tuple[int, Any]]:
         return self.__timed_values
 
     # def num_sequences(self) -> int:
@@ -44,7 +44,7 @@ class ChannelData:
             return None
         return self.__timed_values[-1][0]
 
-    def append_timed_values(self, time_values: Tuple[int, any]) -> None:
+    def append_timed_values(self, time_values: List[Tuple[int, any]]) -> None:
         assert len(time_values) > 0
         if not self.is_empty():
             assert time_values[-1][0] >= self.end_time_millis()
@@ -65,7 +65,7 @@ class ParsedLogPacket:
     def base_time_millis(self) -> int:
         return self.__packet_base_time_millis
 
-    def base_time(self) -> int:
+    def base_time_secs(self) -> float:
         return self.__packet_base_time_millis / 1000.0
 
     def channels(self) -> Dict[str, ChannelData]:
@@ -155,20 +155,20 @@ class LogPacketsParser:
         while not data.read_error() and not data.all_read():
             chan_id = data.read_uint8()
             assert not data.read_error()
-            if chan_id >= 0x11 and chan_id <= 0x14:
-                chan_name = f"LDC{chan_id - 0x11 + 1}"
+            if 0x11 <= chan_id <= 0x14:
+                chan_name = f"lc{chan_id - 0x11 + 1}"
                 timed_values = self._parse_int24_sequence(packet_start_time_millis, data)
                 # print(f"+++1 {chan_name}, {type(timed_values)}")
                 result.append_timed_values(chan_name, timed_values)
-            elif chan_id >= 0x21 and chan_id <= 0x26:
-                chan_name = f"TMP{chan_id - 0x21 + 1}"
+            elif 0x21 <= chan_id <= 0x26:
+                chan_name = f"tm{chan_id - 0x21 + 1}"
                 timed_values = self._parse_int24_sequence(packet_start_time_millis, data)
                 result.append_timed_values(chan_name, timed_values)
             elif chan_id == 0x07:
-                chan_name = "MRKR"
+                chan_name = "mrk"
                 timed_values = self._parse_str_sequence(packet_start_time_millis, data)
                 result.append_timed_values(chan_name, timed_values)
             else:
-                raise ValueError(f"Unexpected log group id: {group_id}")
+                raise ValueError(f"Unexpected log chan id: {chan_id}")
         assert data.all_read_ok()
         return result
