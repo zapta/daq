@@ -125,8 +125,6 @@ def main():
     merged_df.rename(columns={'T[ms]': 'T[s]'}, inplace=True)
 
     # Write the data to the output file.
-    # csv_output_file = os.path.join(args.output_dir, "_collected.csv")
-    # csv_output_file = args.csv_output_file
     logger.info(f"Writing to [{args.csv_output_file}]")
     merged_df.to_csv(args.csv_output_file, index=False, float_format="%.3f", header=True)
 
