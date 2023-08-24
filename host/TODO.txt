@@ -1,2 +1,8 @@
 
-If no tests found, add to tests.csv one entry called 'all'
+TODO: Add a flag to supress plot display.
+
+TODO: Down sample for display using actual down sampling and mean().
+
+TODO: Create a large recording example.
+
+

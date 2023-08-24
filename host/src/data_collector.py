@@ -10,10 +10,9 @@ import matplotlib.pyplot as plt
 # noinspection PyUnresolvedReferences
 import janitor
 
-
 # Local imports
 sys.path.insert(0, "..")
-from lib.data_utils import load_tests_infos, load_channels_infos
+from lib.data_utils import load_tests_infos, load_channels_infos, TestInfo
 
 logging.basicConfig(
     level=logging.INFO,
@@ -26,10 +25,23 @@ parser.add_argument("--input_dir",
                     dest="input_dir",
                     default=".",
                     help="Input directory with channels .csv files.")
-parser.add_argument("--output_dir",
-                    dest="output_dir",
+parser.add_argument("--csv_output_file",
+                    dest="csv_output_file",
                     default=".",
-                    help="Output directory for generated files.")
+                    help="Name of the CSV output file.")
+parser.add_argument("--channels_selector",
+                    dest="channels_selector",
+                    default=None,
+                    help="Optional regex. If specifies, only channels with matching names are selected. E.g.")
+parser.add_argument("--tests_selector",
+                    dest="tests_selector",
+                    default=None,
+                    help="Optional regex. If specifies, only tests with matching names are selected.")
+parser.add_argument('--group_by_test',
+                    dest="group_by_test",
+                    default=False,
+                    action=argparse.BooleanOptionalAction,
+                    help="If true, will collect tests side by side. Otherwise, ignores test markers.")
 
 args = parser.parse_args()
 
@@ -37,13 +49,24 @@ args = parser.parse_args()
 def main():
     logger.info("Tests collector started.")
 
-    # Load the tests information from the tests file.
-    tests_file_path = os.path.join(args.input_dir, '_tests.csv')
-    test_infos = load_tests_infos(tests_file_path)
+    # Determine the tests boundaries
+    if args.group_by_test:
+        tests_file_path = os.path.join(args.input_dir, '_tests.csv')
+        test_infos = load_tests_infos(tests_file_path, args.tests_selector)
+        if not test_infos:
+            logger.fatal("No channels were found after tests filtering. "
+                         "Check _tests.csv file and --tests_selector flag.")
+            sys.exit(1)
+    else:
+        test_infos = [TestInfo("all", 0, 9999999999999)]
 
     # Load channels infos from the tests file.
     channels_file_path = os.path.join(args.input_dir, '_channels.csv')
-    channels_infos = load_channels_infos(channels_file_path)
+    channels_infos = load_channels_infos(channels_file_path, args.channels_selector)
+    if not channels_infos:
+        logger.fatal("No channels were found after channel filtering. "
+                     "Check _channels.csv file and --channels_selector flag.")
+        sys.exit(1)
 
     tests_data = []
     for channel_info in channels_infos:
@@ -70,9 +93,12 @@ def main():
         # and missing values are interpolated.
 
         for test_info in test_infos:
-            logger.info(f"Selectign test {test_info.test_name}")
+            logger.info(f"Selecting test {test_info.test_name}")
             print(f"{test_info.test_name}-{channel_info.channel_name}")
-            new_column_name = f"{channel_info.channel_name}/{test_info.test_name}"
+            if args.group_by_test:
+                new_column_name = f"{channel_info.channel_name}/{test_info.test_name}"
+            else:
+                new_column_name = f"{channel_info.channel_name}"
 
             # df = extract_test_data(channel_df, test_info, channel_info.field_name, new_column_name)
             df = channel_df[channel_df['T[ms]'].between(test_info.start_ms, test_info.end_ms)].copy()
@@ -80,7 +106,6 @@ def main():
             df['T[ms]'] -= test_info.start_ms
             # Rename the value column
             df.rename(columns={channel_info.field_name: new_column_name}, inplace=True)
-
             tests_data.append(df)
 
     # Join the tests data to a single data frame with common time column.
@@ -98,21 +123,31 @@ def main():
     # We do it after the join to avoid floating point irregularities in the time matching.
     merged_df['T[ms]'] /= 1000
     merged_df.rename(columns={'T[ms]': 'T[s]'}, inplace=True)
-    # merged_df.round(3)
 
-    # Write out the file
-    csv_output_file = os.path.join(args.output_dir, "_tests_data.csv")
-    logger.info(f"Writing to [{csv_output_file}]")
-    merged_df.to_csv(csv_output_file, index=False, float_format="%.3f", header=True)
+    # Write the data to the output file.
+    # csv_output_file = os.path.join(args.output_dir, "_collected.csv")
+    # csv_output_file = args.csv_output_file
+    logger.info(f"Writing to [{args.csv_output_file}]")
+    merged_df.to_csv(args.csv_output_file, index=False, float_format="%.3f", header=True)
 
-    # Plot for sanity check
+    # Create data to plot. This is the merged data but down sampled if too large.
+    actual_num_rows = merged_df.shape[0]
+    desire_num_rows = 2000
+    dilution_factor = int(actual_num_rows / desire_num_rows)
+    logger.info(f"Plot size: actual={actual_num_rows} rows, desire={desire_num_rows} rows, factor={dilution_factor}")
+    if dilution_factor >= 2:
+        logger.info("Down sampling for plot purposes only")
+        display_df = merged_df.drop(merged_df[merged_df.index % dilution_factor != 0].index)
+        display_df.reset_index(inplace=True)
+        display_df.drop(['index'], axis=1, inplace=True)
+        # logger.info(f"Display df after index reset:\n{display_df}")
+    else:
+        logger.info("No need to down sample plot data")
+        display_df = merged_df
 
-    # Create a subsample for display. We pick only the 50th row.
-    # TODO: Select automatically the optimal subsampling factor
-    logger.info("Down sampling data.")
-    # sub_sample = merged_df.iloc[::50, :]
+    # Plot the data.
     logger.info("Plotting data.")
-    merged_df.plot(x="T[s]", xlabel="Seconds")
+    display_df.plot(x="T[s]", xlabel="Seconds")
     plt.show()
 
     logger.info(f"All done.")
