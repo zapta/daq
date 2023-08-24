@@ -1,2 +1,2 @@
 
-
+If no tests found, add to tests.csv one entry called 'all'
