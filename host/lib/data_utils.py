@@ -66,3 +66,10 @@ def load_channels_infos(channels_file_path: str, channels_selector: Optional[str
         file_name = row["File"]
         result.append(ChannelInfo(channel_name, channel_type, value_field, num_values, file_name))
     return result
+
+
+def down_sample(df: pd.DataFrame, n: int) -> pd.DataFrame:
+    """Returns a dataframe copy that contains only the n'th rows."""
+    assert isinstance(n, int), f"N must be an integer ({type(n)} found)"
+    assert n >= 2, f"N must be at least 2 ({n} found)"
+    return df[::n].reset_index(drop=True)

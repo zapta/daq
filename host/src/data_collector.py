@@ -12,7 +12,7 @@ import janitor
 
 # Local imports
 sys.path.insert(0, "..")
-from lib.data_utils import load_tests_infos, load_channels_infos, TestInfo
+from lib.data_utils import load_tests_infos, load_channels_infos, TestInfo, down_sample
 
 logging.basicConfig(
     level=logging.INFO,
@@ -129,19 +129,22 @@ def main():
     merged_df.to_csv(args.csv_output_file, index=False, float_format="%.3f", header=True)
 
     # Create data to plot. This is the merged data but down sampled if too large.
-    actual_num_rows = merged_df.shape[0]
-    desire_num_rows = 2000
-    dilution_factor = int(actual_num_rows / desire_num_rows)
-    logger.info(f"Plot size: actual={actual_num_rows} rows, desire={desire_num_rows} rows, factor={dilution_factor}")
-    if dilution_factor >= 2:
+    original_num_rows = merged_df.shape[0]
+    desire_num_rows = 3000
+    down_sampling_factor = int(original_num_rows / desire_num_rows)
+    logger.info(f"Plot size: original={original_num_rows} rows, desire={desire_num_rows} "
+                f"rows, factor={down_sampling_factor}")
+    if down_sampling_factor >= 2:
         logger.info("Down sampling for plot purposes only")
-        display_df = merged_df.drop(merged_df[merged_df.index % dilution_factor != 0].index)
-        display_df.reset_index(inplace=True)
-        display_df.drop(['index'], axis=1, inplace=True)
+        display_df = down_sample(merged_df, down_sampling_factor)
+        # display_df = merged_df.drop(merged_df[merged_df.index % down_sampling_factor != 0].index)
+        # display_df.reset_index(inplace=True)
+        # display_df.drop(['index'], axis=1, inplace=True)
         # logger.info(f"Display df after index reset:\n{display_df}")
     else:
         logger.info("No need to down sample plot data")
         display_df = merged_df
+    logger.info(f"Plot data has {display_df.shape[0]} rows.")
 
     # Plot the data.
     logger.info("Plotting data.")
