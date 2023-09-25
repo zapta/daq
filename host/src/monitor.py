@@ -217,9 +217,9 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
             if args.calibration:
                 temperature_chan.temperature_config.dump_temperature_calibration(round(avg_adc_value))
         # Process marker channel.
-        marker_data: ChannelData = parsed_log_packet.channel("MRKR")
-        markers_config: MarkersConfig = sys_config.markers_config()
+        marker_data: ChannelData = parsed_log_packet.channel("mrk")
         if marker_data:
+            markers_config: MarkersConfig = sys_config.markers_config()
             for time_millis, marker_name in marker_data.timed_values():
                 marker_time = time_millis / 1000
                 marker_type, marker_value = markers_config.classify_marker(marker_name)

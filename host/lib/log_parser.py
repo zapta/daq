@@ -1,5 +1,7 @@
 from typing import Optional, List, Tuple, Any, Dict
 from collections import OrderedDict
+import logging
+
 
 # For using the local version of serial_packet. Comment out if
 # using serial_packets package installed by pip.
@@ -7,6 +9,9 @@ from collections import OrderedDict
 # sys.path.insert(0, "../../../../serial_packets_py/repo/src")
 
 from serial_packets.packets import PacketData
+
+
+logger = logging.getLogger("main")
 
 
 class ChannelData:
@@ -167,6 +172,7 @@ class LogPacketsParser:
             elif chan_id == 0x07:
                 chan_name = "mrk"
                 timed_values = self._parse_str_sequence(packet_start_time_millis, data)
+                # logger.info(f"Marker: {timed_values}")
                 result.append_timed_values(chan_name, timed_values)
             else:
                 raise ValueError(f"Unexpected log chan id: {chan_id}")
