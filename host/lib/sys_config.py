@@ -54,31 +54,21 @@ class MarkersConfig:
 class LoadCellChannelConfig:
     """Configuration of a load cell channel."""
 
-    def __init__(self, chan_name: str, color: str, offset: int, scale: float):
+    def __init__(self, chan_name: str, color: str, adc_offset: int, scale: float):
         self.__chan_name = chan_name
         self.__color = color
-        self.__offset = offset
+        self.__adc_offset = adc_offset
         self.__scale = scale
-        # self.__low_pass_config = low_pass_config
 
     def __str__(self):
-        return f"Load cell {self.__chan_name} ({self.__color}): offset={self.__offset}, scale={self.__scale}"
+        return f"Load cell {self.__chan_name} ({self.__color}): offset={self.__adc_offset}, scale={self.__scale}"
 
     def adc_reading_to_grams(self, adc_reading: int) -> float:
-        return (adc_reading - self.__offset) * self.__scale
+        return (adc_reading - self.__adc_offset) * self.__scale
 
     def dump_lc_calibration(self, adc_reading: int) -> None:
         grams = self.adc_reading_to_grams(adc_reading)
         logger.info(f"{self.__chan_name:5s} adc {adc_reading:7d} -> {grams:7.1f} grams")
-
-    # def new_filter(self) -> Optional[SignalFilter]:
-    #     if self.__low_pass_config:
-    #         return LowPassFilter(self.__low_pass_config)
-    #     return None
-
-    # def filtered_signal_color(self):
-    #     assert self.__low_pass_config, "Load cell channel has no filter."
-    #     return self.__low_pass_config.color
 
     def color(self) -> str:
         return self.__color
@@ -88,7 +78,7 @@ class TemperatureChannelConfig:
     """Configuration of a temperature channel. Should be subclassed for each sensor type."""
 
     def __init__(self, chan_name: str, color: str, adc_open: int, adc_short: int, adc_calib: int,
-                 adc_calib_r: float):
+                 adc_calib_r: float, wire_r: float):
         # Config parameters from sys config.
         self.__chan_name = chan_name
         self.__color = color
@@ -97,7 +87,9 @@ class TemperatureChannelConfig:
         # Affective series resistance. As of July 2023, nominal 2k ohms.
         # By Thévenin, parallel(serial(2k, 2k), serial(2k, 2k)) ,
         # With the calibration value, we can establish the actual series resistance.
-        self.__r_series = (adc_calib_r * (adc_open - adc_calib)) / (adc_calib - adc_short)
+        # As for wire_r, this is the resistance of the sensor's calibration and it does
+        # not present in the calibration with the reference R, which is done with a minimal wire.
+        self.__r_series = wire_r + ((adc_calib_r * (adc_open - adc_calib)) / (adc_calib - adc_short))
 
     def color(self) -> str:
         return self.__color
@@ -131,8 +123,8 @@ class ThermistorChannelConfig(TemperatureChannelConfig):
 
     def __init__(self, chan_name: str, color: str, adc_open: int, adc_short: int, adc_calib: int,
                  adc_calib_r: float, thermistor_beta: int, thermistor_c: float,
-                 thermistor_ref_r: float, thermistor_ref_c: float, thermistor_offset: float):
-        super().__init__(chan_name, color, adc_open, adc_short, adc_calib, adc_calib_r)
+                 thermistor_ref_r: float, thermistor_ref_c: float, wire_r: float, thermistor_offset: float):
+        super().__init__(chan_name, color, adc_open, adc_short, adc_calib, adc_calib_r, wire_r)
         # coef_A/B/C are the coefficients of the Steinhart-Hart equation.
         # https://en.wikipedia.org/wiki/Steinhart%E2%80%93Hart_equation
         self.__thermistor_offset = thermistor_offset
@@ -182,8 +174,8 @@ class RtdChannelConfig(TemperatureChannelConfig):
     """Configuration of a temperature channel of type RTD (e.g. PT1000)."""
 
     def __init__(self, chan_name: str, color: str, adc_open: int, adc_short: int, adc_calib: int,
-                 adc_calib_r: float, rtd_r0: float, rtd_offset: float):
-        super().__init__(chan_name, color, adc_open, adc_short, adc_calib, adc_calib_r)
+                 adc_calib_r: float, rtd_r0: float, rtd_wire_r: float, rtd_offset: float):
+        super().__init__(chan_name, color, adc_open, adc_short, adc_calib, adc_calib_r, rtd_wire_r)
         self.__rtd_r0 = rtd_r0
         self.__rtd_offset = rtd_offset
         self.__last_index = 0
@@ -269,27 +261,29 @@ class SysConfig:
                 if rtd_config:
                     assert "thermistor" not in ch_config, "A channel cannot be both a thermistor and a RTD"
                     rtd_r0 = rtd_config["r0"]
-                    rtd_offset = rtd_config["offset"]
+                    rtd_wire_r = rtd_config["adjustment"]
+                    rtd_adjustment = rtd_config["adjustment"]
                     logger.info(f"RTD channel: {ch_name}, {rtd_r0}")
                     self.__tmp_ch_configs[ch_name] = RtdChannelConfig(ch_name, color, adc_open,
                                                                       adc_short, adc_calib,
-                                                                      adc_calib_r, rtd_r0,
-                                                                      rtd_offset)
+                                                                      adc_calib_r, rtd_r0, rtd_wire_r,
+                                                                      rtd_adjustment)
                 else:
                     thermistor_config = ch_config["thermistor"]
                     thermistor_beta = thermistor_config["beta"]
                     thermistor_c = thermistor_config["c"]
                     thermistor_ref_r = thermistor_config["ref_r"]
                     thermistor_ref_c = thermistor_config["ref_c"]
-                    thermistor_offset = thermistor_config["offset"]
+                    thermistor_wire_r = thermistor_config["wire_r"]
+                    thermistor_adjustment = thermistor_config["adjustment"]
                     logger.info(
                         f"Thermistor channel: {ch_name}, {thermistor_beta},  {thermistor_c},"
                         f" {thermistor_ref_r}, {thermistor_ref_c}"
                     )
                     self.__tmp_ch_configs[ch_name] = ThermistorChannelConfig(
                         ch_name, color, adc_open, adc_short, adc_calib, adc_calib_r,
-                        thermistor_beta, thermistor_c, thermistor_ref_r, thermistor_ref_c,
-                        thermistor_offset)
+                        thermistor_beta, thermistor_c, thermistor_ref_r, thermistor_ref_c, thermistor_wire_r,
+                        thermistor_adjustment)
             else:
                 raise RuntimeError(f"Unexpected channel name in sys_config: {ch_name}")
 
