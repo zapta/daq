@@ -23,19 +23,19 @@ scale = 0.002671
 
 [channel.tm1]
 color = "blueviolet"
-adc = { open = 4196416, short = 300, calib = 1399185, calib_r = 1000 }
+adc = { open = 4197050, short = 550, calib = 1399665, calib_r = 1000 }
 rtd = { r0 = 1000.0, wire_r=0.0, adjustment=0.0 }
 
 
 [channel.tm2]
 color = "blue"
-adc = { open = 4197817, short = 100, calib = 1399264, calib_r = 1000 }
+adc = { open = 4198050, short = 270, calib = 1399264, calib_r = 1000 }
 thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25, wire_r=0.0, adjustment=0.0 }
 
 
 [channel.tm3]
 color = "teal"
-adc = { open = 4196623, short = 245, calib = 1398925, calib_r = 1000 }
+adc = { open = 4197135, short = 170, calib = 1398925, calib_r = 1000 }
 thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25 , wire_r = 0.0, adjustment=0.0}
 
 
