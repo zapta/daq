@@ -4,3 +4,4 @@ serial_packets
 pandas
 matplotlib
 scipy
+stm32loader
