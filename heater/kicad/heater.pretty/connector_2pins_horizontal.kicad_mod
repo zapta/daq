@@ -1,4 +1,4 @@
-(footprint "connector_2pins_horizontal" (version 20221018) (generator pcbnew)
+(footprint "connector_2pins_horizontal" (versheatern 20221018) (generator pcbnew)
   (layer "F.Cu")
   (descr "Through hole straight pin header, 1x04, 2.54mm pitch, single row")
   (tags "Through hole pin header THT 1x04 2.54mm single row")

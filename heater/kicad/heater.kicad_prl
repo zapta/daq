@@ -14,8 +14,8 @@
       "vias": 1.0,
       "zones": 0.6
     },
-    "selection_filter": {
-      "dimensions": true,
+    "selectheatern_filter": {
+      "dimensheaterns": true,
       "footprints": true,
       "graphics": true,
       "keepouts": true,
@@ -65,8 +65,8 @@
     "zone_display_mode": 0
   },
   "meta": {
-    "filename": "io.kicad_prl",
-    "version": 3
+    "filename": "heater.kicad_prl",
+    "versheatern": 3
   },
   "project": {
     "files": []

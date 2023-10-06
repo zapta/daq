@@ -6,21 +6,21 @@ HEADER;
 /* OPTION: using custom renumber hook */
 
 FILE_DESCRIPTION(
-/* description */ ('STEP AP242',
-'CAx-IF Rec.Pracs.---Representation and Presentation of Product Manufa
-cturing Information (PMI)---4.0---2014-10-13',
+/* descriptheatern */ ('STEP AP242',
+'CAx-IF Rec.Pracs.---Representatheatern and Presentatheatern of Product Manufa
+cturing Informatheatern (PMI)---4.0---2014-10-13',
 'CAx-IF Rec.Pracs.---3D Tessellated Geometry---0.4---2014-09-14','2;1'),
 
-/* implementation_level */ '2;1');
+/* implementatheatern_level */ '2;1');
 
 FILE_NAME(
 /* name */ '64c2a31d6de83a2cd0a7b572',
 /* time_stamp */ '2023-07-27T17:02:22Z',
 /* author */ (''),
-/* organization */ (''),
-/* preprocessor_version */ 'ST-DEVELOPER v19.4',
+/* organizatheatern */ (''),
+/* preprocessor_versheatern */ 'ST-DEVELOPER v19.4',
 /* originating_system */ '  ',
-/* authorisation */ '  ');
+/* authorisatheatern */ '  ');
 
 FILE_SCHEMA (('AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF { 1 0 10303 442 1 1 4 }'));
 ENDSEC;
@@ -226,7 +226,7 @@ SI_UNIT($,.METRE.)
 #187=PRODUCT('Part 1','Part 1','Part 1',(#189));
 #188=PRODUCT_CATEGORY('','');
 #189=PRODUCT_CONTEXT('',#191,'mechanical');
-#190=APPLICATION_PROTOCOL_DEFINITION('international standard',
+#190=APPLICATION_PROTOCOL_DEFINITION('internatheaternal standard',
 'ap242_managed_model_based_3d_engineering',2011,#191);
 #191=APPLICATION_CONTEXT('managed model based 3d engineering');
 ENDSEC;

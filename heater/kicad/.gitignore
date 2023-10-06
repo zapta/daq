@@ -1,13 +1,13 @@
 fp-info-cache
-io.kicad_sch-bak
-io.sch-bak
-io.kicad_pcb-bak
-io-backups
-_autosave-io.sch
-io.bak
-io.bck
-production
-production.zip
+heater.kicad_sch-bak
+heater.sch-bak
+heater.kicad_pcb-bak
+heater-backups
+_autosave-heater.sch
+heater.bak
+heater.bck
+productheatern
+productheatern.zip
 _autosave-*
 *auto_saved_files*
 

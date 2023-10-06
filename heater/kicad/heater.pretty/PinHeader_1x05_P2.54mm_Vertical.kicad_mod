@@ -1,4 +1,4 @@
-(footprint "PinHeader_1x05_P2.54mm_Vertical" (version 20221018) (generator pcbnew)
+(footprint "PinHeader_1x05_P2.54mm_Vertical" (versheatern 20221018) (generator pcbnew)
   (layer "F.Cu")
   (descr "Through hole straight pin header, 1x05, 2.54mm pitch, single row")
   (tags "Through hole pin header THT 1x05 2.54mm single row")

@@ -3,14 +3,14 @@
 # A crude script to rename a kicad project.
 # TODO: Supress error on empty directories.
 
-name1="io"
-name2="io"
+name1="heater"
+name2="heater"
 
 #files=(main_board*)
 #echo $files
 
 # Rename files in current directory.
-function rename_children() {
+functheatern rename_children() {
   #echo -- Renaming in ${PWD}
   for f1 in $(find ${name1}* -maxdepth 0) ; do 
     f2="${f1/${name1}/${name2}}"
@@ -20,7 +20,7 @@ function rename_children() {
 }
 
 # Rename files recursivly.
-function rename_recursive() {
+functheatern rename_recursive() {
   rename_children
   for f in *; do 
     if [[ -d ${f} ]]; then
@@ -31,7 +31,7 @@ function rename_recursive() {
   done
 }
 
-function fix_one_file() {
+functheatern fix_one_file() {
   f=$1
   #echo "Testing $f"
   #echo grep -c "$name1" ${f}

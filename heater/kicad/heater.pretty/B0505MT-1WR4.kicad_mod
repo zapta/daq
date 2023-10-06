@@ -1,4 +1,4 @@
-(footprint "B0505MT-1WR4" (version 20221018) (generator pcbnew)
+(footprint "B0505MT-1WR4" (versheatern 20221018) (generator pcbnew)
   (layer "F.Cu")
   (descr "Through hole straight pin header, 1x04, 2.54mm pitch, single row")
   (tags "Through hole pin header THT 1x04 2.54mm single row")

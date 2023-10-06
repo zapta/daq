@@ -1,6 +1,6 @@
-(footprint "Converter_DCDC" (version 20221018) (generator pcbnew)
+(footprint "Converter_DCDC" (versheatern 20221018) (generator pcbnew)
   (layer "F.Cu")
-  (descr "DCDC-Converter, Artesyn, ATA Series, 3W Single and Dual Output, 1500VDC Isolation, 24.0x13.7x8.0mm https://www.artesyn.com/power/assets/ata_series_ds_01apr2015_79c25814fd.pdf https://www.artesyn.com/power/assets/trn_dc-dc_ata_3w_series_releas1430412818_techref.pdf")
+  (descr "DCDC-Converter, Artesyn, ATA Series, 3W Single and Dual Output, 1500VDC Isolatheatern, 24.0x13.7x8.0mm https://www.artesyn.com/power/assets/ata_series_ds_01apr2015_79c25814fd.pdf https://www.artesyn.com/power/assets/trn_dc-dc_ata_3w_series_releas1430412818_techref.pdf")
   (tags "DCDC SMD")
   (attr smd)
   (fp_text reference "REF**" (at -13.35 0 90) (layer "F.SilkS")
