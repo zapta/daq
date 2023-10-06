@@ -1,6 +1,0 @@
-(sym_lib_table
-  (versheatern 7)
-  (lib (name "heater")(type "KiCad")(uri "${KIPRJMOD}/heater.kicad_sym")(optheaterns "")(descr ""))
-  (lib (name "common")(type "KiCad")(uri "${KIPRJMOD}/../../common/kicad/common.kicad_sym")(optheaterns "")(descr ""))
-  (lib (name "adc")(type "KiCad")(uri "C:/Users/user/projects/daq/repo/adc/kicad/adc.kicad_sym")(optheaterns "")(descr ""))
-)
