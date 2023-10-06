@@ -5,6 +5,9 @@
 #
 # Precondition:
 #   pip install jupyter
+#
+# After starting this program, the dashboard is available at 
+#   http://localhost:8888/tree
 
 jupyter notebook
 
