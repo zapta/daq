@@ -6,16 +6,17 @@
 # Semitec thermistors datasheet is here:
 # https://www.mouser.com/datasheet/2/362/P18_NT_Thermistor-1535133.pdf
 
-# Calibrated for system #01.
+# Calibrated for system #02.
 
 [data_link]
-port = "COM4"
+port = "COM7"
 
 
 # grams = (adc_reading - adc_offset) * scale
 [channel.lc1]
 color = "red"
 adc_offset = 673281  
+#adc_offset = 104551  
 scale = 0.002671
 
 

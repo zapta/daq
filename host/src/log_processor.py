@@ -37,6 +37,10 @@ logger = logging.getLogger("main")
 
 # Command line args
 parser = argparse.ArgumentParser()
+parser.add_argument("--sys_config",
+                    dest="sys_config",
+                    default="sys_config.toml",
+                    help="Path to system configuration file.")
 parser.add_argument("--input_file",
                     dest="input_file",
                     default=".",
@@ -227,7 +231,7 @@ def main():
     global byte_count, packet_count, point_count, sys_config
     # Process configuration and command line flags.
     sys_config = SysConfig()
-    sys_config.load_from_file("sys_config.toml")
+    sys_config.load_from_file(args.sys_config)
     logger.info("Log processor started.")
     logger.info(f"Input file:  {args.input_file}")
     logger.info(f"Output directory: {args.output_dir}")

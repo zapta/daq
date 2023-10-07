@@ -27,7 +27,7 @@ parser.add_argument("--input_dir",
                     help="Input directory with channels .csv files.")
 parser.add_argument("--csv_output_file",
                     dest="csv_output_file",
-                    default=".",
+                    default="",
                     help="Name of the CSV output file.")
 parser.add_argument("--channels_selector",
                     dest="channels_selector",
@@ -125,8 +125,11 @@ def main():
     merged_df.rename(columns={'T[ms]': 'T[s]'}, inplace=True)
 
     # Write the data to the output file.
-    logger.info(f"Writing to [{args.csv_output_file}]")
-    merged_df.to_csv(args.csv_output_file, index=False, float_format="%.3f", header=True)
+    if args.csv_output_file:
+      logger.info(f"Writing to [{args.csv_output_file}]")
+      merged_df.to_csv(args.csv_output_file, index=False, float_format="%.3f", header=True)
+    else:
+      logger.info("csv_output_file flag not specified, skipping output file.")
 
     # Create data to plot. This is the merged data but down sampled if too large.
     original_num_rows = merged_df.shape[0]
