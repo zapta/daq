@@ -1,7 +1,13 @@
 pyqtgraph
 PyQt6
+PyQt6-Qt6
+PyQt6-sip
 serial_packets
 pandas
+numpy
 matplotlib
 scipy
 stm32loader
+pyjanitor
+pyinstaller
+
