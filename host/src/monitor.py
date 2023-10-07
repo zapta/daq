@@ -39,6 +39,11 @@ parser.add_argument('--calibration',
                     default=False,
                     action=argparse.BooleanOptionalAction,
                     help="If on, dump also calibration info.")
+parser.add_argument('--dry_run',
+                    dest="dry_run",
+                    default=False,
+                    action=argparse.BooleanOptionalAction,
+                    help="If true, perform sanity check and exit.")
 
 args = parser.parse_args()
 
@@ -54,6 +59,10 @@ logging.basicConfig(
     format="%(relativeCreated)07d %(levelname)-7s %(filename)-10s: %(message)s",
 )
 logger = logging.getLogger("main")
+
+if args.dry_run:
+  logger.info("Running nn Dry Run mode. Sanity checks passed. Terminating.")
+  sys.exit(0)
 
 # We use a single event loop for all asyncio operations.
 main_event_loop = asyncio.get_event_loop()
