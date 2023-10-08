@@ -4,6 +4,8 @@
 :: See this bug regarding an error in pyqtgraph and the workaround of swapping
 :: two lines:
 :: https://github.com/pyinstaller/pyinstaller/issues/7991#issuecomment-1752032919
+::
+:: ~/AppData/Local/Programs/Python/Python312/lib/site-packages/pyqtgraph/canvas/CanvasManager.py
 
 
 ::set -e
