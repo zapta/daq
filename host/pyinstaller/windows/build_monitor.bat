@@ -20,6 +20,8 @@ mkdir _dist
 mkdir _build
 mkdir _spec
 
+call update_build_info.bat ..\..\release\windows\monitor_build_info.txt
+
 pyinstaller ..\..\src\monitor.py ^
   --paths ".." ^
   --clean ^

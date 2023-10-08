@@ -20,6 +20,8 @@ mkdir _dist
 mkdir _build
 mkdir _spec
 
+call update_build_info.bat ..\..\release\windows\log_processor_build_info.txt
+
 pyinstaller ..\..\src\log_processor.py ^
   --paths ".." ^
   --clean ^

@@ -20,7 +20,7 @@ mkdir _dist
 mkdir _build
 mkdir _spec
 
-call update_build_info.bat ..\..\release\windows\info_data_collector.txt
+call update_build_info.bat ..\..\release\windows\data_collector_build_info.txt
 
 pyinstaller ..\..\src\data_collector.py ^
   --paths ".." ^
