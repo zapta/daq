@@ -1,5 +1,5 @@
 :: A Windows batch file to build a single file executable of the 
-:: analyzer's app.
+:: monotor app.
 ::
 :: See this bug regarding an error in pyqtgraph and the workaround of swapping
 :: two lines:
