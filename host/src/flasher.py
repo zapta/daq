@@ -1,5 +1,9 @@
 # A thin wrapper around the stm32loader.
 
+# Build on top of stm32loader
+# https://pypi.org/project/stm32loader/
+# https://github.com/florisla/stm32loader
+
 import stm32loader.main as loader
 import sys
 import argparse
