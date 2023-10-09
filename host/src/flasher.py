@@ -27,6 +27,14 @@ parser.add_argument(
     default="controller_firmware.bin",
     help="Path to firmware .bin file.",
 )
+
+parser.add_argument(
+    "--dry_run",
+    dest="dry_run",
+    default=False,
+    action=argparse.BooleanOptionalAction,
+    help="If true, ID the MCU and exit without flashing.",
+)
 args = parser.parse_args()
 
 
@@ -35,22 +43,25 @@ sys_config.load_from_file(args.sys_config)
 serial_port = sys_config.data_link_port()
 
 
+print(f"Dry run mode: {args.dry_run}", flush=True)
 print(f"Sys config file: {args.sys_config}", flush=True)
 print(f"Firmware file: {args.firmware}", flush=True)
 print(f"Serial port: {serial_port}", flush=True)
-
-if not os.path.exists(args.firmware):
-    print(f"Firmware file {args.firmware} not found. Check the --firmware flag.")
-    sys.exit(1)
 
 
 # Construct the loader command line params
 params = []
 params.extend(["-p", serial_port])
-params.extend(["-e"])
-params.extend(["-w"])
-params.extend(["-v"])
-params.extend([args.firmware])
+
+if not args.dry_run:
+    params.extend(["-e"])
+    params.extend(["-w"])
+    params.extend(["-v"])
+    if not os.path.exists(args.firmware):
+        print(f"Firmware file {args.firmware} not found. Check the --firmware flag.")
+        sys.exit(1)
+    params.extend([args.firmware])
+    
 print(f"Constructed params: {params}", flush=True)
 print(f"Equivalent command: {'stm32loader ' + " ".join(params) }", flush=True)
 
