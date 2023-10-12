@@ -52,6 +52,7 @@ print(f"Serial port: {serial_port}", flush=True)
 # Construct the loader command line params
 params = []
 params.extend(["-p", serial_port])
+params.extend(["-f", "H7"])
 
 if not args.dry_run:
     params.extend(["-e"])
@@ -62,7 +63,7 @@ if not args.dry_run:
         sys.exit(1)
     params.extend([args.firmware])
     
-print(f"Constructed params: {params}", flush=True)
+#print(f"Constructed params: {params}", flush=True)
 print(f"Equivalent command: {'stm32loader ' + " ".join(params) }", flush=True)
 
 # Call the loader
