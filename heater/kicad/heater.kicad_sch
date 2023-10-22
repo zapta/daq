@@ -3466,7 +3466,7 @@
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 87de16d2-165e-4f53-b8b5-47848f33040b)
   )
-  (text "0.975 V/I" (at 195.58 79.375 0)
+  (text "0.975 V/A" (at 195.58 79.375 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 97aac323-3d4b-4bd5-9d12-1234cc906b3f)
   )
