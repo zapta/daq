@@ -13,6 +13,7 @@
 #include "logger.h"
 #include "main.h"
 #include "rng.h"
+#include "i2c.h"
 #include "sdmmc.h"
 #include "serial.h"
 #include "spi.h"
@@ -84,6 +85,7 @@ int main(void) {
   MX_FATFS_Init();
   MX_USART2_UART_Init();
   MX_RNG_Init();
+  MX_I2C1_Init();
 
   if (!main_task.start()) {
     error_handler::Panic(93);
