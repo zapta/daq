@@ -25,21 +25,8 @@ void stop_recording();
 // Packet should be a serialized LOG packet with no write errors.
 void append_log_record_if_recording(const SerialPacketsData& packet_data);
 
-
 bool is_recording_active();
 
-// Sets name with the current recording name or clears it 
-// if recording is off.
-//  void get_current_recording_name(RecordingName* name);
+void get_recoding_info(RecordingInfo* state);
 
- void get_recoding_info(RecordingInfo* state);
-
-// bool is_disk_inserted();
-// void dump_summary();
-
-
-
-
-
-
-} // namespace data_recorder
+}  // namespace data_recorder
