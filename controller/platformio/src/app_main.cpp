@@ -14,15 +14,17 @@
 #include "serial.h"
 #include "session.h"
 #include "spi.h"
+#include "i2c_handler.h"
 #include "static_task.h"
 #include "tim.h"
 #include "usart.h"
 #include "usbd_cdc_if.h"
 
 // Tasks with static stack allocations.
-StaticTask<2000> host_link_rx_task(host_link::rx_task_body, "Host RX", 8);
-StaticTask<2000> printer_link_rx_task(printer_link::rx_task_body, "Printer RX", 5);
-StaticTask<2000> adc_task(adc::adc_task_body, "ADC", 7);
+StaticTask<2000> host_link_rx_task(host_link::rx_task_body, "Host RX", 6);
+StaticTask<2000> printer_link_rx_task(printer_link::rx_task_body, "Printer RX", 4);
+StaticTask<2000> adc_task(adc::adc_task_body, "ADC", 5);
+StaticTask<2000> i2c_task(i2c::i2c_task_body, "I2C", 7);
 
 // Called from from the main FreeRTOS task.
 void app_main() {
@@ -51,6 +53,9 @@ void app_main() {
     error_handler::Panic(87);
   }
   if (!adc_task.start()) {
+    error_handler::Panic(88);
+  }
+   if (!i2c_task.start()) {
     error_handler::Panic(88);
   }
 

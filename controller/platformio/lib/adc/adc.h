@@ -1,9 +1,10 @@
 #pragma once
 
-class Adc {
- public:
- private:
-};
+// class Adc {
+//  public:
+//  private:
+// };
+
 namespace adc {
 
 // void test_setup();
