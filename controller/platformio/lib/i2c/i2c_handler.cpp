@@ -27,6 +27,8 @@ static bool write_reg(uint8_t reg, uint16_t value) {
   return status == HAL_OK;
 }
 
+// TODO: Consider to use   HAL_I2C_Mem_Read_xx()
+//
 // static bool read_reg(uint8_t reg, uint16_t* value) {
 //   // Set address register.
 //   data_buffer[0] = reg;
@@ -35,7 +37,7 @@ static bool write_reg(uint8_t reg, uint16_t value) {
 //   if (status != HAL_OK) {
 //     return false;
 //   }
-
+//
 //   // Read the selected register.
 //   data_buffer[0] = 0;
 //   data_buffer[2] = 0;
