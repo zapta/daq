@@ -6,9 +6,16 @@
 // IMPORTANT: This file should be compiled with optimization off.
 // Enabling the optimization will affect the error code signaling
 // speed.
+
 #pragma GCC push_options
 #pragma GCC optimize("O0")
 
+
+// Error_Handler() is declared by the clube_ide file main.h.
+// This is also called by HAL and the cube_ide libraries.
+void Error_Handler() {
+  error_handler::Panic(3);
+}
 
 namespace error_handler {
 
@@ -42,7 +49,7 @@ static void send_digit(uint8_t n) {
   }
 }
 
- void Panic(uint32_t e) {
+ __attribute__((noreturn)) void Panic(uint32_t e) {
   __disable_irq();
 
   for (;;) {
@@ -78,17 +85,7 @@ static void send_digit(uint8_t n) {
 } // namespace error_handler
 
 
-// Error_Handler() is declared by the clube_ide file main.h.
-// This is also called by HAL and the cube_ide libraries.
-void Error_Handler() {
-  error_handler::Panic(3);
 
-  // __disable_irq();
-  // // TODO: Blink LEDs or something.
-  // while (1) {
-  //   asm("nop");
-  // }
-}
 
 
 #pragma GCC pop_options

@@ -91,7 +91,7 @@ static void process_next_rx_char(uint8_t c) {
 void rx_task_body(void* argument) {
   if (!link_serial) {
     // Setup not called.
-    error_handler::Panic(23);
+    error_handler::Panic(55);
   }
   for (;;) {
     // Wait for rx chars.

@@ -2,7 +2,6 @@
 
 #include "main.h"
 
-
 namespace error_handler {
 // Trap a fatal error of given code. e should be in [1, 999]
 // with zeros allows only as leading zeros, otherwise force
@@ -10,11 +9,9 @@ namespace error_handler {
 // the digit 0.
 // App code should call this function rather than then Error_Handler
 // which is used by HAL and cube_ide libraries.
-void Panic(uint32_t e);
-
+__attribute__((noreturn)) void Panic(uint32_t e);
 
 // Exposed for unit testing only.
- void signaling_delay(float t);
+void signaling_delay(float t);
 
-} // namespace error_handler
-
+}  // namespace error_handler

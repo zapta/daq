@@ -1,8 +1,9 @@
 #include "controller.h"
 
+#include "data_queue.h"
 #include "data_recorder.h"
-#include "host_link.h"
 #include "gpio_pins.h"
+#include "host_link.h"
 #include "serial_packets_client.h"
 #include "session.h"
 #include "static_mutex.h"
@@ -18,7 +19,7 @@ static data_recorder::RecordingName new_recording_name_buffer;
 static data_recorder::RecordingInfo recording_info_buffer;
 
 // Temp packet data. Used to encode log packets.
-static SerialPacketsData packet_data;
+// static SerialPacketsData packet_data;
 
 PacketStatus handle_control_command(const SerialPacketsData& command_data,
                                     SerialPacketsData& response_data) {
@@ -129,36 +130,47 @@ void report_marker(const MarkerName& marker_name) {
 
   // Encode a log record that contain marker channel with
   // a single data point.
-  // TODO: Consider to perform buffering of multiple markers.
-  packet_data.clear();
-  packet_data.write_uint8(1);                     // packet format version
-  packet_data.write_uint32(session::id());        // Device session id.
-  packet_data.write_uint32(time_util::millis());  // Base time.
-  packet_data.write_uint8(0x07);                  // Marker channel id
-  packet_data.write_uint16(0);                    // Relative time offset
-  packet_data.write_uint16(1);                    // Num data points
-  packet_data.write_str(marker_name.c_str());
+  //
+  // TODO: Consider to perform buffering of multiple markers into a single
+  // packet.
 
-  // Verify writing was OK.
-  if (packet_data.had_write_errors()) {
-    error_handler::Panic(77);
+  {
+    // Do not use buffer after it was queued.
+    data_queue::DataBuffer& buffer = data_queue::grab_buffer();
+    SerialPacketsData& packet_data = buffer.packet_data();
+
+    packet_data.clear();
+    packet_data.write_uint8(1);                     // packet format version
+    packet_data.write_uint32(session::id());        // Device session id.
+    packet_data.write_uint32(time_util::millis());  // Base time.
+    packet_data.write_uint8(0x07);                  // Marker channel id
+    packet_data.write_uint16(0);                    // Relative time offset
+    packet_data.write_uint16(1);                    // Num data points
+    packet_data.write_str(marker_name.c_str());
+
+    // Verify writing was OK.
+    if (packet_data.had_write_errors()) {
+      error_handler::Panic(77);
+    }
+
+    // Report to monitor and maybe to SD.
+    // Do not access buffer after this point.
+    data_queue::queue_buffer(buffer);
   }
-
-  // Report to monitor and maybe to SD.
-  report_log_data(packet_data);
+  // report_log_data(packet_data);
 
   // TODO: Implementing logging and reporting in status.
   logger.info("Marker: [%s]", marker_name.c_str());
 }
 
-void report_log_data(const SerialPacketsData& data) {
-  // logger.info("Controller, data = %hu", data.size());
-  gpio_pins::TEST1.set_high();
-  // Send to monitor.
-  host_link::client.sendMessage(HostPorts::LOG_REPORT_MESSAGE, data);
-  // Send to SD.
-  data_recorder::append_log_record_if_recording(data);
-  gpio_pins::TEST1.set_low();
-}
+// void report_log_data(const SerialPacketsData& data) {
+//   // logger.info("Controller, data = %hu", data.size());
+//   gpio_pins::TEST1.set_high();
+//   // Send to monitor.
+//   host_link::client.sendMessage(HostPorts::LOG_REPORT_MESSAGE, data);
+//   // Send to SD.
+//   data_recorder::append_log_record_if_recording(data);
+//   gpio_pins::TEST1.set_low();
+// }
 
 }  // namespace controller

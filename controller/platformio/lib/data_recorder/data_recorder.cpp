@@ -11,6 +11,9 @@
 #include "static_mutex.h"
 #include "time_util.h"
 
+// #pragma GCC push_options
+// #pragma GCC optimize("O0")
+
 // Workarounds for CubeIDE FATFS issues.
 // https://github.com/artlukm/STM32_FATFS_SDcard_remount
 // https://community.st.com/t5/stm32cubeide-mcu/wrong-returned-value-in-the-library-function-sd-initialize/m-p/580229#M19834
@@ -66,6 +69,12 @@ static uint32_t recording_start_time_millis = 0;
 static uint32_t writes_ok = 0;
 static uint32_t write_failures = 0;
 
+// Allows to set a single breakpoint on failures.
+static inline void increment_write_failures() {
+  write_failures++;
+}
+
+
 // Assumes level == STATE_OPENED and mutex is grabbed.
 // Tries to write pending bytes to SD. Always clears pending_bytes upon return.
 // We call this function with pending_bytes being a multiple of _MAX_SS
@@ -83,12 +92,12 @@ static void internal_write_all_pending_bytes() {
   unsigned int bytes_written;
   FRESULT status = f_write(&SDFile, write_buffer, n, &bytes_written);
   if (status != FRESULT::FR_OK) {
-    write_failures++;
+    increment_write_failures();
     logger.error("Error writing to SD recording file, status=%d", status);
     return;
   }
   if (bytes_written != n) {
-    write_failures++;
+    increment_write_failures();
     logger.error("Requested to write to SD %lu bytes, %lu written", n,
                  (uint32_t)bytes_written);
     return;
@@ -96,7 +105,7 @@ static void internal_write_all_pending_bytes() {
 
   status = f_sync(&SDFile);
   if (status != FRESULT::FR_OK) {
-    write_failures++;
+    increment_write_failures();
     logger.warning("Failed to flush SD file, status=%d", status);
   }
 
@@ -225,14 +234,14 @@ void append_log_record_if_recording(const SerialPacketsData& packet_data) {
 
   // Check state.
   if (state != STATE_OPENED) {
-    write_failures++;
+    increment_write_failures();
     logger.error("Can't write to recorder file, (state=%d)", state);
     return;
   }
 
   // Data should not have any errors.
   if (packet_data.had_write_errors()) {
-    write_failures++;
+    increment_write_failures();
     logger.error("Log data has write errors.");
     return;
   }

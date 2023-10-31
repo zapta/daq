@@ -1,4 +1,6 @@
 
+TODO: Changed the invalid temperature, when sensor are not connected, to -99c.
+
 TODO: Add a flag to supress plot display.
 
 TODO: Down sample for display using actual down sampling and mean().

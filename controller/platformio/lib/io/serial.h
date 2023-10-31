@@ -10,8 +10,8 @@
 #include "time_util.h"
 #include "usart.h"
 
-#pragma GCC push_options
-#pragma GCC optimize("Og")
+// #pragma GCC push_options
+// #pragma GCC optimize("Og")
 
 class Serial {
  public:
@@ -225,4 +225,4 @@ extern Serial serial1;
 extern Serial serial2;
 }  // namespace serial
 
-#pragma GCC pop_options
+// #pragma GCC pop_options

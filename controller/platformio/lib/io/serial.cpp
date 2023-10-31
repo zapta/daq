@@ -2,6 +2,7 @@
 
 #include "common.h"
 
+// #pragma GCC push_options
 // #pragma GCC optimize("Og")
 
 namespace serial {

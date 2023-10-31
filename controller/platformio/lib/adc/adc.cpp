@@ -7,11 +7,11 @@
 #include <cstring>
 
 #include "common.h"
-#include "controller.h"
+// #include "controller.h"
+#include "data_queue.h"
 #include "data_recorder.h"
 #include "dma.h"
 #include "host_link.h"
-// #include "gpio_pins.h"
 #include "serial_packets_client.h"
 #include "session.h"
 #include "spi.h"
@@ -76,7 +76,7 @@ constexpr uint16_t kDmaPointsPerSec = 2000;
 static uint8_t tx_buffer[2 * kDmaBytesPerHalf] = {};
 static uint8_t rx_buffer[2 * kDmaBytesPerHalf] = {};
 
-static SerialPacketsData packet_data;
+// static SerialPacketsData packet_data;
 
 // Represent the type of an event that is passed from the ISR handlers to the
 // worker thread.
@@ -168,7 +168,10 @@ void spi_TxRxHalfCpltCallbackIsr(SPI_HandleTypeDef *hspi) {
     BaseType_t task_woken = pdFALSE;
     IrqEvent event = {.id = EVENT_HALF_COMPLETE,
                       .isr_millis = time_util::millis_from_isr()};
-    irq_event_queue.add_from_isr(event, &task_woken);
+    if (!irq_event_queue.add_from_isr(event, &task_woken)) {
+      // Comment this out for debugging with breakpoints
+      error_handler::Panic(52);
+    }
     portYIELD_FROM_ISR(task_woken)
   }
 }
@@ -189,7 +192,10 @@ void spi_TxRxCpltCallbackIsr(SPI_HandleTypeDef *hspi) {
   BaseType_t task_woken = pdFALSE;
   IrqEvent event = {.id = EVENT_FULL_COMPLETE,
                     .isr_millis = time_util::millis_from_isr()};
-  irq_event_queue.add_from_isr(event, &task_woken);
+  if (!irq_event_queue.add_from_isr(event, &task_woken)) {
+    // Comment this out for debugging with breakpoints
+    error_handler::Panic(53);
+  }
   portYIELD_FROM_ISR(task_woken)
 }
 
@@ -502,6 +508,10 @@ void dump_state() {
 }
 
 void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
+  // Allocate a data buffer
+  data_queue::DataBuffer &data_buffer = data_queue::grab_buffer();
+  SerialPacketsData &packet_data = data_buffer.packet_data();
+
   // const bool reports_enabled = controller::is_adc_report_enabled();
   packet_data.clear();
   packet_data.write_uint8(1);               // packet version
@@ -541,7 +551,8 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
     packet_data.write_uint8(0x21 + i);
     // First item offset in ms from packet base time. Truncation of
     // a fraction of a ms is ok.
-    const uint32_t first_pt_index = kDmaConsecutiveLcPoints + i * kDmaPointsPerSlot;
+    const uint32_t first_pt_index =
+        kDmaConsecutiveLcPoints + i * kDmaPointsPerSlot;
     packet_data.write_uint16((1000 * first_pt_index) / kDmaPointsPerSec);
     // Number of values in this channel report. Each temperature channel
     // has a single slot in each cycle.
@@ -554,7 +565,6 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
     uint32_t byte_index =
         (first_pt_index * kDmaBytesPerPoint) + kDmaRxDataOffsetInPoint;
     for (uint32_t cycle = 0; cycle < kDmaCyclesPerHalf; cycle++) {
-
       packet_data.write_bytes(&bfr[byte_index], 3);
       byte_index += kDmaBytesPerCycle;
     }
@@ -572,9 +582,6 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
     regs_values[i] = bfr[i * kDmaBytesPerPoint + kDmaRegValOffsetInPoint];
   }
 
-  // Send to monitor and maybe to SD.
-  controller::report_log_data(packet_data);
-
   // Debugging info.
   if (true) {
     logger.info(
@@ -583,6 +590,10 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
         decode_int24(&bfr[kDmaRxDataOffsetInPoint + 2 * kDmaBytesPerPoint]),
         decode_int24(&bfr[kDmaRxDataOffsetInPoint + 4 * kDmaBytesPerPoint]));
   }
+
+  // Send to monitor and maybe to SD.
+  // Do not use 'buffer' beyond this point.
+  data_queue::queue_buffer(data_buffer);
 
   if (false) {
     logger.info("ADC processed in %lu ms", time_util::millis() - isr_millis);

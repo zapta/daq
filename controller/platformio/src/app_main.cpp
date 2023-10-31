@@ -1,30 +1,37 @@
 
-#include "main.h"
 #include <unistd.h>
+
 #include "FreeRTOS.h"
 #include "adc.h"
 #include "cdc_serial.h"
+#include "data_queue.h"
 #include "data_recorder.h"
 #include "dma.h"
 #include "gpio.h"
-#include "host_link.h"
 #include "gpio_pins.h"
+#include "host_link.h"
+#include "i2c_handler.h"
 #include "logger.h"
+#include "main.h"
 #include "printer_link.h"
 #include "serial.h"
 #include "session.h"
 #include "spi.h"
-#include "i2c_handler.h"
 #include "static_task.h"
 #include "tim.h"
 #include "usart.h"
 #include "usbd_cdc_if.h"
 
+#pragma GCC push_options
+#pragma GCC optimize("O0")
+
 // Tasks with static stack allocations.
 StaticTask<2000> host_link_rx_task(host_link::rx_task_body, "Host RX", 6);
-StaticTask<2000> printer_link_rx_task(printer_link::rx_task_body, "Printer RX", 4);
+StaticTask<2000> printer_link_rx_task(printer_link::rx_task_body, "Printer RX",
+                                      3);
 StaticTask<2000> adc_task(adc::adc_task_body, "ADC", 5);
 StaticTask<2000> i2c_task(i2c::i2c_task_body, "I2C", 7);
+StaticTask<2000> data_queue_task(data_queue::data_queue_task_body, "DQUE", 4);
 
 // Called from from the main FreeRTOS task.
 void app_main() {
@@ -39,6 +46,9 @@ void app_main() {
   __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_1, 200);
   HAL_TIM_Base_Start_IT(&htim12);
 
+  // Init data queue.
+  data_queue::setup();
+
   // Init host link.
   host_link::setup(serial::serial1);
 
@@ -46,6 +56,9 @@ void app_main() {
   printer_link::setup(serial::serial2);
 
   // Start tasks.
+  if (!data_queue_task.start()) {
+    error_handler::Panic(69);
+  }
   if (!host_link_rx_task.start()) {
     error_handler::Panic(86);
   }
@@ -55,7 +68,7 @@ void app_main() {
   if (!adc_task.start()) {
     error_handler::Panic(88);
   }
-   if (!i2c_task.start()) {
+  if (!i2c_task.start()) {
     error_handler::Panic(88);
   }
 
@@ -76,6 +89,7 @@ void app_main() {
                     recording_info.recording_time_millis);
       }
       logger.info("Session id: [%08lx]", session::id());
+      data_queue::dump_state();
       adc::verify_registers_vals();
     }
 

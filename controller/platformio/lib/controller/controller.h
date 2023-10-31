@@ -25,6 +25,6 @@ inline bool is_valid_marker_char(uint8_t c) {
   return isalnum(c) || strchr("-_.:", c);
 }
 
-void report_log_data(const SerialPacketsData& data);
+// void report_log_data(const SerialPacketsData& data);
 
 }  // namespace controller

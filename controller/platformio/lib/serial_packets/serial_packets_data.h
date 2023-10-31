@@ -17,8 +17,7 @@ class SerialPacketsBuffer {
   SerialPacketsBuffer() {}
   ~SerialPacketsBuffer() {}
 
-  // Disable copying and assignment, to avoid unintentinal overhead.
-  // These buffers can be large.
+  // Disable copying and assignment.
   SerialPacketsBuffer(const SerialPacketsBuffer& other) = delete;
   SerialPacketsBuffer& operator=(const SerialPacketsBuffer& other) = delete;
 
