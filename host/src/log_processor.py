@@ -279,7 +279,7 @@ def main():
         output_file.file_handle.close()
     for file_id, output_file in output_csv_files_dict.items():
         logger.info(
-            f"* {file_id:10s} {output_file.row_count:8d} rows  {os.path.basename(output_file.file_path):18s}")
+            f"* {file_id:10s} {output_file.row_count:8d} rows  {output_file.file_path}")
     logger.info(f"Time span: {session_span_secs():.3f} secs")
     logger.info(f"All done.")
 
