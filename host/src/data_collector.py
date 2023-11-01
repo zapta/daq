@@ -58,6 +58,7 @@ def main():
                          "Check _tests.csv file and --tests_selector flag.")
             sys.exit(1)
     else:
+        # Include all time range.
         test_infos = [TestInfo("all", 0, 9999999999999)]
 
     # Load channels infos from the tests file.

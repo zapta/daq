@@ -8,7 +8,12 @@ from PyQt6 import QtCore
 
 logger = logging.getLogger("sys_config")
 
+# A resistance const that represents an open circuit.
+OPEN_CIRCUIT_OHMS = 999999
 
+# A C temp const that represents an open circuit or unknown value.
+OPEN_CIRCUIT_C = -99
+    
 class MarkerConfig:
     """Config of a single marker type."""
 
@@ -99,9 +104,11 @@ class TemperatureChannelConfig:
         if ratio <= 0.0:
             resistance = 0
         elif ratio >= 0.99:
-            resistance = 1e8 - 1
+           # A special case to avoid divide by zero.
+           resistance = OPEN_CIRCUIT_OHMS
         else:
             resistance = (ratio * self.__r_series) / (1 - ratio)
+            resistance = min(resistance, OPEN_CIRCUIT_OHMS)
         return resistance
 
     def resistance_to_c(self, r: float) -> float:
@@ -141,15 +148,16 @@ class ThermistorChannelConfig(TemperatureChannelConfig):
 
     def resistance_to_c(self, r: float) -> float:
         """Thermistor specific resistance to temperature function."""
-        if r >= 1e8 - 1:
-            return -273.15
+        if r >= OPEN_CIRCUIT_OHMS:
+            return OPEN_CIRCUIT_C
         if r <= 1.0:
-            return 999
+            # We use same invalid value for short.
+            return OPEN_CIRCUIT_C
         ln_r = math.log(r)
         # The Steinhart-Hart equation.
         reciprocal_t = self.__coef_A + (self.__coef_B * ln_r) + (self.__coef_C * ln_r * ln_r * ln_r)
         t = (1 / reciprocal_t) - 273.15 + self.__thermistor_offset
-        return min(999.0, t)
+        return max(OPEN_CIRCUIT_C, t)
 
 
 # PT1000 [T[C], R[Ohms]] data points.
@@ -202,9 +210,9 @@ class RtdChannelConfig(TemperatureChannelConfig):
             return self.__interpolate__(self.__last_index, pt1000_r)
         # R is not in cached bucket. Compute from scratch.
         if pt1000_r < PT1000_MIN_R:
-            return -273.15
+            return OPEN_CIRCUIT_C
         if pt1000_r > PT1000_MAX_R:
-            return 999
+            return OPEN_CIRCUIT_C
         for i in range(len(PT1000_TABLE) - 1):
             if pt1000_r <= PT1000_TABLE[i + 1][1]:
                 self.__last_index = i
