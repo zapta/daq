@@ -1,10 +1,10 @@
 #pragma once
 
-namespace i2c {
+namespace i2c_handler {
 
 // Does not return.
 
-void i2c_setup();
+void setup();
 
 void i2c_task_body(void* argument);
 
@@ -13,4 +13,4 @@ void i2c_timer_body();
 
 // void dump_state();
 
-}  // namespace i2c
+}  // namespace i2c_handler

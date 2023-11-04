@@ -21,6 +21,7 @@
 #include "tim.h"
 #include "usart.h"
 #include "usbd_cdc_if.h"
+#include "i2c_handler.h"
 
 #pragma GCC push_options
 #pragma GCC optimize("O0")
@@ -30,7 +31,7 @@ StaticTask<2000> host_link_rx_task(host_link::rx_task_body, "Host RX", 6);
 StaticTask<2000> printer_link_rx_task(printer_link::rx_task_body, "Printer RX",
                                       3);
 StaticTask<2000> adc_task(adc::adc_task_body, "ADC", 5);
-StaticTask<2000> i2c_task(i2c::i2c_task_body, "I2C", 7);
+StaticTask<2000> i2c_task(i2c_handler::i2c_task_body, "I2C", 7);
 StaticTask<2000> data_queue_task(data_queue::data_queue_task_body, "DQUE", 4);
 
 // Called from from the main FreeRTOS task.
@@ -54,6 +55,9 @@ void app_main() {
 
   // Init printer link.
   printer_link::setup(serial::serial2);
+
+  // Init the ADC i2c.
+  i2c_handler::setup();
 
   // Start tasks.
   if (!data_queue_task.start()) {
