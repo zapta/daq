@@ -28,24 +28,33 @@ static bool write_reg(uint8_t reg, uint16_t value) {
 }
 
 // TODO: Consider to use   HAL_I2C_Mem_Read_xx()
-static bool read_reg(uint8_t reg, uint16_t* value) {
+static bool select_reg_to_read(uint8_t reg) {
   // Set address register.
   data_buffer[0] = reg;
-  HAL_StatusTypeDef status =
+  const HAL_StatusTypeDef status =
       HAL_I2C_Master_Transmit(&hi2c1, kDeviceAddress, data_buffer, 1, 100);
-  if (status != HAL_OK) {
-    return false;
-  }
+  return status == HAL_OK;
+}
 
+static bool read_selected_reg(uint16_t* value) {
   // Read the selected register.
   data_buffer[0] = 0;
   data_buffer[2] = 0;
-  status = HAL_I2C_Master_Receive(&hi2c1, kDeviceAddress, data_buffer, 2, 100);
+  const HAL_StatusTypeDef status = HAL_I2C_Master_Receive(&hi2c1, kDeviceAddress, data_buffer, 2, 100);
   if (status != HAL_OK) {
     return false;
   }
   *value = ((uint16_t)data_buffer[0] << 8) | data_buffer[1];
   return true;
+}
+
+// TODO: Consider to use   HAL_I2C_Mem_Read_xx()
+static bool read_reg(uint8_t reg, uint16_t* value) {
+  if (!select_reg_to_read(reg)) {
+    return false;
+  }
+
+  return read_selected_reg(value);
 }
 
 void i2c_task_body(void* argument) {
