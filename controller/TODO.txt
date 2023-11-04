@@ -1,4 +1,6 @@
 
+Revisit the visibility of generated Cube function. See Project Manager / Advance Settings, in the .ioc editor. May simplify some of the python script patching.
+
 Change platformio board from custom to generic stm32h750
 
 Change the logger to accepts a queue of data buffers such that adc and ohter moduels are non blocked on writing.
