@@ -61,7 +61,7 @@ void data_queue_task_body(void* argument) {
                                                    portMAX_DELAY)) {
       error_handler::Panic(16);
     }
-    logger.info("data_buffer[%hu]: procesing", buffer_index);
+    // logger.info("data_buffer[%hu]: procesing", buffer_index);
 
     // Get buffer address.
     if (buffer_index >= kNumBuffers) {
@@ -81,7 +81,7 @@ void data_queue_task_body(void* argument) {
     gpio_pins::TEST1.set_low();
 
     // Free the buffer.
-    logger.info("data_buffer[%hu]: freeing", buffer_index);
+    // logger.info("data_buffer[%hu]: freeing", buffer_index);
     buffer._state = DataBuffer::FREE;
     // We don't expect blocking here.
     if (!free_buffers_indexes_queue.add_from_task(buffer_index, 0)) {
