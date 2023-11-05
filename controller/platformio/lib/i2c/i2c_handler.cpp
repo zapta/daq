@@ -20,7 +20,7 @@ static void i2c_timer_cb(TimerHandle_t xTimer);
 
 // Each data point contains a pair of readings for voltage
 // and current respectivly.
-static constexpr uint16_t kDataPointsPerPacket = 20;
+static constexpr uint16_t kDataPointsPerPacket = 8;
 static constexpr uint16_t kMsTimerTick = 25;
 static constexpr uint16_t kMsPerDataPoint = 2 * kMsTimerTick;
 

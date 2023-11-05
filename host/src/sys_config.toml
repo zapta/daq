@@ -19,7 +19,7 @@ adc_offset = 100388
 scale = 0.002671
 
 [channel.pw1]
-color = "red"
+color = "maroon"
 # value = (adc_reading - adc_offset) * scale
 voltage = { adc_offset = -2, scale = 0.0009 }
 current = { adc_offset = 2568, scale = 0.00012 }

@@ -39,6 +39,11 @@ parser.add_argument('--calibration',
                     default=False,
                     action=argparse.BooleanOptionalAction,
                     help="If on, dump also calibration info.")
+parser.add_argument("--refresh_rate", 
+                    dest="refresh_rate", 
+                    type=int,
+                    default=20, 
+                    help="Graphs refreshes per sec.")
 parser.add_argument('--dry_run',
                     dest="dry_run",
                     default=False,
@@ -47,12 +52,13 @@ parser.add_argument('--dry_run',
 
 args = parser.parse_args()
 
-# X spans, in secs, of the two plots.
+# X spans, in secs, of the the plots.
 # TODO: Make these command line flags.
 # TODO: Add a flag to perform down sampling of the LC channel, for display only.
 plot1_x_span = 2.0
 plot2_x_span = 70.0
-max_plot_x_span = max(plot1_x_span, plot2_x_span)
+plot3_x_span = 70.0
+max_plot_x_span = max(plot1_x_span, plot2_x_span, plot3_x_span)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -70,6 +76,8 @@ main_event_loop = asyncio.get_event_loop()
 # TODO: Move to a common place.
 CONTROL_ENDPOINT = 0x01
 
+# System time of last display update.
+last_display_update_time: float = None
 
 @dataclass(frozen=True)
 class MarkerEntry:
@@ -114,6 +122,9 @@ class LoadCellChannel:
     lc_config: LoadCellChannelConfig
     display_series: DisplaySeries
     
+    def clear(self):
+      self.display_series.clear()
+    
 @dataclass(frozen=True)
 class PowerChannel:
     chan_name: str
@@ -121,12 +132,20 @@ class PowerChannel:
     display_series_v: DisplaySeries
     display_series_a: DisplaySeries
     display_series_w: DisplaySeries
+    
+    def clear(self):
+      self.display_series_v.clear()
+      self.display_series_a.clear()
+      self.display_series_w.clear()
 
 @dataclass(frozen=True)
 class TemperatureChannel:
     chan_name: str
     temperature_config: TemperatureChannelConfig
     display_series: DisplaySeries
+    
+    def clear(self):
+      self.display_series.clear()
 
 
 # Initialized later.
@@ -156,6 +175,7 @@ window_title = "DAQ Monitor"
 
 plot1: Optional[pg.PlotItem] = None
 plot2: Optional[pg.PlotItem] = None
+plot3: Optional[pg.PlotItem] = None
 button1: Optional[QtWidgets.QPushButton] = None
 button2: Optional[QtWidgets.QPushButton] = None
 status_label: Optional[LabelItem] = None
@@ -170,11 +190,12 @@ temperature_configs = {}
 # Device time in secs. Represent the time of last
 # known info.
 latest_log_time: Optional[float] = None
+latest_log_arrival_time: Optional[float] = None
 
 
 async def message_async_callback(endpoint: int, data: PacketData) -> None:
     """Callback from the serial packets clients for incoming messages."""
-    global lc_channels, pw_channels, tm_channels, latest_log_time
+    global lc_channels, pw_channels, tm_channels, latest_log_time, latest_log_arrival_time
     logger.debug(f"Received message: [%d] %s", endpoint, data.hex_str(max_bytes=10))
     if endpoint == 10:
         parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(data)
@@ -189,6 +210,7 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
         packet_end_time = parsed_log_packet.end_time()
         if latest_log_time is None or packet_end_time > latest_log_time:
             latest_log_time = packet_end_time
+            latest_log_arrival_time = time.time()
             
         # Process load cell channels
         for lc_ch_name in lc_channels.keys():
@@ -280,7 +302,7 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
                                        markers_config.pen_for_marker(marker_name))
 
         # All done. Update the display
-        update_display()
+        # update_display()
 
 
 def set_display_status_line(msg: str) -> None:
@@ -289,25 +311,33 @@ def set_display_status_line(msg: str) -> None:
 
 
 def update_display():
-    global lc_channels, tm_channels, plot1, plot2, sys_config, latest_log_time
+    global lc_channels, tm_channels, plot1, plot2, plot3, sys_config, latest_log_time, latest_log_arrival_time
+    global last_display_update_time
 
     # logger.info(f"Update display(), latest_log_time = {latest_log_time}")
     plot1.clear()
     plot2.clear()
+    plot3.clear()
 
     if latest_log_time is None:
         logger.info("No log base time to update graphs")
         markers_history.clear()
         return
+      
+    last_display_update_time = time.time()
+      
+    # For smoother display scroll. We keep advancing the time since the last 
+    # log packet.
+    adjusted_latest_log_time = latest_log_time + (time.time() - latest_log_arrival_time)
 
     # Remove markers that are beyond all plots.
-    markers_history.prune_older_than(latest_log_time - max_plot_x_span)
+    markers_history.prune_older_than(adjusted_latest_log_time - max_plot_x_span)
 
     # Update plot 1 with load_cells
     for ch_name, lc_chan in sorted(lc_channels.items()):
-        cleanup_time = latest_log_time - plot1_x_span
+        cleanup_time = adjusted_latest_log_time - plot1_x_span
         lc_chan.display_series.delete_older_than(cleanup_time)
-        x = lc_chan.display_series.relative_times(latest_log_time)
+        x = lc_chan.display_series.relative_times(adjusted_latest_log_time)
         # Draw the actual values ('below' on the display)
         y = lc_chan.display_series.values()
         color = lc_chan.lc_config.color()
@@ -315,20 +345,34 @@ def update_display():
 
     # Update plot 2 with temperature channels
     for ch_name, temperature_chan in sorted(tm_channels.items()):
-        temperature_chan.display_series.delete_older_than(latest_log_time - plot2_x_span)
-        x = temperature_chan.display_series.relative_times(latest_log_time)
+        temperature_chan.display_series.delete_older_than(adjusted_latest_log_time - plot2_x_span)
+        x = temperature_chan.display_series.relative_times(adjusted_latest_log_time)
         y = temperature_chan.display_series.values()
         color = temperature_chan.temperature_config.color()
         plot2.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name, antialias=True)
+        
+    # Update plot 3 with power channels
+    for ch_name, pw_chan in sorted(pw_channels.items()):
+        pw_chan.display_series_v.delete_older_than(adjusted_latest_log_time - plot3_x_span)
+        pw_chan.display_series_a.delete_older_than(adjusted_latest_log_time - plot3_x_span)
+        pw_chan.display_series_w.delete_older_than(adjusted_latest_log_time - plot3_x_span)
+        # x = pw_chan.display_series_w.relative_times(latest_log_time)
+        # y = pw_chan.display_series_w.values()
+        x = pw_chan.display_series_v.relative_times(adjusted_latest_log_time)
+        y = pw_chan.display_series_v.values()
+        color = pw_chan.pw_config.color()
+        plot3.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name, antialias=True)
 
-    # Draw the markers on plot1, plot2.
+    # Draw the markers on plot1, plot2. plot3.
     # marker_pen = pg.mkPen(color="red", width=2)
     for marker in markers_history.markers:
-        rel_time = marker.marker_time - latest_log_time
+        rel_time = marker.marker_time - adjusted_latest_log_time
         if rel_time > -plot1_x_span:
             plot1.addLine(x=rel_time, pen=marker.marker_pen)
         if rel_time > -plot2_x_span:
             plot2.addLine(x=rel_time, pen=marker.marker_pen)
+        if rel_time > -plot3_x_span:
+            plot3.addLine(x=rel_time, pen=marker.marker_pen)
 
 
 async def connection_task():
@@ -384,7 +428,7 @@ def on_stop_button():
 
 
 def init_display():
-    global plot1, plot2, button1, button2, status_label, app, app_view, lc_channels, pw_channels, tm_channels
+    global plot1, plot2, plot3, button1, button2, status_label, app, app_view, lc_channels, pw_channels, tm_channels
 
     lc_channels = {}
     for chan_name, lc_config in sys_config.load_cells_configs().items():
@@ -433,6 +477,15 @@ def init_display():
     plot2.setXRange(-(plot2_x_span * 0.95), 0)
     plot2.setYRange(0, 260)
     plot2.addLegend(offset=(5, 5), verSpacing=-7, brush="#eee", labelTextSize='7pt')
+    
+    layout.nextRow()
+    plot3 = layout.addPlot(title="Power", colspan=5)
+    plot3.setLabel('left', 'Power', "W")
+    plot3.showGrid(False, True, 0.7)
+    plot3.setMouseEnabled(x=False, y=True)
+    plot3.setXRange(-(plot3_x_span * 0.95), 0)
+    plot3.setYRange(-0.1, 60)
+    plot3.addLegend(offset=(5, 5), verSpacing=-7, brush="#eee", labelTextSize='7pt')
 
     # Add an empty row as spacing.
     # TODO: Is there a cleaner way to specify top margin?
@@ -476,15 +529,22 @@ device_session_id = 0
 def reset_display():
     global latest_log_time
     latest_log_time = None
+    latest_log_arrival_time = None
     for chan in lc_channels.values():
-        chan.display_series.clear()
-        # if chan.filtered_display_series:
-        #     chan.filtered_display_series.clear()
+        chan.clear()
+        # chan.display_series.clear()
+    for chan in pw_channels.values():
+        chan.clear()
+        # chan.display_series_v.clear()
+        # chan.display_series_a.clear()
+        # chan.display_series_w.clear()
     for chan in tm_channels.values():
-        chan.display_series.clear()
+        chan.clear()
+        # chan.display_series.clear()
     markers_history.clear()
     set_display_status_line("")
-    update_display()
+    # Force a display update
+    last_display_update_time = None
 
 
 def timer_handler():
@@ -493,7 +553,8 @@ def timer_handler():
     global pending_start_button_click, command_start_future
     global pending_stop_button_click, command_stop_future
     global last_command_status_time, command_status_future
-    global device_session_id
+    global device_session_id, last_display_update_time
+    
 
     # Process any pending events of the serial packets client.
     # This calls indirectly display_update when new packets arrive.
@@ -574,6 +635,12 @@ def timer_handler():
                 reset_display()
                 msg = "Device reset"
         set_display_status_line(msg)
+      
+    if (last_display_update_time is None) or ((time.time() - last_display_update_time) * args.refresh_rate >= 1):
+      update_display()
+    # if (timer_handler_counter % 10 == 0):
+    #   update_display()
+    # timer_handler_counter += 1
 
 
 def main():
