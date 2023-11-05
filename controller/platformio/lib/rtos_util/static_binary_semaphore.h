@@ -18,8 +18,6 @@ class StaticBinarySemaphore {
   StaticBinarySemaphore(const StaticBinarySemaphore& other) = delete;
   StaticBinarySemaphore& operator=(const StaticBinarySemaphore& other) = delete;
 
-  inline SemaphoreHandle_t handle() { return _handle; }
-
   // Do not call from ISR. Timeout of portMAX_DELAY indicates
   // wait forever.
   inline bool take(TickType_t timeout_millis) {

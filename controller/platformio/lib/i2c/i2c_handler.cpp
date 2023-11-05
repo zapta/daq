@@ -8,9 +8,7 @@
 #include "static_queue.h"
 #include "time_util.h"
 
-
 // TODO: More graceful handling of errors (?)
-
 
 namespace i2c_handler {
 
@@ -45,7 +43,7 @@ enum State {
 
 static State state = STATE_UNDEFINED;
 
-// The IRQ sequence sends these events to the processing task, each 
+// The IRQ sequence sends these events to the processing task, each
 // time a new convertion value is read from the ADC.
 struct IrqEvent {
   uint32_t timestamp_millis;
@@ -57,8 +55,8 @@ static StaticQueue<IrqEvent, 5> irq_event_queue;
 
 // Hanlers for STEP1.
 namespace step1 {
-// Start state 1. Called from task.
-static inline void start_from_task() {
+// Start state 1. Called from timer callback. Should be non blocking.
+static inline void start_from_timer() {
   if (state != STATE_IDLE) {
     error_handler::Panic(216);
   }
@@ -186,7 +184,7 @@ void i2c_AbortCallbackIsr(I2C_HandleTypeDef* hi2c) {
 
 void setup() {
   if (state != STATE_UNDEFINED) {
-    error_handler::Panic(118);
+    error_handler::Panic(119);
   }
 
   // Register interrupt handler. These handler are marked in
@@ -219,25 +217,25 @@ void setup() {
 void i2c_task_body(void* argument) {
   // Processing loop.
   for (;;) {
-    time_util::delay_millis(100);
+    // time_util::delay_millis(100);
 
-    const uint32_t n = irq_event_queue.size();
+    // const uint32_t n = irq_event_queue.size();
 
-    i2c_timer_cb();
+    // i2c_timer_cb();
 
-    logger.info("I2C: Queue has %lu items", n);
-    for (uint32_t i = 0; i < n; i++) {
-      IrqEvent event;
-      if (!irq_event_queue.consume_from_task(&event, 0)) {
-        logger.error("I2C: Error reading queue.");
-      } else {
-        logger.info("I2C[%d]: %lu, %hd", event.ch, event.timestamp_millis,
-                    event.adc_value);
-      }
+    // logger.info("I2C: Queue has %lu items", n);
+    // for (uint32_t i = 0; i < n; i++) {
+    IrqEvent event;
+    if (!irq_event_queue.consume_from_task(&event, portMAX_DELAY)) {
+      error_handler::Panic(122);
     }
+
+    logger.info("I2C[%d]: %lu, %hd", event.ch, event.timestamp_millis,
+                event.adc_value);
   }
 }
 
-void i2c_timer_cb() { step1::start_from_task(); }
+// This function is called from the timer daemon and thus should be non blocking.
+void i2c_timer_cb(TimerHandle_t xTimer) { step1::start_from_timer(); }
 
 }  // namespace i2c_handler

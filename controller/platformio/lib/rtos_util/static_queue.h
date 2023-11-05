@@ -23,8 +23,6 @@ class StaticQueue {
   // The capacity of this queue.
   static constexpr uint16_t capacity = N;
 
-  inline QueueHandle_t handle() { return _handle; }
-
   inline void reset() { xQueueReset(_handle); }
 
   // The current number of items in the queue.

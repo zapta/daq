@@ -16,8 +16,6 @@ class StaticMutex {
   StaticMutex(const StaticMutex& other) = delete;
   StaticMutex& operator=(const StaticMutex& other) = delete;
 
-  inline SemaphoreHandle_t handle() { return _handle; }
-
   // Should not be called from ISR. Timeout of portMAX_DELAY
   // indicates wait forever.
   inline bool take(TickType_t timeout_millis) {
@@ -34,6 +32,8 @@ class StaticMutex {
   }
 
  private:
+  friend class MutexScope;
+
   StaticSemaphore_t _mutex_buffer;
   SemaphoreHandle_t const _handle;
 };
@@ -43,7 +43,7 @@ class MutexScope {
  public:
   // Blocking. Waits to grab the mutex.
   inline MutexScope(StaticMutex& static_mutex)
-      : _mutex_handle(static_mutex.handle()) {
+      : _mutex_handle(static_mutex._handle) {
     xSemaphoreTake(_mutex_handle, portMAX_DELAY);
   }
   // Release the mutex when exiting the scope.
