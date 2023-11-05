@@ -25,9 +25,8 @@ class DataBuffer {
  private:
   friend void data_queue::setup();
   friend void data_queue::data_queue_task_body(void*) ;
-  friend DataBuffer& data_queue::grab_buffer();
-  friend void data_queue::queue_buffer(DataBuffer&) ;
-  friend void data_queue::abandon_buffer(DataBuffer&) ;
+  friend DataBuffer* data_queue::grab_buffer();
+  friend void data_queue::queue_buffer(DataBuffer*) ;
 
   uint8_t _buffer_index = 0;
   State _state = FREE;
@@ -47,11 +46,12 @@ void setup();
 // Should be called after setup().
 void data_queue_task_body(void* argument);
 
-// Non blocking. Panic if a buffer is not available.
-DataBuffer& grab_buffer();
+// Non blocking. Panic if a buffer is not available. Guaranteed to 
+// returned a non null value.
+DataBuffer* grab_buffer();
 
 // Non blocking. 
-void queue_buffer(DataBuffer& buffer);
+void queue_buffer(DataBuffer* buffer);
 
 void dump_state();
 

@@ -132,6 +132,24 @@ class LogPacketsParser:
             t_millis += step_interval_millis
         assert not data.read_error()
         return timed_values
+      
+    def _parse_int16_pairs_sequence(self, packet_start_time_millis: int,
+                              data: PacketData) -> List[Tuple[int, Tuple[int, int]]]:
+        """Returns a list of time values (int16, int16)"""
+        first_value_rel_time: int = data.read_uint16()
+        num_values = data.read_uint16()
+        step_interval_millis = data.read_uint16() if num_values > 0 else 0
+        # print(f"*** {packet_start_time_millis}, {first_value_rel_time}, {num_values}, {step_interval_millis}", flush=True)
+        assert not data.read_error()
+        timed_values = []
+        t_millis: int = packet_start_time_millis + first_value_rel_time
+        for i in range(num_values):
+            value1 =  data.read_int16()
+            value2 =  data.read_int16()
+            timed_values.append((t_millis, (value1, value2)))
+            t_millis += step_interval_millis
+        assert not data.read_error()
+        return timed_values
 
     def _parse_str_sequence(self, packet_start_time_millis: int,
                             data: PacketData) -> List[Tuple[int, str]]:
@@ -169,12 +187,16 @@ class LogPacketsParser:
                 chan_name = f"tm{chan_id - 0x21 + 1}"
                 timed_values = self._parse_int24_sequence(packet_start_time_millis, data)
                 result.append_timed_values(chan_name, timed_values)
+            elif 0x30 <= chan_id <= 0x32:
+                chan_name = f"va{chan_id - 0x30 + 1}"
+                timed_values = self._parse_int16_pairs_sequence(packet_start_time_millis, data)
+                result.append_timed_values(chan_name, timed_values)
             elif chan_id == 0x07:
                 chan_name = "mrk"
                 timed_values = self._parse_str_sequence(packet_start_time_millis, data)
                 # logger.info(f"Marker: {timed_values}")
                 result.append_timed_values(chan_name, timed_values)
             else:
-                raise ValueError(f"Unexpected log chan id: {chan_id}")
+                raise ValueError(f"Unexpected log chan id: 0x{chan_id:02x}")
         assert data.all_read_ok()
         return result

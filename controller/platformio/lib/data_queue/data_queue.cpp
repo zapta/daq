@@ -7,7 +7,6 @@
 #include "static_mutex.h"
 #include "static_queue.h"
 
-
 // #pragma GCC push_options
 // #pragma GCC optimize("O0")
 
@@ -58,7 +57,7 @@ void data_queue_task_body(void* argument) {
     // Wait for next pending buffer.
     uint8_t buffer_index = -1;
     if (!pending_buffers_indexes_queue.consume_from_task(&buffer_index,
-                                                   portMAX_DELAY)) {
+                                                         portMAX_DELAY)) {
       error_handler::Panic(16);
     }
     // logger.info("data_buffer[%hu]: procesing", buffer_index);
@@ -90,7 +89,8 @@ void data_queue_task_body(void* argument) {
   }
 }
 
-DataBuffer& grab_buffer() {
+// Returned a non null value.
+DataBuffer* grab_buffer() {
   uint8_t buffer_index = -1;
 
   // Grab the next free buffer, no blocking, and track min free buffers.
@@ -113,29 +113,29 @@ DataBuffer& grab_buffer() {
   if (buffer_index >= kNumBuffers) {
     error_handler::Panic(22);
   }
-  DataBuffer& buffer = data_buffers[buffer_index];
-  if (buffer.state() != DataBuffer::FREE) {
+  DataBuffer* buffer = &data_buffers[buffer_index];
+  if (buffer->state() != DataBuffer::FREE) {
     error_handler::Panic(23);
   }
-  buffer._state = DataBuffer::GRABBED;
+  buffer->_state = DataBuffer::GRABBED;
   return buffer;
 }
 
-void queue_buffer(DataBuffer& buffer) {
-  const uint8_t buffer_index = buffer._buffer_index;
+void queue_buffer(DataBuffer* buffer) {
+  const uint8_t buffer_index = buffer->_buffer_index;
   // Sanity check.
   if (buffer_index >= kNumBuffers) {
     error_handler::Panic(24);
   }
-  if (&buffer != &data_buffers[buffer_index]) {
+  if (buffer != &data_buffers[buffer_index]) {
     error_handler::Panic(54);
   }
-  if (buffer.state() != DataBuffer::GRABBED) {
+  if (buffer->state() != DataBuffer::GRABBED) {
     error_handler::Panic(25);
   }
-  buffer._state = DataBuffer::PENDING;
+  buffer->_state = DataBuffer::PENDING;
 
-  // Queue the buffer and track max number of pending items.
+  // Queue the buffer index and track max number of pending items.
   {
     MutexScope scope(mutex);
     // Since this is non blocking, it's OK do do within the mutex.
@@ -149,27 +149,6 @@ void queue_buffer(DataBuffer& buffer) {
     }
   }
 }
-
-// void abandon_buffer(DataBuffer& buffer) {
-//   const uint8_t buffer_index = buffer._buffer_index;
-//   // Sanity check.
-//   if (buffer_index >= kNumBuffers) {
-//     error_handler::Panic(27);
-//   }
-//   if (&buffer != &data_buffers[buffer_index]) {
-//     error_handler::Panic(14);
-//   }
-//   if (buffer.state() != DataBuffer::FREE) {
-//     error_handler::Panic(28);
-//   }
-//   buffer._state = DataBuffer::FREE;
-
-//   // Since we increase the number of free items, we don't need to track
-//   // min_free_queue_size.
-//   if (!free_buffers_indexes.add_from_task(buffer_index, 0)) {
-//     error_handler::Panic(29);
-//   }
-// }
 
 void dump_state() {
   // Get values within a mutex

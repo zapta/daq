@@ -18,7 +18,6 @@
 #include "session.h"
 #include "spi.h"
 #include "static_task.h"
-#include "static_timer.h"
 #include "tim.h"
 #include "usart.h"
 #include "usbd_cdc_if.h"
@@ -33,9 +32,6 @@ StaticTask<2000> printer_link_rx_task(printer_link::rx_task_body, "Printer RX",
 StaticTask<2000> adc_task(adc::adc_task_body, "ADC", 5);
 StaticTask<2000> i2c_task(i2c_handler::i2c_task_body, "I2C", 7);
 StaticTask<2000> data_queue_task(data_queue::data_queue_task_body, "DQUE", 4);
-
-// Timers with static allocation.
-StaticTimer i2c_timer(i2c_handler::i2c_timer_cb, "I2C", 100);
 
 // Called from from the main FreeRTOS task.
 void app_main() {
@@ -59,9 +55,6 @@ void app_main() {
   // Init printer link.
   printer_link::setup(serial::serial2);
 
-  // Init the ADC i2c.
-  i2c_handler::setup();
-
   // Start tasks.
   if (!data_queue_task.start()) {
     error_handler::Panic(69);
@@ -77,11 +70,6 @@ void app_main() {
   }
   if (!i2c_task.start()) {
     error_handler::Panic(88);
-  }
-
-  // Start the I2C timer
-  if (!i2c_timer.start()) {
-    error_handler::Panic(123);
   }
 
   // Start the main loop. It's used to provide visual feedback to the user.

@@ -136,26 +136,28 @@ void report_marker(const MarkerName& marker_name) {
 
   {
     // Do not use buffer after it was queued.
-    data_queue::DataBuffer& buffer = data_queue::grab_buffer();
-    SerialPacketsData& packet_data = buffer.packet_data();
+    data_queue::DataBuffer* data_buffer = data_queue::grab_buffer();
+    SerialPacketsData* packet_data = &data_buffer->packet_data();
 
-    packet_data.clear();
-    packet_data.write_uint8(1);                     // packet format version
-    packet_data.write_uint32(session::id());        // Device session id.
-    packet_data.write_uint32(time_util::millis());  // Base time.
-    packet_data.write_uint8(0x07);                  // Marker channel id
-    packet_data.write_uint16(0);                    // Relative time offset
-    packet_data.write_uint16(1);                    // Num data points
-    packet_data.write_str(marker_name.c_str());
+    packet_data->clear();
+    packet_data->write_uint8(1);                     // packet format version
+    packet_data->write_uint32(session::id());        // Device session id.
+    packet_data->write_uint32(time_util::millis());  // Base time.
+    packet_data->write_uint8(0x07);                  // Marker channel id
+    packet_data->write_uint16(0);                    // Relative time offset
+    packet_data->write_uint16(1);                    // Num data points
+    packet_data->write_str(marker_name.c_str());
 
     // Verify writing was OK.
-    if (packet_data.had_write_errors()) {
+    if (packet_data->had_write_errors()) {
       error_handler::Panic(77);
     }
 
     // Report to monitor and maybe to SD.
     // Do not access buffer after this point.
-    data_queue::queue_buffer(buffer);
+    data_queue::queue_buffer(data_buffer);
+    data_buffer = nullptr;
+    packet_data = nullptr;
   }
   // report_log_data(packet_data);
 

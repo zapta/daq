@@ -508,38 +508,38 @@ void dump_state() {
 }
 
 void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
-  // Allocate a data buffer
-  data_queue::DataBuffer &data_buffer = data_queue::grab_buffer();
-  SerialPacketsData &packet_data = data_buffer.packet_data();
+  // Allocate a data buffer. Non blocking. Guaranteed to be non null.
+  data_queue::DataBuffer* data_buffer = data_queue::grab_buffer();
+  SerialPacketsData* packet_data = &data_buffer->packet_data();
 
   // const bool reports_enabled = controller::is_adc_report_enabled();
-  packet_data.clear();
-  packet_data.write_uint8(1);               // packet version
-  packet_data.write_uint32(session::id());  // Device session id.
+  packet_data->clear();
+  packet_data->write_uint8(1);               // packet version
+  packet_data->write_uint32(session::id());  // Device session id.
   // NOTE: In case of a millis wrap around, it's ok if this wraps back. All
   // timestamps are mod 2^32.
   const uint32_t packet_base_millis =
       isr_millis - ((1000 * (kDmaPointsPerHalf - 1)) / kDmaPointsPerSec);
-  packet_data.write_uint32(packet_base_millis);
+  packet_data->write_uint32(packet_base_millis);
   // Write the load cell channel data.
   // logger.info("dt = %lu", time_util::millis() - packet_base_millis);
   {
     // Chan id. Load cell 1.
-    packet_data.write_uint8(0x11);
+    packet_data->write_uint8(0x11);
     // Offset of first value relative to packet start time.
-    packet_data.write_uint16(0);
+    packet_data->write_uint16(0);
     // Num of load cell points in this packet. One per slot.
-    packet_data.write_uint16(kDmaSlotsPerHalf);
+    packet_data->write_uint16(kDmaSlotsPerHalf);
     // Millis between load cell values. We don't allow truncation.
     static_assert(kDmaPointsPerSec % kDmaPointsPerSlot == 0);
     static_assert((kDmaPointsPerSlot * 1000) % kDmaPointsPerSec == 0);
     // Every slot has a single loadcell reading.
-    packet_data.write_uint16((kDmaPointsPerSlot * 1000) / kDmaPointsPerSec);
+    packet_data->write_uint16((kDmaPointsPerSlot * 1000) / kDmaPointsPerSec);
     // Write the values. They are already in big endian order.
     // We collect last load cell point of each slot.
     for (uint32_t i = kDmaConsecutiveLcPoints - 1; i < kDmaPointsPerHalf;
          i += kDmaPointsPerSlot) {
-      packet_data.write_bytes(
+      packet_data->write_bytes(
           &bfr[(i * kDmaBytesPerPoint) + kDmaRxDataOffsetInPoint], 3);
     }
   }
@@ -548,30 +548,30 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
   // in each cycle.
   for (uint32_t i = 0; i < kDmaNumTemperatureChans; i++) {
     // Temperature channel id.
-    packet_data.write_uint8(0x21 + i);
+    packet_data->write_uint8(0x21 + i);
     // First item offset in ms from packet base time. Truncation of
     // a fraction of a ms is ok.
     const uint32_t first_pt_index =
         kDmaConsecutiveLcPoints + i * kDmaPointsPerSlot;
-    packet_data.write_uint16((1000 * first_pt_index) / kDmaPointsPerSec);
+    packet_data->write_uint16((1000 * first_pt_index) / kDmaPointsPerSec);
     // Number of values in this channel report. Each temperature channel
     // has a single slot in each cycle.
-    packet_data.write_uint16(kDmaCyclesPerHalf);
+    packet_data->write_uint16(kDmaCyclesPerHalf);
     // Millis between values. We don't allow truncation.
     static_assert(kDmaCyclesPerHalf > 1);
     static_assert((1000 * kDmaPointsPerCycle) % kDmaPointsPerSec == 0);
-    packet_data.write_uint16((1000 * kDmaPointsPerCycle) / kDmaPointsPerSec);
+    packet_data->write_uint16((1000 * kDmaPointsPerCycle) / kDmaPointsPerSec);
     // Write the values. They are already in big endian order.
     uint32_t byte_index =
         (first_pt_index * kDmaBytesPerPoint) + kDmaRxDataOffsetInPoint;
     for (uint32_t cycle = 0; cycle < kDmaCyclesPerHalf; cycle++) {
-      packet_data.write_bytes(&bfr[byte_index], 3);
+      packet_data->write_bytes(&bfr[byte_index], 3);
       byte_index += kDmaBytesPerCycle;
     }
   }
 
   // Verify writing was OK.
-  if (packet_data.had_write_errors()) {
+  if (packet_data->had_write_errors()) {
     error_handler::Panic(49);
   }
 
@@ -594,6 +594,9 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
   // Send to monitor and maybe to SD.
   // Do not use 'buffer' beyond this point.
   data_queue::queue_buffer(data_buffer);
+  data_buffer = nullptr;
+  packet_data = nullptr;
+
 
   if (false) {
     logger.info("ADC processed in %lu ms", time_util::millis() - isr_millis);

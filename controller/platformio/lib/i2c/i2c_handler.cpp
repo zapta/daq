@@ -4,18 +4,34 @@
 #include <i2c.h>
 
 #include "common.h"
+#include "data_queue.h"
 #include "error_handler.h"
+#include "session.h"
 #include "static_queue.h"
+#include "static_timer.h"
 #include "time_util.h"
 
-// TODO: More graceful handling of errors (?)
+#pragma GCC push_options
+#pragma GCC optimize("O0")
 
 namespace i2c_handler {
+
+static void i2c_timer_cb(TimerHandle_t xTimer);
+
+// Each data point contains a pair of readings for current
+// and voltage respectivly.
+static constexpr uint16_t kDataPointsPerPacket = 20;
+static constexpr uint16_t kMsTimerTick = 25;
+static constexpr uint16_t kMsPerDataPoint = 2 * kMsTimerTick;
+
+// Timer with static allocation. 25ms interval, for 20 data points per
+// seconds (each data points includes two ADC readings)
+StaticTimer i2c_timer(i2c_handler::i2c_timer_cb, "I2C", kMsTimerTick);
 
 static constexpr uint8_t kAds1115DeviceAddress = 0x48 << 1;
 
 // Sampling time 1/128 sec. 4.096V full scale. Single mode.
-static constexpr uint16_t kAds1115BaseConfig = 0b0000001100100000;
+static constexpr uint16_t kAds1115BaseConfig = 0b0000001110000000;
 static constexpr uint16_t kAds1115ConfigStartCh0 =
     kAds1115BaseConfig | 0b1 << 15 | 0b0100 << 12;
 static constexpr uint16_t kAds1115ConfigStartCh1 =
@@ -25,7 +41,7 @@ static constexpr uint16_t kAds1115ConfigStartCh1 =
 static uint8_t data_buffer[5];
 
 // Current ADC channel. Alternates between 0 and 1.
-static int ch = 0;
+// static int ch = 0;
 
 // Module states.
 enum State {
@@ -37,21 +53,29 @@ enum State {
   STATE_STEP1,
   // Started I2C operation 2 (read ADC value from selected register.)
   STATE_STEP2,
-  // Started I2c operation 3 (start convertion of next channel)
+  // Started I2c operation 3 (start conversion of next channel)
   STATE_STEP3
 };
 
 static State state = STATE_UNDEFINED;
 
 // The IRQ sequence sends these events to the processing task, each
-// time a new convertion value is read from the ADC.
+// time a new conversion value is read from the ADC.
 struct IrqEvent {
   uint32_t timestamp_millis;
-  int ch;
+  uint8_t ch;
   int16_t adc_value;
 };
 
 static StaticQueue<IrqEvent, 5> irq_event_queue;
+
+static uint8_t current_channel = 0;
+
+// Increment an ADC channel var to next one. Currently we use only
+// channels 0, 1.
+static inline void increment_ch(uint8_t& ch_var) {
+  ch_var = (ch_var >= 1u ? 0u : ch_var + 1u);
+}
 
 // Hanlers for STEP1.
 namespace step1 {
@@ -103,7 +127,7 @@ static void on_completion_from_isr(BaseType_t* task_woken) {
   // Use the value conversion value.
   const uint16_t reg_value = ((uint16_t)data_buffer[0] << 8) | data_buffer[1];
   const IrqEvent event = {.timestamp_millis = time_util::millis_from_isr(),
-                          .ch = ch,
+                          .ch = current_channel,
                           .adc_value = (int16_t)reg_value};
   if (!irq_event_queue.add_from_isr(event, task_woken)) {
     // Comment this out for debugging with breakpoints
@@ -120,7 +144,7 @@ static inline void start_from_isr() {
     error_handler::Panic(219);
   }
   const uint16_t config_value =
-      ch == 0 ? kAds1115ConfigStartCh0 : kAds1115ConfigStartCh1;
+      current_channel == 0 ? kAds1115ConfigStartCh0 : kAds1115ConfigStartCh1;
   static_assert(sizeof(data_buffer[0]) == 1);
   static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 3);
   data_buffer[0] = 0x01;  // config reg address
@@ -145,7 +169,6 @@ static inline void on_completion_from_isr() {
 
 // A shared handler for RX and TX completions.
 void i2c_MasterCallbackIsr(I2C_HandleTypeDef* hi2c) {
-  // TODO: Implement.
   switch (state) {
     case STATE_STEP1:
       step1::on_completion_from_isr();
@@ -155,7 +178,7 @@ void i2c_MasterCallbackIsr(I2C_HandleTypeDef* hi2c) {
     case STATE_STEP2: {
       BaseType_t task_woken = pdFALSE;
       step2::on_completion_from_isr(&task_woken);
-      ch = (ch + 1) & 0x01;
+      increment_ch(current_channel);
       step3::start_from_isr();
       // In case the queue push above requires a task switch.
       portYIELD_FROM_ISR(task_woken)
@@ -182,7 +205,7 @@ void i2c_AbortCallbackIsr(I2C_HandleTypeDef* hi2c) {
   error_handler::Panic(118);
 }
 
-void setup() {
+static void setup() {
   if (state != STATE_UNDEFINED) {
     error_handler::Panic(119);
   }
@@ -215,27 +238,101 @@ void setup() {
 }
 
 void i2c_task_body(void* argument) {
-  // Processing loop.
+  setup();
+
+  if (!i2c_timer.start()) {
+    error_handler::Panic(123);
+  }
+
+  // We allocate the buffer on demand.
+  data_queue::DataBuffer* data_buffer = nullptr;
+  SerialPacketsData* packet_data = nullptr;
+  uint16_t items_in_buffer = 0;
+
+  bool is_first_iteration = true;
+
+  // Process the ADC reading. Each data point is a pair of readings, from
+  // chan 0 and from chan 1, respectivly.
   for (;;) {
-    // time_util::delay_millis(100);
+    // Get channel 0 value.
+    IrqEvent event0;
+    bool ok = irq_event_queue.consume_from_task(&event0, portMAX_DELAY);
+    // logger.info("DT: %lu", event0.timestamp_millis - last_event_ms);
+    // last_event_ms = event0.timestamp_millis;
+    // logger.info("I2C 0: %d", (int)event0.adc_value);
 
-    // const uint32_t n = irq_event_queue.size();
-
-    // i2c_timer_cb();
-
-    // logger.info("I2C: Queue has %lu items", n);
-    // for (uint32_t i = 0; i < n; i++) {
-    IrqEvent event;
-    if (!irq_event_queue.consume_from_task(&event, portMAX_DELAY)) {
+    if (!ok) {
       error_handler::Panic(122);
     }
+    if (event0.ch != 0) {
+      error_handler::Panic(124);
+    }
 
-    logger.info("I2C[%d]: %lu, %hd", event.ch, event.timestamp_millis,
-                event.adc_value);
+    // Get channel 1 value.
+    IrqEvent event1;
+    ok = irq_event_queue.consume_from_task(&event1, portMAX_DELAY);
+    // logger.info("DT: %lu", event1.timestamp_millis - last_event_ms);
+    // last_event_ms = event1.timestamp_millis;
+    // logger.info("I2C 1: %d", (int)event1.adc_value);
+    if (!ok) {
+      error_handler::Panic(125);
+    }
+    if (event1.ch != 1) {
+      error_handler::Panic(126);
+    }
+
+    // Drop value of first iteration since we read the first ADC value
+    // before we start a conversion.
+    if (is_first_iteration) {
+      is_first_iteration = false;
+      continue;
+    }
+
+    // If no bufer, allocate and fill in the headers. We can do it here
+    // since we know the timestamp of the first data point.
+    if (data_buffer == nullptr) {
+      // Allocate new buffer.
+      data_buffer = data_queue::grab_buffer();
+      packet_data = &data_buffer->packet_data();
+      items_in_buffer = 0;
+
+      // Fill packet header.
+      packet_data->clear();
+      packet_data->write_uint8(1);               // packet version
+      packet_data->write_uint32(session::id());  // Device session id.
+      // We use the average of the two timestamps.
+      const uint32_t start_time =
+          (event0.timestamp_millis + event1.timestamp_millis) / 2;
+      packet_data->write_uint32(start_time);  // Device session id.
+
+      // Fill in the channgel header
+      packet_data->write_uint8(0x30);                   // Channel id ('va1')
+      packet_data->write_uint16(0);                     // Time offset.
+      packet_data->write_uint16(kDataPointsPerPacket);  // Num points
+      packet_data->write_uint16(kMsPerDataPoint);  // Interval between points.
+    }
+
+    // Add next data point.
+    packet_data->write_uint16((uint16_t)event0.adc_value);
+    packet_data->write_uint16((uint16_t)event1.adc_value);
+    items_in_buffer++;
+
+    // Handle a full buffer.
+    if (items_in_buffer >= kDataPointsPerPacket) {
+      // Relinquish the data buffer for queing.
+      data_queue::queue_buffer(data_buffer);
+      data_buffer = nullptr;
+      packet_data = nullptr;
+      items_in_buffer = 0;
+
+      // Dump the last data point, for sanity check.
+      logger.info("I2C: %hd, %hd", event0.adc_value, event1.adc_value);
+    }
   }
 }
 
-// This function is called from the timer daemon and thus should be non blocking.
-void i2c_timer_cb(TimerHandle_t xTimer) { step1::start_from_timer(); }
+// This function is called from the timer daemon and thus should be non
+// blocking.
+static void i2c_timer_cb(TimerHandle_t xTimer) { step1::start_from_timer(); }
 
 }  // namespace i2c_handler
