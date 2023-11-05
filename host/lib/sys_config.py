@@ -66,14 +66,50 @@ class LoadCellChannelConfig:
         self.__scale = scale
 
     def __str__(self):
-        return f"Load cell {self.__chan_name} ({self.__color}): offset={self.__adc_offset}, scale={self.__scale}"
+        return f"Channel {self.__chan_name} ({self.__color}): offset={self.__adc_offset}, scale={self.__scale}"
 
     def adc_reading_to_grams(self, adc_reading: int) -> float:
         return (adc_reading - self.__adc_offset) * self.__scale
 
     def dump_lc_calibration(self, adc_reading: int) -> None:
         grams = self.adc_reading_to_grams(adc_reading)
-        logger.info(f"{self.__chan_name:5s} adc {adc_reading:7d} -> {grams:7.1f} grams")
+        logger.info(f"{self.__chan_name:7s} adc {adc_reading:7d} -> {grams:7.1f} grams")
+
+    def color(self) -> str:
+        return self.__color
+      
+      
+class PowerChannelConfig:
+    """Configuration of a power (voltage and current) channel."""
+
+    def __init__(self, chan_name: str, color: str, adc_current_offset: int, adc_current_scale: float, adc_voltage_offset: int, adc_voltage_scale: float):
+        self.__chan_name = chan_name
+        self.__color = color
+        self.__adc_current_offset = adc_current_offset
+        self.__adc_current_scale = adc_current_scale
+        self.__adc_voltage_offset = adc_voltage_offset
+        self.__adc_voltage_scale = adc_voltage_scale
+
+    def __str__(self):
+        return f"Channel {self.__chan_name} ({self.__color}): current=({self.__adc_current_offset}, {self.__adc_current_scale}), voltage=({self.__adc_voltage_offset}, {self.__adc_voltage_offset})"
+
+    def adc_current_reading_to_amps(self, adc_current_reading: int) -> float:
+        amps =  (adc_current_reading - self.__adc_current_offset) * self.__adc_current_scale
+        # Avoid negative zero per https://stackoverflow.com/a/74383961
+        return round(amps, 3) + 0.
+      
+    def adc_voltage_reading_to_volts(self, adc_voltage_reading: int) -> float:
+        volts = (adc_voltage_reading - self.__adc_voltage_offset) * self.__adc_voltage_scale
+        # Avoid negative zero per https://stackoverflow.com/a/74383961
+        return round(volts, 3) + 0.
+
+    def dump_calibration(self, adc_current_reading: int, adc_voltage_reading: int) -> None:
+        amps = self.adc_current_reading_to_amps(adc_current_reading)
+        volts = self.adc_voltage_reading_to_volts(adc_voltage_reading)
+        watts = amps * volts
+        logger.info(f"{self.__chan_name + ".v":7s} adc {adc_voltage_reading:7d} -> {volts:7.3f} V")
+        logger.info(f"{self.__chan_name + ".a":7s} adc {adc_current_reading:7d} -> {amps:7.3f} A")
+        logger.info(f"{self.__chan_name + ".w":7s} computed:   -> {watts:7.3f} W")
 
     def color(self) -> str:
         return self.__color
@@ -96,6 +132,9 @@ class TemperatureChannelConfig:
         # not present in the calibration with the reference R, which is done with a minimal wire.
         self.__r_series = wire_r + ((adc_calib_r * (adc_open - adc_calib)) / (adc_calib - adc_short))
 
+    def chan_name(self) ->  str:
+        return self.__chan_name
+      
     def color(self) -> str:
         return self.__color
 
@@ -122,7 +161,7 @@ class TemperatureChannelConfig:
     def dump_temperature_calibration(self, adc_reading: int) -> None:
         r = self.adc_reading_to_ohms(adc_reading)
         c = self.resistance_to_c(r)
-        logger.info(f"{self.__chan_name:5s} adc {adc_reading:7.0f} -> {r:10.3f} ohms -> {c:6.2f} C")
+        logger.info(f"{self.__chan_name:7s} adc {adc_reading:7.0f} -> {r:10.3f} ohms -> {c:6.2f} C")
 
 
 class ThermistorChannelConfig(TemperatureChannelConfig):
@@ -144,7 +183,8 @@ class ThermistorChannelConfig(TemperatureChannelConfig):
                                273.15) - self.__coef_B * ln_rref - self.__coef_C * ln_rref_cube
 
     def __str__(self):
-        return f"Thermistor {self.__chan_name}"
+        # TODO: Dump also parent values.
+        return f"Channel {self.chan_name()} ({self.color()}): thermistor offset={self.__thermistor_offset}, a={self.__coef_A},  b={self.__coef_B}, c={self.__coef_C}"
 
     def resistance_to_c(self, r: float) -> float:
         """Thermistor specific resistance to temperature function."""
@@ -189,7 +229,8 @@ class RtdChannelConfig(TemperatureChannelConfig):
         self.__last_index = 0
 
     def __str__(self):
-        return f"RTD {self.__chan_name}"
+        # TODO: Dump also parent values.
+        return f"Channel {self.chan_name()} ({self.color()}): RTD r0={self.__rtd_r0}, offset={self.__rtd_offset}"
 
     def __interpolate__(self, i, pt1000_r):
         e0 = PT1000_TABLE[i]
@@ -227,8 +268,9 @@ class SysConfig:
     def __init__(self):
         """Constructor."""
         self.__com_port: Optional[str] = None
-        self.__ldc_ch_configs: Optional[Dict[str, LoadCellChannelConfig]] = None
-        self.__tmp_ch_configs: Optional[Dict[str, TemperatureChannelConfig]] = None
+        self.__lc_ch_configs: Optional[Dict[str, LoadCellChannelConfig]] = None
+        self.__pw_ch_configs: Optional[Dict[str, PowerChannelConfig]] = None
+        self.__tm_ch_configs: Optional[Dict[str, TemperatureChannelConfig]] = None
         self.__markers_config: Optional[MarkersConfig] = None
 
     def __populate_com_port(self, toml: Dict[str, Any]) -> None:
@@ -237,26 +279,41 @@ class SysConfig:
 
     def __populate_channels(self, toml: Dict[str, Any]) -> None:
         """Populates __ldc_ch_configs and __tmp_ch_configs from toml sys_config."""
-        self.__ldc_ch_configs = {}
-        self.__tmp_ch_configs = {}
+        self.__lc_ch_configs = {}
+        self.__pw_ch_configs = {}
+        self.__tm_ch_configs = {}
         toml_channels = toml["channel"]
         for ch_name, ch_config in toml_channels.items():
+            # Load cell channel config
             if ch_name.startswith("lc"):
-                assert ch_name not in self.__ldc_ch_configs
+                assert ch_name not in self.__lc_ch_configs
                 color = ch_config["color"]
                 offset = ch_config["adc_offset"]
                 scale = ch_config["scale"]
-                # low_pass_config = None
-                # low_pass = ch_config.get("low_pass", None)
-                # if low_pass:
-                #     lp_f_sampling = low_pass["f_sampling"]
-                #     lp_f_cutoff = low_pass["f_cutoff"]
-                #     lp_color = low_pass["color"]
-                #     low_pass_config = LowPassFilterConfig(lp_f_sampling, lp_f_cutoff, lp_color)
-                self.__ldc_ch_configs[ch_name] = LoadCellChannelConfig(
+                lc_ch_config =  LoadCellChannelConfig(
                     ch_name, color, offset, scale)
+                logger.info(lc_ch_config)
+                self.__lc_ch_configs[ch_name] = lc_ch_config
+                
+            # Power channel config.
+            elif ch_name.startswith("pw"):
+                assert ch_name not in self.__lc_ch_configs
+                color = ch_config["color"]
+                current_config = ch_config["current"]
+                adc_current_offset = current_config["adc_offset"]
+                adc_current_scale = current_config["scale"]
+                voltage_config = ch_config["voltage"]
+                adc_voltage_offset = voltage_config["adc_offset"]
+                adc_voltage_scale = voltage_config["scale"]
+                pw_ch_config = PowerChannelConfig(
+                    ch_name, color, adc_current_offset, adc_current_scale, adc_voltage_offset, adc_voltage_scale)
+                logger.info(pw_ch_config)
+                self.__pw_ch_configs[ch_name] = pw_ch_config
+                
+                
+            # Temperature channel config.  
             elif ch_name.startswith("tm"):
-                assert ch_name not in self.__tmp_ch_configs
+                assert ch_name not in self.__tm_ch_configs
                 color = ch_config["color"]
                 # Get ADC specific params.
                 adc_config = ch_config["adc"]
@@ -271,11 +328,13 @@ class SysConfig:
                     rtd_r0 = rtd_config["r0"]
                     rtd_wire_r = rtd_config["adjustment"]
                     rtd_adjustment = rtd_config["adjustment"]
-                    logger.info(f"RTD channel: {ch_name}, {rtd_r0}")
-                    self.__tmp_ch_configs[ch_name] = RtdChannelConfig(ch_name, color, adc_open,
+                    # logger.info(f"RTD channel: {ch_name}, {rtd_r0}")
+                    tm_ch_config = RtdChannelConfig(ch_name, color, adc_open,
                                                                       adc_short, adc_calib,
                                                                       adc_calib_r, rtd_r0, rtd_wire_r,
                                                                       rtd_adjustment)
+                    logger.info(tm_ch_config)
+                    self.__tm_ch_configs[ch_name] = tm_ch_config
                 else:
                     thermistor_config = ch_config["thermistor"]
                     thermistor_beta = thermistor_config["beta"]
@@ -284,14 +343,16 @@ class SysConfig:
                     thermistor_ref_c = thermistor_config["ref_c"]
                     thermistor_wire_r = thermistor_config["wire_r"]
                     thermistor_adjustment = thermistor_config["adjustment"]
-                    logger.info(
-                        f"Thermistor channel: {ch_name}, {thermistor_beta},  {thermistor_c},"
-                        f" {thermistor_ref_r}, {thermistor_ref_c}"
-                    )
-                    self.__tmp_ch_configs[ch_name] = ThermistorChannelConfig(
+                    # logger.info(
+                    #     f"Thermistor channel: {ch_name}, {thermistor_beta},  {thermistor_c},"
+                    #     f" {thermistor_ref_r}, {thermistor_ref_c}"
+                    # )
+                    tm_ch_config = ThermistorChannelConfig(
                         ch_name, color, adc_open, adc_short, adc_calib, adc_calib_r,
                         thermistor_beta, thermistor_c, thermistor_ref_r, thermistor_ref_c, thermistor_wire_r,
                         thermistor_adjustment)
+                    logger.info(tm_ch_config)
+                    self.__tm_ch_configs[ch_name] = tm_ch_config
             else:
                 raise RuntimeError(f"Unexpected channel name in sys_config: {ch_name}")
 
@@ -324,18 +385,27 @@ class SysConfig:
             self.__populate_channels(toml)
             self.__populate_markers(toml)
 
+    # Individual channel getters.
     def load_cell_config(self, chan_name: str) -> LoadCellChannelConfig:
-        return self.__ldc_ch_configs[chan_name]
+        return self.__lc_ch_configs[chan_name]
+      
+    def power_config(self, chan_name: str) -> PowerChannelConfig:
+        return self.__pw_ch_configs[chan_name]
 
     def temperature_config(self, chan_name: str) -> TemperatureChannelConfig:
-        return self.__tmp_ch_configs[chan_name]
-
+        return self.__tm_ch_configs[chan_name]
+      
+    # Channel list getters
     def load_cells_configs(self) -> Dict[str, LoadCellChannelConfig]:
-        return self.__ldc_ch_configs
+        return self.__lc_ch_configs
+      
+    def power_configs(self) -> Dict[str, PowerChannelConfig]:
+        return self.__pw_ch_configs
 
     def temperature_configs(self) -> Dict[str, TemperatureChannelConfig]:
-        return self.__tmp_ch_configs
-
+        return self.__tm_ch_configs
+      
+    # Other getters
     def markers_config(self) -> MarkersConfig:
         return self.__markers_config
 

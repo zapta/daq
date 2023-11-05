@@ -21,7 +21,7 @@ from serial_packets.packets import PacketStatus, PacketData
 # Local imports
 sys.path.insert(0, "..")
 from lib.log_parser import LogPacketsParser, ChannelData, ParsedLogPacket
-from lib.sys_config import SysConfig, MarkersConfig, LoadCellChannelConfig, TemperatureChannelConfig
+from lib.sys_config import SysConfig, MarkersConfig, LoadCellChannelConfig, PowerChannelConfig,  TemperatureChannelConfig
 from lib.display_series import DisplaySeries
 
 
@@ -113,9 +113,14 @@ class LoadCellChannel:
     chan_name: str
     lc_config: LoadCellChannelConfig
     display_series: DisplaySeries
-    # signal_filter: Optional[SignalFilter]
-    # filtered_display_series: DisplaySeries
-
+    
+@dataclass(frozen=True)
+class PowerChannel:
+    chan_name: str
+    pw_config: PowerChannelConfig
+    display_series_v: DisplaySeries
+    display_series_a: DisplaySeries
+    display_series_w: DisplaySeries
 
 @dataclass(frozen=True)
 class TemperatureChannel:
@@ -132,7 +137,8 @@ serial_packets_client: Optional[SerialPacketsClient] = None
 
 # Initialized later. Keys are channel names.
 lc_channels: Optional[Dict[str, LoadCellChannel]] = None
-temperature_channels: Optional[Dict[str, TemperatureChannel]] = None
+pw_channels: Optional[Dict[str, PowerChannel]] = None
+tm_channels: Optional[Dict[str, TemperatureChannel]] = None
 
 markers_history = MarkerHistory()
 
@@ -168,10 +174,11 @@ latest_log_time: Optional[float] = None
 
 async def message_async_callback(endpoint: int, data: PacketData) -> None:
     """Callback from the serial packets clients for incoming messages."""
-    global lc_channels, temperature_channels, latest_log_time
+    global lc_channels, pw_channels, tm_channels, latest_log_time
     logger.debug(f"Received message: [%d] %s", endpoint, data.hex_str(max_bytes=10))
     if endpoint == 10:
         parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(data)
+        # logger.info(f"New packet, channels: {parsed_log_packet.channel_keys()}")
         # Ignore packet if it's a left over from a previous device session (before reboot).
         if parsed_log_packet.session_id() != device_session_id:
             logger.warning(
@@ -182,6 +189,7 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
         packet_end_time = parsed_log_packet.end_time()
         if latest_log_time is None or packet_end_time > latest_log_time:
             latest_log_time = packet_end_time
+            
         # Process load cell channels
         for lc_ch_name in lc_channels.keys():
             lc_data: ChannelData = parsed_log_packet.channel(lc_ch_name)
@@ -197,22 +205,55 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
                 values_g.append(lc_chan.lc_config.adc_reading_to_grams(adc_value))
                 adc_values_sum += adc_value
             lc_chan.display_series.extend(times_secs, values_g)
-            # if lc_chan.signal_filter:
-            #     filtered_values_g = lc_chan.signal_filter.filter(values_g)
-            #     lc_chan.filtered_display_series.extend(times_secs, filtered_values_g)
             if args.calibration:
                 avg_adc_value = round(adc_values_sum / len(times_secs))
                 lc_chan.lc_config.dump_lc_calibration(avg_adc_value)
 
+        # Process power channels.
+        for pw_ch_name in pw_channels.keys():
+            # logger.info(f"**** Looking for pw chan {pw_ch_name}")
+            pw_data: ChannelData = parsed_log_packet.channel(pw_ch_name)
+            if not pw_data:
+                # logger.info(f"**** pw chan {pw_ch_name} not found")
+                # This packet has no data for this channel.
+                break
+            # logger.info(f"**** pw chan {pw_ch_name} found")
+            pw_chan: PowerChannel = pw_channels[pw_ch_name]
+            times_secs = []
+            values_v = []
+            values_a = []
+            values_w = []
+            adc_current_readings_sum = 0
+            adc_voltage_readings_sum = 0
+            for time_millis, adc_value_pair in pw_data.timed_values():
+                adc_voltage_reading = adc_value_pair[0]
+                adc_current_reading = adc_value_pair[1]
+                volts = pw_chan.pw_config.adc_voltage_reading_to_volts(adc_voltage_reading)
+                amps = pw_chan.pw_config.adc_current_reading_to_amps(adc_current_reading)
+                watts = amps * volts
+                times_secs.append(time_millis / 1000)
+                values_v.append(volts)
+                values_a.append(amps)
+                values_w.append(watts)
+                adc_voltage_readings_sum += adc_voltage_reading
+                adc_current_readings_sum += adc_current_reading
+            pw_chan.display_series_v.extend(times_secs, values_v)
+            pw_chan.display_series_a.extend(times_secs, values_a)
+            pw_chan.display_series_w.extend(times_secs, values_w)
+            if args.calibration:
+                avg_adc_current_reading = round(adc_current_readings_sum / len(times_secs))
+                avg_adc_voltage_reading = round(adc_voltage_readings_sum / len(times_secs))
+                pw_chan.pw_config.dump_calibration(avg_adc_current_reading, avg_adc_voltage_reading)
+        
         # Process temperature channels
-        for temperature_chan_name in temperature_channels.keys():
+        for temperature_chan_name in tm_channels.keys():
             # Process temperature channel. We compute the average of the readings
             # in this packet.
             temperature_data: ChannelData = parsed_log_packet.channel(temperature_chan_name)
             if not temperature_data:
                 # This packet has no data for this channel.
                 break
-            temperature_chan: TemperatureChannel = temperature_channels[temperature_chan_name]
+            temperature_chan: TemperatureChannel = tm_channels[temperature_chan_name]
             times_millis = []
             adc_values = []
             for time_millis, adc_value in temperature_data.timed_values():
@@ -248,7 +289,7 @@ def set_display_status_line(msg: str) -> None:
 
 
 def update_display():
-    global lc_channels, temperature_channels, plot1, plot2, sys_config, latest_log_time
+    global lc_channels, tm_channels, plot1, plot2, sys_config, latest_log_time
 
     # logger.info(f"Update display(), latest_log_time = {latest_log_time}")
     plot1.clear()
@@ -271,17 +312,9 @@ def update_display():
         y = lc_chan.display_series.values()
         color = lc_chan.lc_config.color()
         plot1.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name, antialias=True)
-        # Draw first the optional low pass version ('above' on the display)
-        # if lc_chan.filtered_display_series:
-        #     lc_chan.filtered_display_series.delete_older_than(cleanup_time)
-        #     y = lc_chan.filtered_display_series.values()
-        #     color = lc_chan.lc_config.filtered_signal_color()
-        #     plot1.plot(x, y, pen=pg.mkPen(color=color, width=2),
-        #                name=ch_name + "-LP", antialias=True)
-
 
     # Update plot 2 with temperature channels
-    for ch_name, temperature_chan in sorted(temperature_channels.items()):
+    for ch_name, temperature_chan in sorted(tm_channels.items()):
         temperature_chan.display_series.delete_older_than(latest_log_time - plot2_x_span)
         x = temperature_chan.display_series.relative_times(latest_log_time)
         y = temperature_chan.display_series.values()
@@ -351,17 +384,19 @@ def on_stop_button():
 
 
 def init_display():
-    global plot1, plot2, button1, button2, status_label, app, app_view, lc_channels, temperature_channels
+    global plot1, plot2, button1, button2, status_label, app, app_view, lc_channels, pw_channels, tm_channels
 
     lc_channels = {}
     for chan_name, lc_config in sys_config.load_cells_configs().items():
-        # lc_filter = lc_config.new_filter()
-        # filtered_display_series = DisplaySeries() if lc_filter else None
         lc_channels[chan_name] = LoadCellChannel(chan_name, lc_config, DisplaySeries())
+        
+    pw_channels = {}
+    for chan_name, pw_config in sys_config.power_configs().items():
+        pw_channels[chan_name] = PowerChannel(chan_name, pw_config, DisplaySeries(), DisplaySeries(), DisplaySeries())
 
-    temperature_channels = {}
-    for chan_name, temperature_config in sys_config.temperature_configs().items():
-        temperature_channels[chan_name] = TemperatureChannel(chan_name, temperature_config,
+    tm_channels = {}
+    for chan_name, tm_config in sys_config.temperature_configs().items():
+        tm_channels[chan_name] = TemperatureChannel(chan_name, tm_config,
                                                              DisplaySeries())
 
     pg.setConfigOption('background', 'w')
@@ -445,7 +480,7 @@ def reset_display():
         chan.display_series.clear()
         # if chan.filtered_display_series:
         #     chan.filtered_display_series.clear()
-    for chan in temperature_channels.values():
+    for chan in tm_channels.values():
         chan.display_series.clear()
     markers_history.clear()
     set_display_status_line("")

@@ -18,8 +18,8 @@ namespace i2c_handler {
 
 static void i2c_timer_cb(TimerHandle_t xTimer);
 
-// Each data point contains a pair of readings for current
-// and voltage respectivly.
+// Each data point contains a pair of readings for voltage
+// and current respectivly.
 static constexpr uint16_t kDataPointsPerPacket = 20;
 static constexpr uint16_t kMsTimerTick = 25;
 static constexpr uint16_t kMsPerDataPoint = 2 * kMsTimerTick;
@@ -40,8 +40,7 @@ static constexpr uint16_t kAds1115ConfigStartCh1 =
 // Buffer for DMA transactions.
 static uint8_t data_buffer[5];
 
-// Current ADC channel. Alternates between 0 and 1.
-// static int ch = 0;
+
 
 // Module states.
 enum State {
@@ -69,13 +68,15 @@ struct IrqEvent {
 
 static StaticQueue<IrqEvent, 5> irq_event_queue;
 
-static uint8_t current_channel = 0;
+// 0 -> ADC chan 0 (voltage)
+// 1 -> ADC chan 1 (current)
+static uint8_t channel = 0;
 
 // Increment an ADC channel var to next one. Currently we use only
 // channels 0, 1.
-static inline void increment_ch(uint8_t& ch_var) {
-  ch_var = (ch_var >= 1u ? 0u : ch_var + 1u);
-}
+// static inline void increment_ch(uint8_t& ch_var) {
+//   ch_var = (ch_var >= 1u ? 0u : ch_var + 1u);
+// }
 
 // Hanlers for STEP1.
 namespace step1 {
@@ -127,7 +128,7 @@ static void on_completion_from_isr(BaseType_t* task_woken) {
   // Use the value conversion value.
   const uint16_t reg_value = ((uint16_t)data_buffer[0] << 8) | data_buffer[1];
   const IrqEvent event = {.timestamp_millis = time_util::millis_from_isr(),
-                          .ch = current_channel,
+                          .ch = channel,
                           .adc_value = (int16_t)reg_value};
   if (!irq_event_queue.add_from_isr(event, task_woken)) {
     // Comment this out for debugging with breakpoints
@@ -138,13 +139,13 @@ static void on_completion_from_isr(BaseType_t* task_woken) {
 
 // Hanlers for STEP3.
 namespace step3 {
-// Start conversion of current channel.
+// Start conversion of the channel whose index is in 'channel'.
 static inline void start_from_isr() {
   if (state != STATE_STEP2) {
     error_handler::Panic(219);
   }
   const uint16_t config_value =
-      current_channel == 0 ? kAds1115ConfigStartCh0 : kAds1115ConfigStartCh1;
+      channel == 0 ? kAds1115ConfigStartCh0 : kAds1115ConfigStartCh1;
   static_assert(sizeof(data_buffer[0]) == 1);
   static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 3);
   data_buffer[0] = 0x01;  // config reg address
@@ -178,7 +179,11 @@ void i2c_MasterCallbackIsr(I2C_HandleTypeDef* hi2c) {
     case STATE_STEP2: {
       BaseType_t task_woken = pdFALSE;
       step2::on_completion_from_isr(&task_woken);
-      increment_ch(current_channel);
+      // Select next channel
+      channel++;
+      if (channel > 1) {
+        channel = 0;
+      }
       step3::start_from_isr();
       // In case the queue push above requires a task switch.
       portYIELD_FROM_ISR(task_woken)

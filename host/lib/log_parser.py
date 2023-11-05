@@ -79,6 +79,9 @@ class ParsedLogPacket:
     def channel(self, chan_name: str) -> Optional[ChannelData]:
         return self.__channels.get(chan_name, None)
 
+    def channel_keys(self) -> List[str]:
+        return list(self.__channels.keys())
+      
     def num_channels(self):
         return len(self.__channels)
 
@@ -188,7 +191,8 @@ class LogPacketsParser:
                 timed_values = self._parse_int24_sequence(packet_start_time_millis, data)
                 result.append_timed_values(chan_name, timed_values)
             elif 0x30 <= chan_id <= 0x32:
-                chan_name = f"va{chan_id - 0x30 + 1}"
+                chan_name = f"pw{chan_id - 0x30 + 1}"
+                # (timestamp, (adc_voltage_reading, adc_current_reading))
                 timed_values = self._parse_int16_pairs_sequence(packet_start_time_millis, data)
                 result.append_timed_values(chan_name, timed_values)
             elif chan_id == 0x07:
