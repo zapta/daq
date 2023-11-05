@@ -5,36 +5,173 @@
 
 #include "common.h"
 #include "error_handler.h"
+#include "static_queue.h"
 #include "time_util.h"
 
-// TODO: Change tx/rx to non blocking (irq, dma, etc)
+
+// TODO: More graceful handling of errors (?)
+
 
 namespace i2c_handler {
 
 static constexpr uint8_t kAds1115DeviceAddress = 0x48 << 1;
-// static constexpr uint16_t kDefaultTimeout = 50;
 
 // Sampling time 1/128 sec. 4.096V full scale. Single mode.
 static constexpr uint16_t kAds1115BaseConfig = 0b0000001100100000;
-
-// static constexpr uint16_t kConfigSetup = kBaseConfig | 0b0100 << 12;
 static constexpr uint16_t kAds1115ConfigStartCh0 =
     kAds1115BaseConfig | 0b1 << 15 | 0b0100 << 12;
 static constexpr uint16_t kAds1115ConfigStartCh1 =
     kAds1115BaseConfig | 0b1 << 15 | 0b0101 << 12;
 
-static uint8_t data_buffer[20];
+// Buffer for DMA transactions.
+static uint8_t data_buffer[5];
 
+// Current ADC channel. Alternates between 0 and 1.
 static int ch = 0;
 
-void i2c_MasterTxCallbackIsr(I2C_HandleTypeDef* hi2c) {
-  // TODO: Implement.
-  error_handler::Panic(115);
+// Module states.
+enum State {
+  // Initial state, before setup.
+  STATE_UNDEFINED,
+  // Ready for next sampling cycle.
+  STATE_IDLE,
+  // Started I2C operation 1 (select register 0 to read)
+  STATE_STEP1,
+  // Started I2C operation 2 (read ADC value from selected register.)
+  STATE_STEP2,
+  // Started I2c operation 3 (start convertion of next channel)
+  STATE_STEP3
+};
+
+static State state = STATE_UNDEFINED;
+
+// The IRQ sequence sends these events to the processing task, each 
+// time a new convertion value is read from the ADC.
+struct IrqEvent {
+  uint32_t timestamp_millis;
+  int ch;
+  int16_t adc_value;
+};
+
+static StaticQueue<IrqEvent, 5> irq_event_queue;
+
+// Hanlers for STEP1.
+namespace step1 {
+// Start state 1. Called from task.
+static inline void start_from_task() {
+  if (state != STATE_IDLE) {
+    error_handler::Panic(216);
+  }
+  static_assert(sizeof(data_buffer[0]) == 1);
+  static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 1);
+  data_buffer[0] = 0;
+  state = STATE_STEP1;
+  HAL_StatusTypeDef status = HAL_I2C_Master_Transmit_DMA(
+      &hi2c1, kAds1115DeviceAddress, data_buffer, 1);
+  if (status != HAL_OK) {
+    error_handler::Panic(217);
+  }
 }
 
-void i2c_MasterRxCallbackIsr(I2C_HandleTypeDef* hi2c) {
+// Nothing to do here.
+static inline void on_completion_from_isr() {}
+}  // namespace step1
+
+// Hanlers for STEP2.
+namespace step2 {
+// Start step 2. Called from isr.
+static void start_from_isr() {
+  if (state != STATE_STEP1) {
+    error_handler::Panic(217);
+  }
+  // Start reading the conversion value from the selected register 0.
+  static_assert(sizeof(data_buffer[0]) == 1);
+  static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 2);
+  data_buffer[0] = 0;
+  data_buffer[1] = 0;
+  state = STATE_STEP2;
+  const HAL_StatusTypeDef status =
+      HAL_I2C_Master_Receive_DMA(&hi2c1, kAds1115DeviceAddress, data_buffer, 2);
+  if (status != HAL_OK) {
+    error_handler::Panic(212);
+  }
+}
+
+static void on_completion_from_isr(BaseType_t* task_woken) {
+  if (state != STATE_STEP2) {
+    error_handler::Panic(218);
+  }
+  // Here when completed to read the conversion value from reg 0.
+  // Use the value conversion value.
+  const uint16_t reg_value = ((uint16_t)data_buffer[0] << 8) | data_buffer[1];
+  const IrqEvent event = {.timestamp_millis = time_util::millis_from_isr(),
+                          .ch = ch,
+                          .adc_value = (int16_t)reg_value};
+  if (!irq_event_queue.add_from_isr(event, task_woken)) {
+    // Comment this out for debugging with breakpoints
+    error_handler::Panic(214);
+  }
+}
+}  // namespace step2
+
+// Hanlers for STEP3.
+namespace step3 {
+// Start conversion of current channel.
+static inline void start_from_isr() {
+  if (state != STATE_STEP2) {
+    error_handler::Panic(219);
+  }
+  const uint16_t config_value =
+      ch == 0 ? kAds1115ConfigStartCh0 : kAds1115ConfigStartCh1;
+  static_assert(sizeof(data_buffer[0]) == 1);
+  static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 3);
+  data_buffer[0] = 0x01;  // config reg address
+  data_buffer[1] = (uint8_t)(config_value >> 8);
+  data_buffer[2] = (uint8_t)config_value;
+  state = STATE_STEP3;
+  const HAL_StatusTypeDef status = HAL_I2C_Master_Transmit_DMA(
+      &hi2c1, kAds1115DeviceAddress, data_buffer, 3);
+  if (status != HAL_OK) {
+    error_handler::Panic(215);
+  }
+}
+
+static inline void on_completion_from_isr() {
+  if (state != STATE_STEP3) {
+    error_handler::Panic(221);
+  }
+  // I2C transaction sequence completed.
+  state = STATE_IDLE;
+}
+}  // namespace step3
+
+// A shared handler for RX and TX completions.
+void i2c_MasterCallbackIsr(I2C_HandleTypeDef* hi2c) {
   // TODO: Implement.
-  error_handler::Panic(116);
+  switch (state) {
+    case STATE_STEP1:
+      step1::on_completion_from_isr();
+      step2::start_from_isr();
+      break;
+
+    case STATE_STEP2: {
+      BaseType_t task_woken = pdFALSE;
+      step2::on_completion_from_isr(&task_woken);
+      ch = (ch + 1) & 0x01;
+      step3::start_from_isr();
+      // In case the queue push above requires a task switch.
+      portYIELD_FROM_ISR(task_woken)
+
+    } break;
+
+    case STATE_STEP3:
+      // Cycle completed OK.
+      state = STATE_IDLE;
+      break;
+
+    default:
+      error_handler::Panic(211);
+  }
 }
 
 void i2c_ErrorCallbackIsr(I2C_HandleTypeDef* hi2c) {
@@ -47,70 +184,24 @@ void i2c_AbortCallbackIsr(I2C_HandleTypeDef* hi2c) {
   error_handler::Panic(118);
 }
 
-// void dump_state() {}
+void setup() {
+  if (state != STATE_UNDEFINED) {
+    error_handler::Panic(118);
+  }
 
-// static bool write_reg(uint8_t reg, uint16_t value) {
-//   // Select register and write in one transaction.
-//   data_buffer[0] = reg;
-//   data_buffer[1] = (uint8_t)(value >> 8);
-//   data_buffer[2] = (uint8_t)value;
-//   const HAL_StatusTypeDef status =
-//       HAL_I2C_Master_Transmit(&hi2c1, kDeviceAddress, data_buffer, 3, 100);
-//   // logger.info("Status: %d", status);
-//   return status == HAL_OK;
-// }
-
-// static bool start_select_reg_to_read_DMA(uint8_t reg) {
-//   // Set address register.
-//   data_buffer[0] = reg;
-//   const HAL_StatusTypeDef status =
-//       HAL_I2C_Master_Transmit_DMA(&hi2c1, kDeviceAddress, data_buffer, 1);
-//   return status == HAL_OK;
-// }
-
-// TODO: Consider to use   HAL_I2C_Mem_Read_xx()
-// static bool select_reg_to_read(uint8_t reg) {
-//   // Set address register.
-//   data_buffer[0] = reg;
-//   const HAL_StatusTypeDef status =
-//       HAL_I2C_Master_Transmit(&hi2c1, kDeviceAddress, data_buffer, 1, 100);
-//   return status == HAL_OK;
-// }
-
-// static bool read_selected_reg(uint16_t* value) {
-//   // Read the selected register.
-//   data_buffer[0] = 0;
-//   data_buffer[2] = 0;
-//   const HAL_StatusTypeDef status =
-//       HAL_I2C_Master_Receive(&hi2c1, kDeviceAddress, data_buffer, 2, 100);
-//   if (status != HAL_OK) {
-//     return false;
-//   }
-//   *value = ((uint16_t)data_buffer[0] << 8) | data_buffer[1];
-//   return true;
-// }
-
-// TODO: Consider to use   HAL_I2C_Mem_Read_xx()
-// static bool read_reg(uint8_t reg, uint16_t* value) {
-//   if (!select_reg_to_read(reg)) {
-//     return false;
-//   }
-
-//   return read_selected_reg(value);
-// }
-
- void setup() {
   // Register interrupt handler. These handler are marked in
   // cube ide for registration rather than overriding a weak
   // global handler.
+  //
+  // NOTE: We use a shared handler for TX and RX completions.
   if (HAL_OK != HAL_I2C_RegisterCallback(&hi2c1,
                                          HAL_I2C_MASTER_TX_COMPLETE_CB_ID,
-                                         i2c_MasterTxCallbackIsr)) {
+                                         i2c_MasterCallbackIsr)) {
     error_handler::Panic(111);
   }
   if (HAL_OK != HAL_I2C_RegisterCallback(&hi2c1,
                                          HAL_I2C_MASTER_RX_COMPLETE_CB_ID,
-                                         i2c_MasterRxCallbackIsr)) {
+                                         i2c_MasterCallbackIsr)) {
     error_handler::Panic(112);
   }
   if (HAL_OK != HAL_I2C_RegisterCallback(&hi2c1, HAL_I2C_ERROR_CB_ID,
@@ -121,186 +212,32 @@ void i2c_AbortCallbackIsr(I2C_HandleTypeDef* hi2c) {
                                          i2c_AbortCallbackIsr)) {
     error_handler::Panic(114);
   }
+
+  state = STATE_IDLE;
 }
 
 void i2c_task_body(void* argument) {
-  // setup();
-
-  // bool ok = write_reg(0x01, 0x4383);  // config
-  // bool ok = write_reg(0x01, kConfigStart0);
-
-  // if (!ok) {
-  //   error_handler::Panic(999);
-  // }
-  // // bool status = write_reg(0x01, 0xc383);  // start conversion
-  // logger.info("i2c write: %s", ok ? "OK" : "ERR");
-
   // Processing loop.
   for (;;) {
     time_util::delay_millis(100);
 
-    i2c_timer_body();
+    const uint32_t n = irq_event_queue.size();
 
-    // uint8_t data_buffer[3];
+    i2c_timer_cb();
 
-    // uint16_t reg_value = 0;
-    // NOTE: the first value is invalid since the ADC was not
-    // configured properly yet.
-    // bool ok = read_reg(0x0, &reg_value);  // read conversion
-
-    // bool ok = select_reg_to_read(0);
-
-    // Select ADC's register 0 for reading.
-    // static_assert(sizeof(data_buffer[0]) == 1);
-    // static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 1);
-    // data_buffer[0] = 0;
-    // HAL_StatusTypeDef status =
-    //     HAL_I2C_Master_Transmit(&hi2c1, kAds1115DeviceAddress, data_buffer,
-    //     1, 100);
-
-    // // Read selected register
-    // if (status != HAL_OK) {
-    //   logger.error("I2C: error selecting reg 0: %d", status);
-    //   continue;
-    // }
-    // // status = read_selected_reg(&reg_value);
-    // static_assert(sizeof(data_buffer[0]) == 1);
-    // static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 2);
-    // data_buffer[0] = 0;
-    // data_buffer[1] = 0;
-    // status =
-    //     HAL_I2C_Master_Receive(&hi2c1, kAds1115DeviceAddress, data_buffer, 2,
-    //     100);
-    // if (status != HAL_OK) {
-    //   logger.error("I2C: error reading reg 0: %d", status);
-    //   continue;
-    // }
-
-    // const uint16_t reg_value = ((uint16_t)data_buffer[0] << 8) |
-    // data_buffer[1]; const int16_t adc_value = (int16_t)reg_value;
-
-    // // const int16_t adc_value = (int16_t)reg_value;
-    // logger.info("I2C read [%d]: %03hx, %hd", ch, reg_value, adc_value);
-
-    // //  Toggle channel.
-    // ch = (ch + 1) & 0x01;
-
-    // // Temp for test
-    // // bool status = write_reg(0x01, 0x4383);
-
-    // // Configure mux for next channel and start conversion.
-    // const uint16_t config_value = ch == 0 ? kAds1115ConfigStartCh0 :
-    // kAds1115ConfigStartCh1; static_assert(sizeof(data_buffer[0]) == 1);
-    // static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 3);
-    // data_buffer[0] = 0x01;  // config reg address
-    // data_buffer[1] = (uint8_t)(config_value >> 8);
-    // data_buffer[2] = (uint8_t)config_value;
-    // status =
-    //     HAL_I2C_Master_Transmit(&hi2c1, kAds1115DeviceAddress, data_buffer,
-    //     3, 100);
-    // // logger.info("Status: %d", status);
-
-    // if (status != HAL_OK) {
-    //   logger.error("I2C: error selecting chanel: %d (%d)", ch, status);
-    //   continue;
-    // }
-
-    // logger.error("I2C: cycle OK");
-
-    // // return status == HAL_OK;
-
-    // // status = write_reg(
-    // //     0x01, ch == 0 ? kConfigStart0 : kConfigStart1);  // start
-    // conversion
-    // // logger.info("i2c start conv: %s", ok ? "OK" : "ERR");
+    logger.info("I2C: Queue has %lu items", n);
+    for (uint32_t i = 0; i < n; i++) {
+      IrqEvent event;
+      if (!irq_event_queue.consume_from_task(&event, 0)) {
+        logger.error("I2C: Error reading queue.");
+      } else {
+        logger.info("I2C[%d]: %lu, %hd", event.ch, event.timestamp_millis,
+                    event.adc_value);
+      }
+    }
   }
 }
 
-void i2c_timer_body() {
-  // setup();
-
-  // bool ok = write_reg(0x01, 0x4383);  // config
-  // bool ok = write_reg(0x01, kConfigStart0);
-
-  // if (!ok) {
-  //   error_handler::Panic(999);
-  // }
-  // // bool status = write_reg(0x01, 0xc383);  // start conversion
-  // logger.info("i2c write: %s", ok ? "OK" : "ERR");
-
-  // Processing loop.
-  // for (;;) {
-  // time_util::delay_millis(100);
-
-  // uint8_t data_buffer[3];
-
-  // uint16_t reg_value = 0;
-  // NOTE: the first value is invalid since the ADC was not
-  // configured properly yet.
-  // bool ok = read_reg(0x0, &reg_value);  // read conversion
-
-  // bool ok = select_reg_to_read(0);
-
-  // Select ADC's register 0 for reading.
-  static_assert(sizeof(data_buffer[0]) == 1);
-  static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 1);
-  data_buffer[0] = 0;
-  HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(
-      &hi2c1, kAds1115DeviceAddress, data_buffer, 1, 100);
-
-  // Read selected register
-  if (status != HAL_OK) {
-    logger.error("I2C: error selecting reg 0: %d", status);
-    return;
-  }
-  // status = read_selected_reg(&reg_value);
-  static_assert(sizeof(data_buffer[0]) == 1);
-  static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 2);
-  data_buffer[0] = 0;
-  data_buffer[1] = 0;
-  status = HAL_I2C_Master_Receive(&hi2c1, kAds1115DeviceAddress, data_buffer, 2,
-                                  100);
-  if (status != HAL_OK) {
-    logger.error("I2C: error reading reg 0: %d", status);
-    return;
-  }
-
-  const uint16_t reg_value = ((uint16_t)data_buffer[0] << 8) | data_buffer[1];
-  const int16_t adc_value = (int16_t)reg_value;
-
-  // const int16_t adc_value = (int16_t)reg_value;
-  logger.info("I2C read [%d]: %03hx, %hd", ch, reg_value, adc_value);
-
-  //  Toggle channel.
-  ch = (ch + 1) & 0x01;
-
-  // Temp for test
-  // bool status = write_reg(0x01, 0x4383);
-
-  // Configure mux for next channel and start conversion.
-  const uint16_t config_value =
-      ch == 0 ? kAds1115ConfigStartCh0 : kAds1115ConfigStartCh1;
-  static_assert(sizeof(data_buffer[0]) == 1);
-  static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 3);
-  data_buffer[0] = 0x01;  // config reg address
-  data_buffer[1] = (uint8_t)(config_value >> 8);
-  data_buffer[2] = (uint8_t)config_value;
-  status = HAL_I2C_Master_Transmit(&hi2c1, kAds1115DeviceAddress, data_buffer,
-                                   3, 100);
-  // logger.info("Status: %d", status);
-
-  if (status != HAL_OK) {
-    logger.error("I2C: error selecting chanel: %d (%d)", ch, status);
-    return;
-  }
-
-  logger.error("I2C: cycle OK");
-
-  // return status == HAL_OK;
-
-  // status = write_reg(
-  //     0x01, ch == 0 ? kConfigStart0 : kConfigStart1);  // start conversion
-  // logger.info("i2c start conv: %s", ok ? "OK" : "ERR");
-}
+void i2c_timer_cb() { step1::start_from_task(); }
 
 }  // namespace i2c_handler

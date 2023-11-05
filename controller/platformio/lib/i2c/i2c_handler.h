@@ -8,9 +8,6 @@ void setup();
 
 void i2c_task_body(void* argument);
 
-void i2c_timer_body();
-
-
-// void dump_state();
+void i2c_timer_cb();
 
 }  // namespace i2c_handler
