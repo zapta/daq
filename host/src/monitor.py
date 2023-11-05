@@ -55,9 +55,9 @@ args = parser.parse_args()
 # X spans, in secs, of the the plots.
 # TODO: Make these command line flags.
 # TODO: Add a flag to perform down sampling of the LC channel, for display only.
-plot1_x_span = 2.0
-plot2_x_span = 70.0
-plot3_x_span = 70.0
+plot1_x_span = 5.5
+plot2_x_span = 65.0
+plot3_x_span = 65.0
 max_plot_x_span = max(plot1_x_span, plot2_x_span, plot3_x_span)
 
 logging.basicConfig(
@@ -461,7 +461,7 @@ def init_display():
     app_view.setWindowTitle("DAQ Monitor")
     app_view.resize(initial_window_width, initial_window_height)
 
-    plot1 = layout.addPlot(title="Load Cells", colspan=5)
+    plot1 = layout.addPlot(title="Force", colspan=5)
     plot1.setLabel('left', 'Force', "g")
     plot1.showGrid(False, True, 0.7)
     plot1.setMouseEnabled(x=False, y=True)
@@ -470,7 +470,7 @@ def init_display():
     plot1.addLegend(offset=(5, 5), verSpacing=-7, brush="#eee", labelTextSize='7pt')
 
     layout.nextRow()
-    plot2 = layout.addPlot(title="Temperatures", colspan=5)
+    plot2 = layout.addPlot(title="Temperature", colspan=5)
     plot2.setLabel('left', 'Temp', "C")
     plot2.showGrid(False, True, 0.7)
     plot2.setMouseEnabled(x=False, y=True)
