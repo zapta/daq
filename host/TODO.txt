@@ -1,5 +1,4 @@
 
-TODO: In the graphs, high the latest 0.5s of the graph to hide the flickering.
 
 TODO: Change the serial packets data writer/parser to use generic methods such as read_uint(num_of_bytes), write_uint(value, num_of_bytes)
 

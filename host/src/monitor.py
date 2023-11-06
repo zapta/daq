@@ -44,6 +44,11 @@ parser.add_argument("--refresh_rate",
                     type=int,
                     default=20, 
                     help="Graphs refreshes per sec.")
+parser.add_argument("--buffering_time", 
+                    dest="buffering_time", 
+                    type=float,
+                    default=0.3, 
+                    help="Show only data points that are older than this time in secs, to avoid flickering.")
 parser.add_argument('--dry_run',
                     dest="dry_run",
                     default=False,
@@ -340,38 +345,40 @@ def update_display():
       
     # For smoother display scroll. We keep advancing the time since the last 
     # log packet.
-    adjusted_latest_log_time = latest_log_time + (time.time() - latest_log_arrival_time)
+    adjusted_latest_log_time = latest_log_time + (time.time() - latest_log_arrival_time) - args.buffering_time
 
     # Remove markers that are beyond all plots.
     markers_history.prune_older_than(adjusted_latest_log_time - max_plot_x_span)
 
     # Update plot 1 with load_cells
     for ch_name, lc_chan in sorted(lc_channels.items()):
-        cleanup_time = adjusted_latest_log_time - plot1_x_span
-        lc_chan.display_series.delete_older_than(cleanup_time)
-        x = lc_chan.display_series.relative_times(adjusted_latest_log_time)
-        # Draw the actual values ('below' on the display)
-        y = lc_chan.display_series.values()
+        lc_cleanup_time = adjusted_latest_log_time - plot1_x_span 
+        lc_chan.display_series.delete_older_than(lc_cleanup_time)
+        x, y = lc_chan.display_series.get_display_xy(adjusted_latest_log_time)
+        # x = lc_chan.display_series.relative_times(adjusted_latest_log_time)
+        # y = lc_chan.display_series.values()
         color = lc_chan.lc_config.color()
         plot1.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name, antialias=True)
 
     # Update plot 2 with temperature channels
-    for ch_name, temperature_chan in sorted(tm_channels.items()):
-        temperature_chan.display_series.delete_older_than(adjusted_latest_log_time - plot2_x_span)
-        x = temperature_chan.display_series.relative_times(adjusted_latest_log_time)
-        y = temperature_chan.display_series.values()
-        color = temperature_chan.temperature_config.color()
+    for ch_name, tm_chan in sorted(tm_channels.items()):
+        tm_cleanup_time = adjusted_latest_log_time - plot2_x_span 
+        tm_chan.display_series.delete_older_than(tm_cleanup_time)
+        x, y = tm_chan.display_series.get_display_xy(adjusted_latest_log_time)
+        # x = temperature_chan.display_series.relative_times(adjusted_latest_log_time)
+        # y = temperature_chan.display_series.values()
+        color = tm_chan.temperature_config.color()
         plot2.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name, antialias=True)
         
     # Update plot 3 with power channels
     for ch_name, pw_chan in sorted(pw_channels.items()):
-        pw_chan.display_series_v.delete_older_than(adjusted_latest_log_time - plot3_x_span)
-        pw_chan.display_series_a.delete_older_than(adjusted_latest_log_time - plot3_x_span)
-        pw_chan.display_series_w.delete_older_than(adjusted_latest_log_time - plot3_x_span)
-        # x = pw_chan.display_series_w.relative_times(latest_log_time)
-        # y = pw_chan.display_series_w.values()
-        x = pw_chan.display_series_v.relative_times(adjusted_latest_log_time)
-        y = pw_chan.display_series_v.values()
+        pw_cleanup_time = adjusted_latest_log_time - plot3_x_span 
+        pw_chan.display_series_v.delete_older_than(pw_cleanup_time)
+        pw_chan.display_series_a.delete_older_than(pw_cleanup_time)
+        pw_chan.display_series_w.delete_older_than(pw_cleanup_time)
+        x, y = pw_chan.display_series_v.get_display_xy(adjusted_latest_log_time)
+        # x = pw_chan.display_series_v.relative_times(adjusted_latest_log_time)
+        # y = pw_chan.display_series_v.values()
         color = pw_chan.pw_config.color()
         plot3.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name, antialias=True)
 
