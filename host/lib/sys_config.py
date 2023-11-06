@@ -386,14 +386,14 @@ class SysConfig:
             self.__populate_markers(toml)
 
     # Individual channel getters.
-    def load_cell_config(self, chan_name: str) -> LoadCellChannelConfig:
-        return self.__lc_ch_configs[chan_name]
+    def load_cell_config(self, chan_name: str) -> Optional[LoadCellChannelConfig]:
+        return self.__lc_ch_configs.get(chan_name, None)
       
-    def power_config(self, chan_name: str) -> PowerChannelConfig:
-        return self.__pw_ch_configs[chan_name]
+    def power_config(self, chan_name: str) -> Optional[PowerChannelConfig]:
+        return self.__pw_ch_configs.get(chan_name, None)
 
-    def temperature_config(self, chan_name: str) -> TemperatureChannelConfig:
-        return self.__tm_ch_configs[chan_name]
+    def temperature_config(self, chan_name: str) -> Optional[TemperatureChannelConfig]:
+        return self.__tm_ch_configs.get(chan_name, None)
       
     # Channel list getters
     def load_cells_configs(self) -> Dict[str, LoadCellChannelConfig]:

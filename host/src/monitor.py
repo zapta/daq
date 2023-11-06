@@ -20,7 +20,7 @@ from serial_packets.packets import PacketStatus, PacketData
 
 # Local imports
 sys.path.insert(0, "..")
-from lib.log_parser import LogPacketsParser, ChannelData, ParsedLogPacket
+from lib.log_parser import LogPacketsParser, ChannelData, ParsedLogPacket, LcChannelValue, PwChannelValue, TmChannelValue, MrkChannelValue
 from lib.sys_config import SysConfig, MarkersConfig, LoadCellChannelConfig, PowerChannelConfig,  TemperatureChannelConfig
 from lib.display_series import DisplaySeries
 
@@ -152,7 +152,7 @@ class TemperatureChannel:
 sys_config: Optional[SysConfig] = None
 serial_port: Optional[str] = None
 serial_packets_client: Optional[SerialPacketsClient] = None
-# serial_reconnection_task = None
+log_packets_parser = None
 
 # Initialized later. Keys are channel names.
 lc_channels: Optional[Dict[str, LoadCellChannel]] = None
@@ -166,7 +166,7 @@ pending_start_button_click = False
 pending_stop_button_click = False
 
 # Used to parse the incoming data log messages from the device.
-log_packets_parser = LogPacketsParser()
+# log_packets_parser = LogPacketsParser()
 
 # Initial window size in pixels.
 initial_window_width = 800
@@ -219,27 +219,31 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
                 # This packet has no data for this channel.
                 break
             lc_chan: LoadCellChannel = lc_channels[lc_ch_name]
+            adc_readings_sum = 0
             times_secs = []
             values_g = []
-            adc_values_sum = 0
-            for time_millis, adc_value in lc_data.timed_values():
-                times_secs.append(time_millis / 1000)
-                values_g.append(lc_chan.lc_config.adc_reading_to_grams(adc_value))
-                adc_values_sum += adc_value
+            # lc_value is a 
+            for lc_value in lc_data.values():
+                assert isinstance(lc_value, LcChannelValue)
+                # times_secs = []
+                # values_g = []
+                # adc_values_sum = 0
+                # for time_millis, adc_value in lc_data.values():
+                times_secs.append(lc_value.time_millis / 1000)
+                values_g.append(lc_value.value_grams)
+                adc_readings_sum += lc_value.adc_reading
             lc_chan.display_series.extend(times_secs, values_g)
             if args.calibration:
-                avg_adc_value = round(adc_values_sum / len(times_secs))
-                lc_chan.lc_config.dump_lc_calibration(avg_adc_value)
+                adc_readings_avg = round(adc_readings_sum / len(times_secs))
+                lc_chan.lc_config.dump_lc_calibration(adc_readings_avg)
 
         # Process power channels.
         for pw_ch_name in pw_channels.keys():
             # logger.info(f"**** Looking for pw chan {pw_ch_name}")
             pw_data: ChannelData = parsed_log_packet.channel(pw_ch_name)
             if not pw_data:
-                # logger.info(f"**** pw chan {pw_ch_name} not found")
                 # This packet has no data for this channel.
                 break
-            # logger.info(f"**** pw chan {pw_ch_name} found")
             pw_chan: PowerChannel = pw_channels[pw_ch_name]
             times_secs = []
             values_v = []
@@ -247,18 +251,19 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
             values_w = []
             adc_current_readings_sum = 0
             adc_voltage_readings_sum = 0
-            for time_millis, adc_value_pair in pw_data.timed_values():
-                adc_voltage_reading = adc_value_pair[0]
-                adc_current_reading = adc_value_pair[1]
-                volts = pw_chan.pw_config.adc_voltage_reading_to_volts(adc_voltage_reading)
-                amps = pw_chan.pw_config.adc_current_reading_to_amps(adc_current_reading)
-                watts = amps * volts
-                times_secs.append(time_millis / 1000)
-                values_v.append(volts)
-                values_a.append(amps)
-                values_w.append(watts)
-                adc_voltage_readings_sum += adc_voltage_reading
-                adc_current_readings_sum += adc_current_reading
+            for pw_value in pw_data.values():
+                assert isinstance(pw_value, PwChannelValue)
+                # adc_voltage_reading = adc_value_pair[0]
+                # adc_current_reading = adc_value_pair[1]
+                # volts = pw_chan.pw_config.adc_voltage_reading_to_volts(adc_voltage_reading)
+                # amps = pw_chan.pw_config.adc_current_reading_to_amps(adc_current_reading)
+                # watts = pw_value.value_volts * pw_value.value_amps
+                times_secs.append(pw_value.time_millis / 1000)
+                values_v.append(pw_value.value_volts)
+                values_a.append(pw_value.value_amps)
+                values_w.append(pw_value.value_volts * pw_value.value_amps)
+                adc_voltage_readings_sum += pw_value.adc_voltage_reading
+                adc_current_readings_sum += pw_value.adc_current_reading
             pw_chan.display_series_v.extend(times_secs, values_v)
             pw_chan.display_series_a.extend(times_secs, values_a)
             pw_chan.display_series_w.extend(times_secs, values_w)
@@ -276,30 +281,37 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
                 # This packet has no data for this channel.
                 break
             temperature_chan: TemperatureChannel = tm_channels[temperature_chan_name]
-            times_millis = []
-            adc_values = []
-            for time_millis, adc_value in temperature_data.timed_values():
-                times_millis.append(time_millis)
-                adc_values.append(adc_value)
-            avg_times_millis = statistics.mean(times_millis)
-            avg_adc_value = statistics.mean(adc_values)
-            temperature_chan.display_series.extend(
-                [avg_times_millis / 1000],
-                [temperature_chan.temperature_config.adc_reading_to_c(round(avg_adc_value))])
+            times_millis_sum = 0
+            adc_readings_sum = 0
+            temp_c_sum = 0
+            n = 0
+            for tm_value in temperature_data.values():
+                assert isinstance(tm_value, TmChannelValue)
+                times_millis_sum += tm_value.time_millis
+                adc_readings_sum += tm_value.adc_reading
+                temp_c_sum += tm_value.t_celsius
+                n += 1
+            # We compute average and add a single temp point.
+            avg_times_secs = times_millis_sum / (n * 1000)
+            avg_adc_reading = round(adc_readings_sum / n)
+            avg_temp_c = temp_c_sum / n
+            temperature_chan.display_series.extend([avg_times_secs], [avg_temp_c])
             if args.calibration:
-                temperature_chan.temperature_config.dump_temperature_calibration(round(avg_adc_value))
+                temperature_chan.temperature_config.dump_temperature_calibration(round(avg_adc_reading))
+                
         # Process marker channel.
         marker_data: ChannelData = parsed_log_packet.channel("mrk")
         if marker_data:
             markers_config: MarkersConfig = sys_config.markers_config()
-            for time_millis, marker_name in marker_data.timed_values():
-                marker_time = time_millis / 1000
-                marker_type, marker_value = markers_config.classify_marker(marker_name)
+            for mrk_value in marker_data.values():
+                assert isinstance(tm_value, MrkChannelValue)
+                marker_time_secs = mrk_value.time_millis / 1000
+                # marker_type, marker_value = markers_config.classify_marker(marker_name)
                 logger.info(
-                    f"Marker: [{marker_name}] type=[{marker_type}] value[{marker_value}] time={marker_time:.3f}]"
+                    f"Marker: [{mrk_value.marker_name}] type=[{mrk_value.marker_type}] value[{mrk_value.marker_value}] time={marker_time_secs:.3f}]"
                 )
-                markers_history.append(marker_time, marker_name,
-                                       markers_config.pen_for_marker(marker_name))
+                markers_history.append(marker_time_secs, mrk_value.marker_name,
+                                       markers_config.pen_for_marker(mrk_value.marker_name))
 
         # All done. Update the display
         # update_display()
@@ -644,10 +656,12 @@ def timer_handler():
 
 
 def main():
-    global sys_config
+    global sys_config, log_packets_parser
 
     sys_config = SysConfig()
     sys_config.load_from_file(args.sys_config)
+    log_packets_parser = LogPacketsParser(sys_config)
+    
     init_display()
     main_event_loop.run_until_complete(init_serial_packets_client())
 

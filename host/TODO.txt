@@ -1,8 +1,7 @@
 
+TODO: In the graphs, high the latest 0.5s of the graph to hide the flickering.
 
-TODO: Add a flag to supress plot display.
-
-TODO: Down sample for display using actual down sampling and mean().
+TODO: Change the serial packets data writer/parser to use generic methods such as read_uint(num_of_bytes), write_uint(value, num_of_bytes)
 
 
 
