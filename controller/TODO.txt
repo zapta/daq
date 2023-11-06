@@ -1,9 +1,11 @@
 
+In the I2C handler, sample the time at the begining of the tick, not in the ISR level. For better chance for consistent time increment.
+
+Verify with scope the integrity of the I2C signals on the CPU, with I2C board on the far end of the bus. (to determine if additional pullup are needed)
 
 Revisit the visibility of generated Cube function. See Project Manager / Advance Settings, in the .ioc editor. May simplify some of the python script patching.
 
 Change platformio board from custom to generic stm32h750
 
-Change the logger to accepts a queue of data buffers such that adc and ohter moduels are non blocked on writing.
 
 
