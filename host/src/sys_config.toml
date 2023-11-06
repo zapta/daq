@@ -10,6 +10,7 @@
 
 [data_link]
 port = "COM7"
+# port = "/dev/tty.usbserial-0001"
 
 
 # grams = (adc_reading - adc_offset) * scale
