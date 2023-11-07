@@ -129,9 +129,6 @@ def patch_ff_c(file):
     print(f"{count} patches made to {file}")
 
 
-# FILE = "../controller/platformio/lib/cube_ide/Core/Src/main.c.ignored"
-# patch_main_c(FILE)
-
 DST = "../platformio"
 DST_LIB = f"{DST}/lib/cube_ide"
 
