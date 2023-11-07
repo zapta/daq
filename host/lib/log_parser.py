@@ -59,7 +59,7 @@ class ChannelData:
     def __init__(self, chan_name: str):
         self.__chan_name = chan_name
         # List of (time_millis, value)
-        self.__values: List[Tuple[int, Any]] = []
+        self.__values: List[Any] = []
 
     def __str__(self) -> str:
         return f"Chan {self.__chan_name}: {self.size()} values"
@@ -67,7 +67,7 @@ class ChannelData:
     def chan_name(self) -> str:
         return self.__chan_name
 
-    def values(self) -> List[Tuple[int, Any]]:
+    def values(self) -> List[Any]:
         return self.__values
 
     def size(self) -> int:
@@ -86,7 +86,7 @@ class ChannelData:
             return None
         return self.__values[-1].time_millis
 
-    def append_values(self, values: List[Tuple[int, any]]) -> None:
+    def append_values(self, values: List[Any]) -> None:
         assert len(values) > 0
         if not self.is_empty():
             assert values[-1].time_millis >= self.end_time_millis()
