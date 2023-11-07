@@ -42,7 +42,7 @@ parser.add_argument('--calibration',
 parser.add_argument("--refresh_rate", 
                     dest="refresh_rate", 
                     type=int,
-                    default=20, 
+                    default=3, 
                     help="Graphs refreshes per sec.")
 parser.add_argument("--buffering_time", 
                     dest="buffering_time", 
