@@ -337,7 +337,7 @@ def update_display():
     plot3.clear()
 
     if latest_log_time is None:
-        logger.info("No log base time to update graphs")
+        # logger.info("No log base time to update graphs")
         markers_history.clear()
         return
       

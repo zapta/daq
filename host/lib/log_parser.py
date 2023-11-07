@@ -145,7 +145,7 @@ class ParsedLogPacket:
         return not self.__channels
 
     def append_values(self, chan_name: str, values: List[LcChannelValue]|List[PwChannelValue]|List[TmChannelValue]) -> None:
-        logger.info(f"{chan_name}: {len(values)} new values")
+        # logger.info(f"{chan_name}: {len(values)} new values")
         if not chan_name in self.__channels:
             self.__channels[chan_name] = ChannelData(chan_name)
         self.__channels[chan_name].append_values(values)
