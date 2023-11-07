@@ -1,5 +1,4 @@
 
-add auto detection of i2c board, until all system will have that board.
 
 Change platformio board from custom to generic stm32h750
 

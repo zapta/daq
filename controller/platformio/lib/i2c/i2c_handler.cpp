@@ -75,6 +75,42 @@ static StaticQueue<IrqEvent, 5> irq_event_queue;
 // 1 -> ADC chan 1 (current)
 static uint8_t channel = 0;
 
+// Called before setup to test if the I2C card is plugged in.
+// Allows to support system with and without the I2c card, during
+// transition.
+static bool does_hardware_exist() {
+  if (state != STATE_UNDEFINED) {
+    error_handler::Panic(311);
+  }
+
+  // Three attemps to read conversion register 0.
+  for (int i = 0; i < 3; i++) {
+    // Select ADC register 0 for reading (conversion data)
+    static_assert(sizeof(data_buffer[0]) == 1);
+    static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 1);
+    data_buffer[0] = 0;
+    static_assert(configTICK_RATE_HZ == 1000);
+    HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(
+        &hi2c1, kAds1115DeviceAddress, data_buffer, 1, 50);
+    if (status != HAL_OK) {
+      // Retry, just in case.
+      continue;
+    }
+    // Read selected register
+    static_assert(sizeof(data_buffer[0]) == 1);
+    static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 2);
+    data_buffer[0] = 0;
+    data_buffer[1] = 0;
+    static_assert(configTICK_RATE_HZ == 1000);
+    status = HAL_I2C_Master_Receive(
+        &hi2c1, kAds1115DeviceAddress, data_buffer, 2, 50);
+    if (status == HAL_OK) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // Hanlers for STEP1.
 namespace step1 {
 // Start state 1. Called from timer callback. Should be non blocking.
@@ -89,7 +125,7 @@ static inline void start_from_timer() {
   HAL_StatusTypeDef status = HAL_I2C_Master_Transmit_DMA(
       &hi2c1, kAds1115DeviceAddress, data_buffer, 1);
   if (status != HAL_OK) {
-    error_handler::Panic(217);
+    error_handler::Panic(213);
   }
 }
 
@@ -240,6 +276,14 @@ static void setup() {
 }
 
 void i2c_task_body(void* argument) {
+  if (!does_hardware_exist()) {
+    for (;;) {
+      logger.warning("I2C: heater card not found. Ignoring.");
+      time_util::delay_millis(3000);
+    }
+  }
+
+  // Hardware found. Start the normal operation.
   setup();
 
   if (!i2c_timer.start()) {
