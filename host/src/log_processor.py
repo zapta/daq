@@ -107,7 +107,7 @@ def process_packet_load_cell_channels(parsed_log_packet: ParsedLogPacket):
             continue
         chan = output_csv_files_dict[chan_name]
         f = chan.file_handle
-        for time, marker_name in chan_data.timed_values():
+        for time, marker_name in chan_data.values():
             millis_in_session = time - earliest_packet_start_time
             g = lc_config.adc_reading_to_grams(marker_name)
             f.write(f"{millis_in_session},{marker_name},{g:.3f}\n")
@@ -124,7 +124,7 @@ def process_packet_temperature_channels(parsed_log_packet: ParsedLogPacket):
             continue
         chan = output_csv_files_dict[chan_name]
         f = chan.file_handle
-        for time, marker_name in chan_data.timed_values():
+        for time, marker_name in chan_data.values():
             millis_in_session = time - earliest_packet_start_time
             r = temperature_config.adc_reading_to_ohms(marker_name)
             c = temperature_config.resistance_to_c(r)
@@ -143,7 +143,7 @@ def process_packet_markers(parsed_log_packet: ParsedLogPacket):
     chan_data = parsed_log_packet.channel(chan_name)
     markers_config = sys_config.markers_config()
     if chan_data:
-        for time, marker_name in chan_data.timed_values():
+        for time, marker_name in chan_data.values():
             millis_in_session = time - earliest_packet_start_time
             point_count += 1
             marker_type, marker_value = markers_config.classify_marker(marker_name)
@@ -246,9 +246,12 @@ def main():
     last_progress_report_time = time.time()
 
     # Initialized output files.
-    # Load cell files.
+    # Load cell sensors files.
     for chan_name in sys_config.load_cells_configs():
         init_output_csv_file(chan_name, f"T[ms],Value[adc],Value[g]", f"_channel_{chan_name}")
+    # Power sensors files.
+    for chan_name in sys_config.power_configs():
+        init_output_csv_file(chan_name, f"T[ms],Voltage[adc],Current[adc],Voltage[V],Current[A],Power[W]", f"_channel_{chan_name}")
     # Temperature sensors files.
     for chan_name in sys_config.temperature_configs():
         init_output_csv_file(chan_name, f"T[ms],Value[adc],Value[R],Value[C]",

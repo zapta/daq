@@ -40,7 +40,10 @@ static constexpr uint16_t kAds1115ConfigStartCh1 =
 // Buffer for DMA transactions.
 static uint8_t data_buffer[5];
 
-
+// We update the conversion timestamps at the timer tick handler
+// to have more consistent timestamp intervals.
+static uint32_t current_event_timestamp_millis = 0;
+static uint32_t next_event_timestamp_millis = 0;
 
 // Module states.
 enum State {
@@ -71,12 +74,6 @@ static StaticQueue<IrqEvent, 5> irq_event_queue;
 // 0 -> ADC chan 0 (voltage)
 // 1 -> ADC chan 1 (current)
 static uint8_t channel = 0;
-
-// Increment an ADC channel var to next one. Currently we use only
-// channels 0, 1.
-// static inline void increment_ch(uint8_t& ch_var) {
-//   ch_var = (ch_var >= 1u ? 0u : ch_var + 1u);
-// }
 
 // Hanlers for STEP1.
 namespace step1 {
@@ -127,7 +124,7 @@ static void on_completion_from_isr(BaseType_t* task_woken) {
   // Here when completed to read the conversion value from reg 0.
   // Use the value conversion value.
   const uint16_t reg_value = ((uint16_t)data_buffer[0] << 8) | data_buffer[1];
-  const IrqEvent event = {.timestamp_millis = time_util::millis_from_isr(),
+  const IrqEvent event = {.timestamp_millis = current_event_timestamp_millis,
                           .ch = channel,
                           .adc_value = (int16_t)reg_value};
   if (!irq_event_queue.add_from_isr(event, task_woken)) {
@@ -262,10 +259,6 @@ void i2c_task_body(void* argument) {
     // Get channel 0 value.
     IrqEvent event0;
     bool ok = irq_event_queue.consume_from_task(&event0, portMAX_DELAY);
-    // logger.info("DT: %lu", event0.timestamp_millis - last_event_ms);
-    // last_event_ms = event0.timestamp_millis;
-    // logger.info("I2C 0: %d", (int)event0.adc_value);
-
     if (!ok) {
       error_handler::Panic(122);
     }
@@ -276,9 +269,6 @@ void i2c_task_body(void* argument) {
     // Get channel 1 value.
     IrqEvent event1;
     ok = irq_event_queue.consume_from_task(&event1, portMAX_DELAY);
-    // logger.info("DT: %lu", event1.timestamp_millis - last_event_ms);
-    // last_event_ms = event1.timestamp_millis;
-    // logger.info("I2C 1: %d", (int)event1.adc_value);
     if (!ok) {
       error_handler::Panic(125);
     }
@@ -338,6 +328,13 @@ void i2c_task_body(void* argument) {
 
 // This function is called from the timer daemon and thus should be non
 // blocking.
-static void i2c_timer_cb(TimerHandle_t xTimer) { step1::start_from_timer(); }
+static void i2c_timer_cb(TimerHandle_t xTimer) {
+  // NOTE: Since we drop the first data point, we don't care about
+  // the initial value of next_event_timestamp_millis.
+  current_event_timestamp_millis = next_event_timestamp_millis;
+  next_event_timestamp_millis = time_util::millis();
+
+  step1::start_from_timer();
+}
 
 }  // namespace i2c_handler
