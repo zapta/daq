@@ -1,6 +1,2 @@
 
 
-Change platformio board from custom to generic stm32h750
-
-
-
