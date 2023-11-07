@@ -50,7 +50,8 @@ class TmChannelValue:
 class MrkChannelValue:
     """A single value of the markers channel."""
     time_millis: int
-    marker_type: int
+    marker_name: str
+    marker_type: str
     marker_value: str
     
 class ChannelData:
@@ -239,8 +240,7 @@ class LogPacketsParser:
             item_time_millis += step_interval_millis
         assert not packet_data.read_error()
         # If channel is not ignored, add its values.
-        if values:
-          # logger.info(f"Adding {len(values)} values of chan {chan_name}")
+        if tm_ch_config:
           output.append_values(chan_name, values)
         else:
           logger.info(f"Channel [{chan_name} not in config, skipping {num_values}values")
@@ -248,83 +248,15 @@ class LogPacketsParser:
     def _parse_mrk_ch_values(self, chan_name: str, packet_start_time_millis: int,
                            packet_data: PacketData, output: ParsedLogPacket) -> None:
         """Parse an append a list of marker values."""
-        # Get channel config. If not in config, we read but ignore this channel.
-        # lc_ch_config: Optional[LoadCellChannelConfig] = self.__sys_config.load_cell_config(chan_name)
-        # Read header 
         first_value_rel_time: int = packet_data.read_uint16()
         num_values = packet_data.read_uint16()
         assert num_values == 1
-        # step_interval_millis = packet_data.read_uint16()
         assert not packet_data.read_error()
-        # Read values
-        # values = [] 
         item_time_millis: int = packet_start_time_millis + first_value_rel_time
-        # for i in range(num_values):
-        marker_str: str =  packet_data.read_str()
-        marker_type, marker_value =  self.__sys_config.markers_config().classify_marker(marker_str)
-        output.append_values(chan_name, [MrkChannelValue(item_time_millis, marker_type, marker_value)])
-            # if lc_ch_config:
-            #     grams = lc_ch_config.adc_reading_to_grams(adc_reading)
-        # values.append(LcChannelValue(item_time_millis, adc_reading, grams))
-        # item_time_millis += step_interval_millis
+        marker_name: str =  packet_data.read_str()
+        marker_type, marker_value =  self.__sys_config.markers_config().classify_marker(marker_name)
+        output.append_values(chan_name, [MrkChannelValue(item_time_millis, marker_name, marker_type, marker_value)])
         assert not packet_data.read_error()
-        # If channel is not ignored, add its values.
-        # if values:
-        #   logger.info(f"Adding {len(values)} values of chan {chan_name}")
-        #   output.append_values(chan_name, values)
-        # else:
-        #   logger.info(f"Channel [{chan_name} not in config, skipping {num_values}values")
-   
-      
-    # def _parse_int24_sequence(self, packet_start_time_millis: int,
-    #                           data: PacketData) -> List[Tuple[int, float]]:
-    #     """Returns a list of time values (time_millis, value)"""
-    #     first_value_rel_time: int = data.read_uint16()
-    #     num_values = data.read_uint16()
-    #     step_interval_millis = data.read_uint16() if num_values > 0 else 0
-    #     # print(f"*** {packet_start_time_millis}, {first_value_rel_time}, {num_values}, {step_interval_millis}", flush=True)
-    #     assert not data.read_error()
-    #     timed_values = []
-    #     t_millis: int = packet_start_time_millis + first_value_rel_time
-    #     for i in range(num_values):
-    #         timed_values.append((t_millis, data.read_int24()))
-    #         t_millis += step_interval_millis
-    #     assert not data.read_error()
-    #     return timed_values
-      
-    # def _parse_int16_pairs_sequence(self, packet_start_time_millis: int,
-    #                           data: PacketData) -> List[Tuple[int, Tuple[int, int]]]:
-    #     """Returns a list of time values (int16, int16)"""
-    #     first_value_rel_time: int = data.read_uint16()
-    #     num_values = data.read_uint16()
-    #     step_interval_millis = data.read_uint16() if num_values > 0 else 0
-    #     # print(f"*** {packet_start_time_millis}, {first_value_rel_time}, {num_values}, {step_interval_millis}", flush=True)
-    #     assert not data.read_error()
-    #     timed_values = []
-    #     t_millis: int = packet_start_time_millis + first_value_rel_time
-    #     for i in range(num_values):
-    #         value1 =  data.read_int16()
-    #         value2 =  data.read_int16()
-    #         timed_values.append((t_millis, (value1, value2)))
-    #         t_millis += step_interval_millis
-    #     assert not data.read_error()
-    #     return timed_values
-
-    # def _parse_str_sequence(self, packet_start_time_millis: int,
-    #                         data: PacketData) -> List[Tuple[int, str]]:
-    #     """Returns a list of time values (time_millis, value)"""
-    #     first_value_rel_time = data.read_uint16()
-    #     num_values = data.read_uint16()
-    #     step_interval_millis = data.read_uint16() if num_values > 1 else 0
-    #     # print(f"*** {packet_start_time_millis}, {first_value_rel_time}, {num_values}, {step_interval_millis}", flush=True)
-    #     assert not data.read_error()
-    #     timed_values = []
-    #     t_millis = packet_start_time_millis + first_value_rel_time
-    #     for i in range(num_values):
-    #         timed_values.append((t_millis, data.read_str()))
-    #         t_millis += step_interval_millis
-    #     assert not data.read_error()
-    #     return timed_values
 
     def parse_next_packet(self, packet_data: PacketData) -> ParsedLogPacket:
         packet_data.reset_read_location()
@@ -332,7 +264,6 @@ class LogPacketsParser:
         assert version == 1, f"Unexpected log packet version: {version}"
         session_id = packet_data.read_uint32()
         packet_start_time_millis = packet_data.read_uint32()
-        # print(f"### {packet_start_sys_time_millis:07d}", flush=True)
         result: ParsedLogPacket = ParsedLogPacket(session_id, packet_start_time_millis)
         while not packet_data.read_error() and not packet_data.all_read():
             chan_id = packet_data.read_uint8()

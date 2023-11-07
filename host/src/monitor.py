@@ -309,7 +309,7 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
         if marker_data:
             markers_config: MarkersConfig = sys_config.markers_config()
             for mrk_value in marker_data.values():
-                assert isinstance(tm_value, MrkChannelValue)
+                assert isinstance(mrk_value, MrkChannelValue)
                 marker_time_secs = mrk_value.time_millis / 1000
                 # marker_type, marker_value = markers_config.classify_marker(marker_name)
                 logger.info(
