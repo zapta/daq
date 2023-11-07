@@ -1,2 +1,5 @@
 
+Add automatic detection of io board.
+
+Add automatic detection of ADC board.
 
