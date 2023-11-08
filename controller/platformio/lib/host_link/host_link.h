@@ -31,6 +31,6 @@ void setup(Serial& serial);
 
 // Main allocates a task that executes this task body.
 // Doesn't return.
-void rx_task_body(void* argument);
+void host_link_task_body(void* ignored_argument);
 
 }  // namespace host_link

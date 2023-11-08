@@ -48,7 +48,7 @@ void setup() {
   setup_completed = true;
 }
 
-void data_queue_task_body(void* argument) {
+void data_queue_task_body(void* ignored_argument) {
   if (!setup_completed) {
     error_handler::Panic(57);
   }

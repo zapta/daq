@@ -8,7 +8,7 @@
 namespace adc_card {
 
 // Does not return.
-void adc_card_task_body(void* argument);
+void adc_card_task_body(void* ignored_argument);
 
 void dump_state();
 

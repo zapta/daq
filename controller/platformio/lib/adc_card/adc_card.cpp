@@ -77,6 +77,9 @@ static uint8_t rx_buffer[2 * kDmaBytesPerHalf] = {};
 
 // static SerialPacketsData packet_data;
 
+// static const char kNoHardwareMessage[] =
+//     "adc card not found. Ignoring channels lc1, tm1, tm2, tm3";
+
 // Represent the type of an event that is passed from the ISR handlers to the
 // worker thread.
 enum IrqEventId {
@@ -106,6 +109,9 @@ enum DmaState {
 };
 
 static volatile DmaState state = DMA_STATE_IDLE;
+
+// We detect in setup() of the card exists and fall gracefully if not.
+static bool adc_card_hardware_found = false;
 
 // General stats.
 static volatile uint32_t irq_half_count = 0;
@@ -273,12 +279,11 @@ void cmd_reset() {
   static const uint8_t cmd[] = {0x06, 0x00};
   spi_send_one_shot(cmd, sizeof(cmd));
 
-  // time_util::delay_millis(50);
   // Since commands are done at a TIM12 intervals, we don't
   // need to insert a ~50us delay here as called by the datasheet.
 }
 
-uint8_t cmd_read_register(uint8_t reg_index) {
+uint8_t one_shot_cmd_read_register(uint8_t reg_index) {
   if (reg_index > 18) {
     error_handler::Panic(38);
   }
@@ -288,7 +293,7 @@ uint8_t cmd_read_register(uint8_t reg_index) {
   return rx_buffer[2];
 }
 
-void cmd_write_register(uint8_t reg_index, uint8_t val) {
+void one_shot_cmd_write_register(uint8_t reg_index, uint8_t val) {
   if (reg_index > 18) {
     error_handler::Panic(39);
   }
@@ -296,11 +301,6 @@ void cmd_write_register(uint8_t reg_index, uint8_t val) {
   const uint8_t cmd[] = {cmd_code, val};
   spi_send_one_shot(cmd, sizeof(cmd));
 }
-
-// oid cmd_start_conversion() {
-//   static const uint8_t cmd[] = {0x08, 0x00};
-//   spi_send_one_shot(cmd, sizeof(cmd));
-// }v
 
 // Bfr3 points to three bytes with ADC value.
 int32_t decode_int24(const uint8_t *bfr3) {
@@ -456,10 +456,19 @@ static void setup() {
 
   cmd_reset();
 
-  logger.info("ADC device id: 0x%02hx", cmd_read_register(0));
+  // If ADC card is not available we get all zeros here.
+  // TODO: Is this a strong enough way to detect no card? E.g. by writing and
+  // reading back.
+  const uint8_t device_id = one_shot_cmd_read_register(0);
+  logger.info("ADC device id: 0x%02hx", device_id);
+  adc_card_hardware_found = (device_id != 0x00);
+  if (!adc_card_hardware_found) {
+    return;
+  }
 
-  // Reset ADC status.
-  cmd_write_register(0x01, 0x00);
+  // Here we believe that the ADC card exists, so we initialize it.
+  // We start with reseting ADC status.
+  one_shot_cmd_write_register(0x01, 0x00);
 
   // Init static registers
   for (uint8_t i = 0; i < kNumRegsInfo; i++) {
@@ -469,15 +478,15 @@ static void setup() {
       error_handler::Panic(48);
     }
     if (reg_info.type == STAT) {
-      cmd_write_register(reg_info.idx, reg_info.val);
+      one_shot_cmd_write_register(reg_info.idx, reg_info.val);
     }
   }
 
   // Initialize dynamic registers. They also also modified
   // as part of the continious ADC/DMA sampling.
-  cmd_write_register(0x06, 0x09);  // Ref Ain0 - Ain1
-  cmd_write_register(0x10, 0x07);  // PGA = x128
-  cmd_write_register(0x11, 0x34);  // Ain1 = positive, Ain0 = Negative.
+  one_shot_cmd_write_register(0x06, 0x09);  // Ref Ain0 - Ain1
+  one_shot_cmd_write_register(0x10, 0x07);  // PGA = x128
+  one_shot_cmd_write_register(0x11, 0x34);  // Ain1 = positive, Ain0 = Negative.
 
   start_continuos_DMA();
 }
@@ -499,6 +508,7 @@ void dump_state() {
   }
   __enable_irq();
 
+  // TODO: Print something else if there is no hardware.
   logger.info("ADC DMA counters: half: %lu (%lu), full: %lu (%lu), err: %lu",
               _irq_half_count, _event_half_count, _irq_full_count,
               _event_full_count, _irq_error_count);
@@ -506,8 +516,8 @@ void dump_state() {
 
 void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
   // Allocate a data buffer. Non blocking. Guaranteed to be non null.
-  data_queue::DataBuffer* data_buffer = data_queue::grab_buffer();
-  SerialPacketsData* packet_data = &data_buffer->packet_data();
+  data_queue::DataBuffer *data_buffer = data_queue::grab_buffer();
+  SerialPacketsData *packet_data = &data_buffer->packet_data();
 
   // const bool reports_enabled = controller::is_adc_report_enabled();
   packet_data->clear();
@@ -594,7 +604,6 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
   data_buffer = nullptr;
   packet_data = nullptr;
 
-
   if (false) {
     logger.info("ADC processed in %lu ms", time_util::millis() - isr_millis);
   }
@@ -605,6 +614,12 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
 // the desired values.
 // Used to detect SPI bus error or ADC reset mid operation.
 void verify_static_registers_values() {
+  // If ADC card was not detected do nothing.
+  if (!adc_card_hardware_found) {
+    return;
+  }
+
+  // Report.
   logger.info("ADC id reg: 0x%02hx", regs_values[0x00]);
   logger.info("ADC status reg: 0x%02hx", regs_values[0x01]);
   for (uint32_t i = 0; i < kNumRegsInfo; i++) {
@@ -616,8 +631,19 @@ void verify_static_registers_values() {
   }
 }
 
-void adc_card_task_body(void *argument) {
+void adc_card_task_body(void *ignored_argument) {
   setup();
+
+  // If no hardware, stay in a do nothing loop.
+  if (!adc_card_hardware_found) {
+    for (;;) {
+      logger.warning(
+          "ADC card not found. Ignoring channels lc1, tm1, tm2, tm3");
+      time_util::delay_millis(5000);
+    }
+  }
+
+  // Hardware found. Do the service loop.
   for (;;) {
     IrqEvent event;
     if (!irq_event_queue.consume_from_task(&event, 300)) {

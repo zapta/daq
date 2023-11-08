@@ -88,7 +88,7 @@ static void process_next_rx_char(uint8_t c) {
   // Character added OK.
 }
 
-void printer_link_task_body(void* argument) {
+void printer_link_task_body(void* ignored_argument) {
   if (!printer_link_serial) {
     // Setup not called.
     error_handler::Panic(55);

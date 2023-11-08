@@ -275,10 +275,10 @@ static void setup() {
   state = STATE_IDLE;
 }
 
-void pw_card_task_body(void* argument) {
+void pw_card_task_body(void* ignored_argument) {
   if (!does_hardware_exist()) {
     for (;;) {
-      logger.warning("Heater card not found. Ignoring channel [pw1].");
+      logger.warning("Heater card not found. Ignoring channel pw1.");
       time_util::delay_millis(3000);
     }
   }

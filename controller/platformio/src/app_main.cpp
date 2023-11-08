@@ -26,7 +26,7 @@
 #pragma GCC optimize("O0")
 
 // Tasks with static stack allocations.
-StaticTask<2000> host_link_rx_task(host_link::rx_task_body, "Host RX", 6);
+StaticTask<2000> host_link_rx_task(host_link::host_link_task_body, "Host RX", 6);
 StaticTask<2000> printer_link_task(printer_link_card::printer_link_task_body, "Printer Link",
                                       3);
 StaticTask<2000> adc_card_task(adc_card::adc_card_task_body, "ADC", 5);

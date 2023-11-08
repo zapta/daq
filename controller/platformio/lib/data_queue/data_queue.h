@@ -44,7 +44,7 @@ void setup();
 
 // Body of data processing task. Never returns.
 // Should be called after setup().
-void data_queue_task_body(void* argument);
+void data_queue_task_body(void* ignored_argument);
 
 // Non blocking. Panic if a buffer is not available. Guaranteed to 
 // returned a non null value.

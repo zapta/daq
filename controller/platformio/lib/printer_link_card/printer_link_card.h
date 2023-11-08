@@ -10,6 +10,6 @@ void setup(Serial* serial);
 
 // Main allocates a task that executes this task body.
 // Doesn't return.
-void printer_link_task_body(void* argument);
+void printer_link_task_body(void* ignored_argument);
 
 }  // namespace printer_link_card
