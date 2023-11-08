@@ -85,7 +85,7 @@ void app_main() {
       static data_recorder::RecordingInfo recording_info;
       data_recorder::get_recoding_info(&recording_info);
       if (recording_info.recording_active) {
-        logger.info("Recording [%s], %lu msecs.",
+        logger.info("Recording [%s], %lu ms.",
                     recording_info.recording_name.c_str(),
                     recording_info.recording_time_millis);
       }
