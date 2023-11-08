@@ -1,4 +1,4 @@
-#include "i2c_handler.h"
+#include "pw_card.h"
 
 #include <FreeRtos.h>
 #include <i2c.h>
@@ -14,9 +14,9 @@
 #pragma GCC push_options
 #pragma GCC optimize("O0")
 
-namespace i2c_handler {
+namespace pw_card {
 
-static void i2c_timer_cb(TimerHandle_t xTimer);
+static void pw_card_timer_cb(TimerHandle_t xTimer);
 
 // Each data point contains a pair of readings for voltage
 // and current respectivly.
@@ -26,7 +26,7 @@ static constexpr uint16_t kMsPerDataPoint = 2 * kMsTimerTick;
 
 // Timer with static allocation. 25ms interval, for 20 data points per
 // seconds (each data points includes two ADC readings)
-StaticTimer i2c_timer(i2c_handler::i2c_timer_cb, "I2C", kMsTimerTick);
+StaticTimer pw_card_timer(pw_card::pw_card_timer_cb, "PW", kMsTimerTick);
 
 static constexpr uint8_t kAds1115DeviceAddress = 0x48 << 1;
 
@@ -75,8 +75,8 @@ static StaticQueue<IrqEvent, 5> irq_event_queue;
 // 1 -> ADC chan 1 (current)
 static uint8_t channel = 0;
 
-// Called before setup to test if the I2C card is plugged in.
-// Allows to support system with and without the I2c card, during
+// Called before setup to test if the pw card is plugged in.
+// Allows to support system with and without the pw card, during
 // transition.
 static bool does_hardware_exist() {
   if (state != STATE_UNDEFINED) {
@@ -275,10 +275,10 @@ static void setup() {
   state = STATE_IDLE;
 }
 
-void i2c_task_body(void* argument) {
+void pw_card_task_body(void* argument) {
   if (!does_hardware_exist()) {
     for (;;) {
-      logger.warning("I2C: heater card not found. Ignoring.");
+      logger.warning("Heater card not found. Ignoring channel [pw1].");
       time_util::delay_millis(3000);
     }
   }
@@ -286,7 +286,7 @@ void i2c_task_body(void* argument) {
   // Hardware found. Start the normal operation.
   setup();
 
-  if (!i2c_timer.start()) {
+  if (!pw_card_timer.start()) {
     error_handler::Panic(123);
   }
 
@@ -365,14 +365,14 @@ void i2c_task_body(void* argument) {
       items_in_buffer = 0;
 
       // Dump the last data point, for sanity check.
-      logger.info("I2C: %hd, %hd", event0.adc_value, event1.adc_value);
+      logger.info("pw1 %hd, %hd", event0.adc_value, event1.adc_value);
     }
   }
 }
 
 // This function is called from the timer daemon and thus should be non
 // blocking.
-static void i2c_timer_cb(TimerHandle_t xTimer) {
+static void pw_card_timer_cb(TimerHandle_t xTimer) {
   // NOTE: Since we drop the first data point, we don't care about
   // the initial value of next_event_timestamp_millis.
   current_event_timestamp_millis = next_event_timestamp_millis;
@@ -381,4 +381,4 @@ static void i2c_timer_cb(TimerHandle_t xTimer) {
   step1::start_from_timer();
 }
 
-}  // namespace i2c_handler
+}  // namespace pw_card

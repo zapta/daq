@@ -10,10 +10,10 @@
 #include "gpio.h"
 #include "gpio_pins.h"
 #include "host_link.h"
-#include "i2c_handler.h"
+#include "pw_card.h"
 #include "logger.h"
 #include "main.h"
-#include "printer_link.h"
+#include "printer_link_card.h"
 #include "serial.h"
 #include "session.h"
 #include "spi.h"
@@ -27,10 +27,10 @@
 
 // Tasks with static stack allocations.
 StaticTask<2000> host_link_rx_task(host_link::rx_task_body, "Host RX", 6);
-StaticTask<2000> printer_link_rx_task(printer_link::rx_task_body, "Printer RX",
+StaticTask<2000> printer_link_task(printer_link_card::printer_link_task_body, "Printer Link",
                                       3);
 StaticTask<2000> adc_card_task(adc_card::adc_card_task_body, "ADC", 5);
-StaticTask<2000> i2c_task(i2c_handler::i2c_task_body, "I2C", 7);
+StaticTask<2000> pw_card_task(pw_card::pw_card_task_body, "PW", 7);
 StaticTask<2000> data_queue_task(data_queue::data_queue_task_body, "DQUE", 4);
 
 // Called from from the main FreeRTOS task.
@@ -53,7 +53,7 @@ void app_main() {
   host_link::setup(serial::serial1);
 
   // Init printer link.
-  printer_link::setup(serial::serial2);
+  printer_link_card::setup(&serial::serial2);
 
   // Start tasks.
   if (!data_queue_task.start()) {
@@ -62,13 +62,13 @@ void app_main() {
   if (!host_link_rx_task.start()) {
     error_handler::Panic(86);
   }
-  if (!printer_link_rx_task.start()) {
+  if (!printer_link_task.start()) {
     error_handler::Panic(87);
   }
   if (!adc_card_task.start()) {
     error_handler::Panic(88);
   }
-  if (!i2c_task.start()) {
+  if (!pw_card_task.start()) {
     error_handler::Panic(88);
   }
 

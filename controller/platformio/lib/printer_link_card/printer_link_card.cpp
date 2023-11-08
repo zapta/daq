@@ -1,13 +1,13 @@
-#include "printer_link.h"
+#include "printer_link_card.h"
 
 #include "controller.h"
 #include "logger.h"
 #include "time_util.h"
 
-namespace printer_link {
+namespace printer_link_card {
 
 // Initialized in setup() to point to the serial port.
-static Serial* link_serial = nullptr;
+static Serial* printer_link_serial = nullptr;
 
 // NOTE: Since the rx task is the only task that access
 // these variables, we don't need to protect with a mutex.
@@ -37,13 +37,13 @@ static void set_state(State new_state) {
 
 // One time initialization of this module. Should be the first
 // function called.
-void setup(Serial& serial) {
-  if (link_serial) {
+void setup(Serial* serial) {
+  if (printer_link_serial) {
     // Already initialized.
     error_handler::Panic(82);
   }
   set_state(IDLE);
-  link_serial = &serial;
+  printer_link_serial = serial;
 }
 
 static void process_next_rx_char(uint8_t c) {
@@ -88,14 +88,14 @@ static void process_next_rx_char(uint8_t c) {
   // Character added OK.
 }
 
-void rx_task_body(void* argument) {
-  if (!link_serial) {
+void printer_link_task_body(void* argument) {
+  if (!printer_link_serial) {
     // Setup not called.
     error_handler::Panic(55);
   }
   for (;;) {
     // Wait for rx chars.
-    const int n = link_serial->read(temp_buffer, sizeof(temp_buffer));
+    const int n = printer_link_serial->read(temp_buffer, sizeof(temp_buffer));
     logger.info("Printer link: Recieved %d chars", n);
     // If current COLLECT session is too old, clear it.
     if (state == COLLECT) {
@@ -114,4 +114,4 @@ void rx_task_body(void* argument) {
   }
 }
 
-}  // namespace printer_link
+}  // namespace printer_link_card

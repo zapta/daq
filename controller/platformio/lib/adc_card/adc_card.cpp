@@ -231,9 +231,7 @@ static void spi_send_one_shot(const uint8_t *cmd, uint16_t num_bytes) {
     error_handler::Panic(32);
   }
 
-  // time_util::delay_millis(50);
-
-  logger.info("Sending SPI one shot (%hu bytes)", num_bytes);
+  // logger.info("ADC: Sending SPI one shot (%hu bytes)", num_bytes);
   if (num_bytes > sizeof(rx_buffer)) {
     error_handler::Panic(33);
   }
@@ -501,7 +499,7 @@ void dump_state() {
   }
   __enable_irq();
 
-  logger.info("DMA counters: half: %lu (%lu), full: %lu (%lu), err: %lu",
+  logger.info("ADC DMA counters: half: %lu (%lu), full: %lu (%lu), err: %lu",
               _irq_half_count, _event_half_count, _irq_full_count,
               _event_full_count, _irq_error_count);
 }
@@ -584,7 +582,7 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
   // Debugging info.
   if (true) {
     logger.info(
-        "ADC %d: %ld, %ld, %ld", id,
+        "ADC [%d] %ld, %ld, %ld", id,
         decode_int24(&bfr[kDmaRxDataOffsetInPoint]),
         decode_int24(&bfr[kDmaRxDataOffsetInPoint + 2 * kDmaBytesPerPoint]),
         decode_int24(&bfr[kDmaRxDataOffsetInPoint + 4 * kDmaBytesPerPoint]));
