@@ -179,7 +179,7 @@ def process_packet(packet: DecodedLogPacket):
     packet_end_time_millis = parsed_log_packet.end_time_millis()
     if earliest_packet_start_time is None or packet_start_time_millis < earliest_packet_start_time:
         earliest_packet_start_time = packet_start_time_millis
-        logger.info(f"Session base time millis: {earliest_packet_start_time}")
+        logger.info(f"Recording base time millis: {earliest_packet_start_time}")
     if latest_packet_end_time_millis is None or packet_end_time_millis > latest_packet_end_time_millis:
         latest_packet_end_time_millis = packet_end_time_millis
 
@@ -294,8 +294,17 @@ def main():
     in_f.close()
     report_status()
     write_channels_file()
+    ignored_channels = list(log_packets_parser.ignored_channels().items())
+    ignored_channels.sort()
+    if ignored_channels:
+      logger.info("Ignored channels:")
+      for chan_id, row_count in log_packets_parser.ignored_channels().items():
+          logger.info(f"* {chan_id:10s} {row_count:8d} rows.")  
+        
     for _, output_file in output_csv_files_dict.items():
         output_file.file_handle.close()
+        
+    logger.info("Active channels:")
     for file_id, output_file in output_csv_files_dict.items():
         logger.info(
             f"* {file_id:10s} {output_file.row_count:8d} rows  {output_file.file_path}")

@@ -158,7 +158,18 @@ class LogPacketsParser:
     def __init__(self, sys_config: SysConfig):
         """Constructor."""
         self.__sys_config = sys_config
+        # Counts the number of values each each ignored channel.
+        self.__ignored_channels: Dict[str, int] = {}
+        
+    def __report_ignored_channel(self, chan_id: str, num_values: int) -> None:
+        old_value = self.__ignored_channels.get(chan_id, 0);
+        self.__ignored_channels[chan_id] = old_value + num_values
+        # logger.info(f"Channel [{chan_id} not in config, skipping {num_values} values (total {self.__skipped_channels[chan_id]})")
 
+    def ignored_channels(self) -> Dict[str, int]:
+        """Returns a list of ignored channel ids and their respective row counts."""
+        return self.__ignored_channels;
+      
     def _parse_lc_ch_values(self, chan_id: str, packet_start_time_millis: int,
                            packet_data: PacketData, output: ParsedLogPacket) -> None:
         """Parse an append a list of lc channel values. If chan is not in sys_config, parse and ignore values."""
@@ -185,7 +196,7 @@ class LogPacketsParser:
           # logger.info(f"Adding {len(values)} values of chan {chan_name}")
           output.append_values(chan_id, values)
         else:
-          logger.info(f"Channel [{chan_id} not in config, skipping {num_values}values")
+          self.__report_ignored_channel(chan_id, num_values)
           
           
     def _parse_pw_ch_values(self, chan_id: str, packet_start_time_millis: int,
@@ -216,7 +227,7 @@ class LogPacketsParser:
           # logger.info(f"Adding {len(values)} values of chan {chan_name}")
           output.append_values(chan_id, values)
         else:
-          logger.info(f"Channel [{chan_id} not in config, skipping {num_values}values")
+          self.__report_ignored_channel(chan_id, num_values)
         
     def _parse_tm_ch_values(self, chan_id: str, packet_start_time_millis: int,
                            packet_data: PacketData, output: ParsedLogPacket) -> None:
@@ -244,7 +255,7 @@ class LogPacketsParser:
         if tm_ch_config:
           output.append_values(chan_id, values)
         else:
-          logger.info(f"Channel [{chan_id} not in config, skipping {num_values}values")
+          self.__report_ignored_channel(chan_id, num_values)
       
     def _parse_mrk_ch_values(self, chan_id: str, packet_start_time_millis: int,
                            packet_data: PacketData, output: ParsedLogPacket) -> None:
@@ -275,48 +286,22 @@ class LogPacketsParser:
 
             # Parse a load cell channel.
             if chan_id.startswith("lc"):
-                # chan_name = f"lc{chan_id - 0x11 + 1}"
-                # None if not found. In this case we read but ignore the channel.
-                # lc_ch_config: Optional[LoadCellChannelConfig] = self.__sys_config.load_cell_config(chan_name)
                 self._parse_lc_ch_values(chan_id, packet_start_time_millis, packet_data, result)
-                # if lc_ch_config:
-                #   logger.info(f"Adding {len(values)} values of chan {chan_name}")
-                #   result.append_values(chan_name, values)
-                # else:
-                #   logger.info(f"Channel [{chan_name} not in config, skipping values")
                 continue
               
             # Parse a power channel
             if chan_id.startswith("pw"):
-                # chan_ = f"pw{chan_id - 0x30 + 1}"
                 self._parse_pw_ch_values(chan_id, packet_start_time_millis, packet_data, result)
                 continue
-                #
-                # # None if not found. In this case we read but ignore the channel.
-                # pw_ch_config: Optional[PowerChannelConfig] = self.__sys_config.power_config(chan_name)
-                # values: Optional[List[PwChannelValue]] = self._parse_pw_sequence(packet_start_time_millis, packet_data, pw_ch_config)
-                # if pw_ch_config:
-                #   logger.info(f"Adding {len(values)} value of chan {chan_name}")
-                #   result.append_values(chan_name, values)
-                # else:
-                #   logger.info(f"Channel [{chan_name} not in config, skipping values")
-                # continue
               
             # Temperature channels.
             if chan_id.startswith("tm"):
-                # chan_name = f"tm{chan_id - 0x21 + 1}"
                 self._parse_tm_ch_values(chan_id, packet_start_time_millis, packet_data, result)
-                # timed_values = self._parse_int24_sequence(packet_start_time_millis, packet_data)
-                # result.append_values(chan_name, timed_values)
                 continue
               
             # Markers.
             if chan_id == "mrk":
-                # chan_name = "mrk"
                 self._parse_mrk_ch_values(chan_id, packet_start_time_millis, packet_data, result)
-                # timed_values = self._parse_str_sequence(packet_start_time_millis, packet_data)
-                # logger.info(f"Marker: {timed_values}")
-                # result.append_values(chan_name, timed_values)
                 continue
               
             # Unknown channel id
