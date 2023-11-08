@@ -5,14 +5,14 @@
 
 #pragma once
 
-namespace adc {
+namespace adc_card {
 
 // Does not return.
-void adc_task_body(void* argument);
+void adc_card_task_body(void* argument);
 
 void dump_state();
 
 // For diagnostics.
-void verify_registers_vals();
+void verify_static_registers_values();
 
-}  // namespace adc
+}  // namespace adc_card

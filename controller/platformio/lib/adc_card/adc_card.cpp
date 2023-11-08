@@ -1,4 +1,4 @@
-#include "adc.h"
+#include "adc_card.h"
 
 #include <FreeRtos.h>
 #include <portmacro.h>
@@ -7,7 +7,6 @@
 #include <cstring>
 
 #include "common.h"
-// #include "controller.h"
 #include "data_queue.h"
 #include "data_recorder.h"
 #include "dma.h"
@@ -25,7 +24,7 @@ extern DMA_HandleTypeDef hdma_spi1_tx;
 
 using host_link::HostPorts;
 
-namespace adc {
+namespace adc_card {
 
 // Our DMA Terminology
 // * Buffer - the entire dma tx or rx buffer (must be same size).
@@ -604,9 +603,10 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
 }
 
 // TODO: Once we confirm that static regs change value (e.g. bus noise when
-// shacking the ADC card), change the static regs reads to writes restore
+// shacking the ADC card), change the static regs reads to writes to restore
 // the desired values.
-void verify_registers_vals() {
+// Used to detect SPI bus error or ADC reset mid operation.
+void verify_static_registers_values() {
   logger.info("ADC id reg: 0x%02hx", regs_values[0x00]);
   logger.info("ADC status reg: 0x%02hx", regs_values[0x01]);
   for (uint32_t i = 0; i < kNumRegsInfo; i++) {
@@ -618,7 +618,7 @@ void verify_registers_vals() {
   }
 }
 
-void adc_task_body(void *argument) {
+void adc_card_task_body(void *argument) {
   setup();
   for (;;) {
     IrqEvent event;
@@ -643,4 +643,4 @@ void adc_task_body(void *argument) {
   }
 }
 
-}  // namespace adc
+}  // namespace adc_card

@@ -2,7 +2,7 @@
 #include <FreeRTOS.h>
 #include <unistd.h>
 
-#include "adc.h"
+#include "adc_card.h"
 #include "cdc_serial.h"
 #include "data_queue.h"
 #include "data_recorder.h"
@@ -29,7 +29,7 @@
 StaticTask<2000> host_link_rx_task(host_link::rx_task_body, "Host RX", 6);
 StaticTask<2000> printer_link_rx_task(printer_link::rx_task_body, "Printer RX",
                                       3);
-StaticTask<2000> adc_task(adc::adc_task_body, "ADC", 5);
+StaticTask<2000> adc_card_task(adc_card::adc_card_task_body, "ADC", 5);
 StaticTask<2000> i2c_task(i2c_handler::i2c_task_body, "I2C", 7);
 StaticTask<2000> data_queue_task(data_queue::data_queue_task_body, "DQUE", 4);
 
@@ -65,7 +65,7 @@ void app_main() {
   if (!printer_link_rx_task.start()) {
     error_handler::Panic(87);
   }
-  if (!adc_task.start()) {
+  if (!adc_card_task.start()) {
     error_handler::Panic(88);
   }
   if (!i2c_task.start()) {
@@ -91,7 +91,7 @@ void app_main() {
       }
       logger.info("Session id: [%08lx]", session::id());
       data_queue::dump_state();
-      adc::verify_registers_vals();
+      adc_card::verify_static_registers_values();
     }
 
     time_util::delay_millis(100);
