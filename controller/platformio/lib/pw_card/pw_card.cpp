@@ -345,9 +345,9 @@ void pw_card_task_body(void* ignored_argument) {
       packet_data->write_uint32(start_time);  // Device session id.
 
       // Fill in the channgel header
-      packet_data->write_uint8(0x30);                   // Channel id ('va1')
-      packet_data->write_uint16(0);                     // Time offset.
-      packet_data->write_uint16(kDataPointsPerPacket);  // Num points
+      packet_data->write_str("pw1");                    // Channel id
+      packet_data->write_uint16(0);                     // Time offset from packet start time.
+      packet_data->write_uint16(kDataPointsPerPacket);  // Num of data points we plan to add
       packet_data->write_uint16(kMsPerDataPoint);  // Interval between points.
     }
 
@@ -356,7 +356,7 @@ void pw_card_task_body(void* ignored_argument) {
     packet_data->write_uint16((uint16_t)event1.adc_value);
     items_in_buffer++;
 
-    // Handle a full buffer.
+    // If buffer has enough items, queue it for sending.
     if (items_in_buffer >= kDataPointsPerPacket) {
       // Relinquish the data buffer for queing.
       data_queue::queue_buffer(data_buffer);

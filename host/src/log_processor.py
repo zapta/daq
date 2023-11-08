@@ -13,18 +13,14 @@ import sys
 import os
 import glob
 from dataclasses import dataclass
+from serial_packets.packet_decoder import PacketDecoder, DecodedLogPacket
+
 
 # Local imports.
 sys.path.insert(0, "..")
 from lib.log_parser import LogPacketsParser, ParsedLogPacket, ChannelData,  LcChannelValue, PwChannelValue, TmChannelValue, MrkChannelValue
 from lib.sys_config import SysConfig
 
-# For using the local version of serial_packet. Comment out if
-# using serial_packets package installed by pip.
-# sys.path.insert(0, "../../../../serial_packets_py/repo/src")
-# print(f"sys.path: {sys.path}", flush=True)
-
-from serial_packets.packet_decoder import PacketDecoder, DecodedLogPacket
 
 # Initialized by main().
 sys_config: Optional[SysConfig] = None
@@ -58,8 +54,6 @@ latest_packet_end_time_millis: Optional[int] = None
 # For progress report.
 byte_count = 0
 packet_count = 0
-# chan_data_count = 0
-# point_count = 0
 
 last_point_rel_time = None
 
@@ -103,25 +97,7 @@ class PendingTestStartMarker:
 
 # If we are waiting for a test end marker, this contains the information
 # from the start marker.
-pending_test_start_marker: Optional[PendingTestStartMarker] = None
-
-
-# def process_packet_load_cell_channels(parsed_log_packet: ParsedLogPacket):
-#     """Process the load cell(s) data of a log packet."""
-#     global point_count, sys_config, output_csv_files_dict, earliest_packet_start_time
-#     for chan_name, lc_config in sys_config.load_cells_configs().items():
-#         chan_data = parsed_log_packet.channel(chan_name)
-#         if not chan_data:
-#             continue
-#         chan = output_csv_files_dict[chan_name]
-#         f = chan.file_handle
-#         for time, adc_reading in chan_data.values():
-#             millis_in_session = time - earliest_packet_start_time
-#             g = lc_config.adc_reading_to_grams(adc_reading)
-#             f.write(f"{millis_in_session},{adc_reading},{g:.3f}\n")
-#         point_count += chan_data.size()
-#         chan.row_count += chan_data.size()
-        
+pending_test_start_marker: Optional[PendingTestStartMarker] = None       
         
 def process_lc_channel_data(ch_name: str, ch_data: ChannelData) -> None:
     global sys_config, output_csv_files_dict, earliest_packet_start_time
@@ -146,25 +122,6 @@ def process_pw_channel_data(ch_name: str, ch_data: ChannelData) -> None:
     # point_count += ch_data.size()
     chan.row_count += ch_data.size()
 
-
-# def process_packet_temperature_channels(parsed_log_packet: ParsedLogPacket):
-#     """Process the temperature sensor(s) data of a log packet."""
-#     global point_count, sys_config, output_csv_files_dict, earliest_packet_start_time
-#     for chan_name, temperature_config in sys_config.temperature_configs().items():
-#         chan_data = parsed_log_packet.channel(chan_name)
-#         if not chan_data:
-#             continue
-#         chan = output_csv_files_dict[chan_name]
-#         f = chan.file_handle
-#         for time, marker_name in chan_data.values():
-#             millis_in_session = time - earliest_packet_start_time
-#             r = temperature_config.adc_reading_to_ohms(marker_name)
-#             c = temperature_config.resistance_to_c(r)
-#             f.write(f"{millis_in_session},{marker_name},{r:.2f},{c:.3f}\n")
-#         point_count += chan_data.size()
-#         chan.row_count += chan_data.size()
-
-
 def process_tm_channel_data(ch_name: str, ch_data: ChannelData) -> None:
     global sys_config, output_csv_files_dict, earliest_packet_start_time
     chan = output_csv_files_dict[ch_name]
@@ -175,40 +132,6 @@ def process_tm_channel_data(ch_name: str, ch_data: ChannelData) -> None:
       f.write(f"{millis_in_session},{tm_value.adc_reading},{tm_value.r_ohms:.2f},{tm_value.t_celsius:.3f}\n")
     # point_count += ch_data.size()
     chan.row_count += ch_data.size()
-    
-
-# def process_packet_markers(parsed_log_packet: ParsedLogPacket):
-#     """Process the markers data of a log packet."""
-#     global point_count, sys_config, output_csv_files_dict, earliest_packet_start_time
-#     global pending_test_start_marker
-#     chan_name = "mrk"
-#     chan = output_csv_files_dict["markers"]
-#     f = chan.file_handle
-#     chan_data = parsed_log_packet.channel(chan_name)
-#     markers_config = sys_config.markers_config()
-#     if chan_data:
-#         for time, marker_name in chan_data.values():
-#             millis_in_session = time - earliest_packet_start_time
-#             point_count += 1
-#             marker_type, marker_value = markers_config.classify_marker(marker_name)
-#             f.write(f"{millis_in_session},{marker_name},{marker_type},{marker_value}\n")
-#             # Process test range extraction
-#             if marker_type == "test_begin":
-#                 assert pending_test_start_marker is None, f"No end marker for test {pending_test_start_marker.test_name}"
-#                 assert marker_value, f"test_being marker has no test name"
-#                 pending_test_start_marker = PendingTestStartMarker(marker_value, millis_in_session)
-#             elif marker_type == "test_end":
-#                 assert pending_test_start_marker, f"Test end marker with no pending start marker: {marker_value}"
-#                 assert marker_value == pending_test_start_marker.test_name, f"Test end name {marker_value} doesn't match start name {pending_test_start_marker.test_name}"
-#                 tests_output_csv_file = output_csv_files_dict["tests"]
-#                 tests_output_csv_file.file_handle.write(
-#                     f"{pending_test_start_marker.test_name},{pending_test_start_marker.test_start_time_ms},{millis_in_session}\n"
-#                 )
-#                 tests_output_csv_file.row_count += 1
-#                 pending_test_start_marker = None
-
-#         point_count += chan_data.size()
-#         chan.row_count += chan_data.size()
         
 def process_mrk_channel_data(ch_data: ChannelData) -> None:
     global sys_config, output_csv_files_dict, earliest_packet_start_time, pending_test_start_marker
@@ -262,7 +185,7 @@ def process_packet(packet: DecodedLogPacket):
 
 
     for ch_name, ch_data in parsed_log_packet.channels().items():
-      assert ch_name == ch_data.chan_name()
+      assert ch_name == ch_data.chan_id()
       if ch_name.startswith("lc"):
          process_lc_channel_data(ch_name, ch_data)
          continue
@@ -278,19 +201,7 @@ def process_packet(packet: DecodedLogPacket):
       if ch_name == ("mrk"):
          process_mrk_channel_data(ch_data)
          continue
-       
-
-    # Process load cells.
-    # process_packet_load_cell_channels(parsed_log_packet)
     
-    # TODO: process power channels
-
-    # Process temperature channels.
-    # process_packet_temperature_channels(parsed_log_packet)
-
-    # Process markers channel
-    # process_packet_markers(parsed_log_packet)
-
 
 def report_status():
     global byte_count, packet_count, chan_data_count
@@ -312,20 +223,20 @@ def init_output_csv_file(file_id: str, csv_header: str, file_base_name) -> None:
 def write_channels_file() -> None:
     """Write to the channels output file the information of the sensor channels."""
     channels_file = output_csv_files_dict["channels"]
-    for chan_name in sys_config.load_cells_configs():
-        chan_file = output_csv_files_dict[chan_name]
+    for chan_id in sys_config.load_cells_configs():
+        chan_file = output_csv_files_dict[chan_id]
         channels_file.row_count += 1
-        channels_file.file_handle.write(f"{chan_name},load_cell,Value[g],{chan_file.row_count},"
+        channels_file.file_handle.write(f"{chan_id},load_cell,Grams,{chan_file.row_count},"
                                         f"{os.path.basename(chan_file.file_path)}\n")
-    for chan_name in sys_config.power_configs():
-        chan_file = output_csv_files_dict[chan_name]
+    for chan_id in sys_config.power_configs():
+        chan_file = output_csv_files_dict[chan_id]
         channels_file.row_count += 1
-        channels_file.file_handle.write(f"{chan_name},power,Power[W],{chan_file.row_count},"
+        channels_file.file_handle.write(f"{chan_id},power,Watts,{chan_file.row_count},"
                                         f"{os.path.basename(chan_file.file_path)}\n")
-    for chan_name in sys_config.temperature_configs():
-        chan_file = output_csv_files_dict[chan_name]
+    for chan_id in sys_config.temperature_configs():
+        chan_file = output_csv_files_dict[chan_id]
         channels_file.row_count += 1
-        channels_file.file_handle.write(f"{chan_name},temperature,Value[C],{chan_file.row_count},"
+        channels_file.file_handle.write(f"{chan_id},temperature,Celsius,{chan_file.row_count},"
                                         f"{os.path.basename(chan_file.file_path)}\n")
 
 
@@ -352,15 +263,15 @@ def main():
 
     # Initialized output files.
     # Load cell sensors files.
-    for chan_name in sys_config.load_cells_configs():
-        init_output_csv_file(chan_name, f"T[ms],Value[adc],Value[g]", f"_channel_{chan_name}")
+    for chan_id in sys_config.load_cells_configs():
+        init_output_csv_file(chan_id, f"T[ms],ADC,Grams", f"_channel_{chan_id}")
     # Power sensors files.
-    for chan_name in sys_config.power_configs():
-        init_output_csv_file(chan_name, f"T[ms],Voltage[adc],Current[adc],Voltage[V],Current[A],Power[W]", f"_channel_{chan_name}")
+    for chan_id in sys_config.power_configs():
+        init_output_csv_file(chan_id, f"T[ms],ADC1,ADC2,Volts,Amps,Watts", f"_channel_{chan_id}")
     # Temperature sensors files.
-    for chan_name in sys_config.temperature_configs():
-        init_output_csv_file(chan_name, f"T[ms],Value[adc],Value[R],Value[C]",
-                             f"_channel_{chan_name}")
+    for chan_id in sys_config.temperature_configs():
+        init_output_csv_file(chan_id, f"T[ms],ADC,Ohms,Celsius",
+                             f"_channel_{chan_id}")
     # Markers file
     init_output_csv_file("markers", f"T[ms],Name,Type,Value", "_markers")
     # Tests list file

@@ -7,7 +7,6 @@ import os
 import sys
 import pandas as pd
 import matplotlib.pyplot as plt
-# noinspection PyUnresolvedReferences
 import janitor
 
 # Local imports
@@ -29,12 +28,12 @@ parser.add_argument("--csv_output_file",
                     dest="csv_output_file",
                     default="",
                     help="Name of the CSV output file.")
-parser.add_argument("--channels_selector",
-                    dest="channels_selector",
+parser.add_argument("--channels_selection_regex",
+                    dest="channels_selection_regex",
                     default=None,
                     help="Optional regex. If specifies, only channels with matching names are selected. E.g.")
-parser.add_argument("--tests_selector",
-                    dest="tests_selector",
+parser.add_argument("--tests_selection_regex",
+                    dest="tests_selection_regex",
                     default=None,
                     help="Optional regex. If specifies, only tests with matching names are selected.")
 parser.add_argument('--group_by_test',
@@ -52,7 +51,7 @@ def main():
     # Determine the tests boundaries
     if args.group_by_test:
         tests_file_path = os.path.join(args.input_dir, '_tests.csv')
-        test_infos = load_tests_infos(tests_file_path, args.tests_selector)
+        test_infos = load_tests_infos(tests_file_path, args.tests_selection_regex)
         if not test_infos:
             logger.fatal("No channels were found after tests filtering. "
                          "Check _tests.csv file and --tests_selector flag.")
@@ -63,10 +62,10 @@ def main():
 
     # Load channels infos from the tests file.
     channels_file_path = os.path.join(args.input_dir, '_channels.csv')
-    channels_infos = load_channels_infos(channels_file_path, args.channels_selector)
+    channels_infos = load_channels_infos(channels_file_path, args.channels_selection_regex)
     if not channels_infos:
         logger.fatal("No channels were found after channel filtering. "
-                     "Check _channels.csv file and --channels_selector flag.")
+                     "Check _channels.csv file and --channels_selection_regex flag.")
         sys.exit(1)
 
     tests_data = []

@@ -123,7 +123,7 @@ class MarkerHistory:
 
 @dataclass(frozen=True)
 class LoadCellChannel:
-    chan_name: str
+    chan_id: str
     lc_config: LoadCellChannelConfig
     display_series: DisplaySeries
     
@@ -132,7 +132,7 @@ class LoadCellChannel:
     
 @dataclass(frozen=True)
 class PowerChannel:
-    chan_name: str
+    chan_id: str
     pw_config: PowerChannelConfig
     display_series_v: DisplaySeries
     display_series_a: DisplaySeries
@@ -145,7 +145,7 @@ class PowerChannel:
 
 @dataclass(frozen=True)
 class TemperatureChannel:
-    chan_name: str
+    chan_id: str
     temperature_config: TemperatureChannelConfig
     display_series: DisplaySeries
     
@@ -218,12 +218,12 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
             latest_log_arrival_time = time.time()
             
         # Process load cell channels
-        for lc_ch_name in lc_channels.keys():
-            lc_data: ChannelData = parsed_log_packet.channel(lc_ch_name)
+        for lc_chan_id in lc_channels.keys():
+            lc_data: ChannelData = parsed_log_packet.channel(lc_chan_id)
             if not lc_data:
                 # This packet has no data for this channel.
                 break
-            lc_chan: LoadCellChannel = lc_channels[lc_ch_name]
+            lc_chan: LoadCellChannel = lc_channels[lc_chan_id]
             adc_readings_sum = 0
             times_secs = []
             values_g = []
@@ -243,13 +243,13 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
                 lc_chan.lc_config.dump_lc_calibration(adc_readings_avg)
 
         # Process power channels.
-        for pw_ch_name in pw_channels.keys():
+        for pw_chan_id in pw_channels.keys():
             # logger.info(f"**** Looking for pw chan {pw_ch_name}")
-            pw_data: ChannelData = parsed_log_packet.channel(pw_ch_name)
+            pw_data: ChannelData = parsed_log_packet.channel(pw_chan_id)
             if not pw_data:
                 # This packet has no data for this channel.
                 break
-            pw_chan: PowerChannel = pw_channels[pw_ch_name]
+            pw_chan: PowerChannel = pw_channels[pw_chan_id]
             times_secs = []
             values_v = []
             values_a = []
@@ -278,19 +278,19 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
                 pw_chan.pw_config.dump_calibration(avg_adc_current_reading, avg_adc_voltage_reading)
         
         # Process temperature channels
-        for temperature_chan_name in tm_channels.keys():
+        for tm_chan_id in tm_channels.keys():
             # Process temperature channel. We compute the average of the readings
             # in this packet.
-            temperature_data: ChannelData = parsed_log_packet.channel(temperature_chan_name)
-            if not temperature_data:
+            tm_chan_data: ChannelData = parsed_log_packet.channel(tm_chan_id)
+            if not tm_chan_data:
                 # This packet has no data for this channel.
                 break
-            temperature_chan: TemperatureChannel = tm_channels[temperature_chan_name]
+            tm_chan: TemperatureChannel = tm_channels[tm_chan_id]
             times_millis_sum = 0
             adc_readings_sum = 0
             temp_c_sum = 0
             n = 0
-            for tm_value in temperature_data.values():
+            for tm_value in tm_chan_data.values():
                 assert isinstance(tm_value, TmChannelValue)
                 times_millis_sum += tm_value.time_millis
                 adc_readings_sum += tm_value.adc_reading
@@ -300,9 +300,9 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
             avg_times_secs = times_millis_sum / (n * 1000)
             avg_adc_reading = round(adc_readings_sum / n)
             avg_temp_c = temp_c_sum / n
-            temperature_chan.display_series.extend([avg_times_secs], [avg_temp_c])
+            tm_chan.display_series.extend([avg_times_secs], [avg_temp_c])
             if args.calibration:
-                temperature_chan.temperature_config.dump_temperature_calibration(round(avg_adc_reading))
+                tm_chan.temperature_config.dump_temperature_calibration(round(avg_adc_reading))
                 
         # Process marker channel.
         marker_data: ChannelData = parsed_log_packet.channel("mrk")
@@ -351,27 +351,27 @@ def update_display():
     markers_history.prune_older_than(adjusted_latest_log_time - max_plot_x_span)
 
     # Update plot 1 with load_cells
-    for ch_name, lc_chan in sorted(lc_channels.items()):
+    for lc_chan_id, lc_chan in sorted(lc_channels.items()):
         lc_cleanup_time = adjusted_latest_log_time - plot1_x_span 
         lc_chan.display_series.delete_older_than(lc_cleanup_time)
         x, y = lc_chan.display_series.get_display_xy(adjusted_latest_log_time)
         # x = lc_chan.display_series.relative_times(adjusted_latest_log_time)
         # y = lc_chan.display_series.values()
         color = lc_chan.lc_config.color()
-        plot1.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name, antialias=True)
+        plot1.plot(x, y, pen=pg.mkPen(color=color, width=2), name=lc_chan_id, antialias=True)
 
     # Update plot 2 with temperature channels
-    for ch_name, tm_chan in sorted(tm_channels.items()):
+    for lc_chan_id, tm_chan in sorted(tm_channels.items()):
         tm_cleanup_time = adjusted_latest_log_time - plot2_x_span 
         tm_chan.display_series.delete_older_than(tm_cleanup_time)
         x, y = tm_chan.display_series.get_display_xy(adjusted_latest_log_time)
         # x = temperature_chan.display_series.relative_times(adjusted_latest_log_time)
         # y = temperature_chan.display_series.values()
         color = tm_chan.temperature_config.color()
-        plot2.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name, antialias=True)
+        plot2.plot(x, y, pen=pg.mkPen(color=color, width=2), name=lc_chan_id, antialias=True)
         
     # Update plot 3 with power channels
-    for ch_name, pw_chan in sorted(pw_channels.items()):
+    for lc_chan_id, pw_chan in sorted(pw_channels.items()):
         pw_cleanup_time = adjusted_latest_log_time - plot3_x_span 
         pw_chan.display_series_v.delete_older_than(pw_cleanup_time)
         pw_chan.display_series_a.delete_older_than(pw_cleanup_time)
@@ -380,7 +380,7 @@ def update_display():
         # x = pw_chan.display_series_v.relative_times(adjusted_latest_log_time)
         # y = pw_chan.display_series_v.values()
         color = pw_chan.pw_config.color()
-        plot3.plot(x, y, pen=pg.mkPen(color=color, width=2), name=ch_name, antialias=True)
+        plot3.plot(x, y, pen=pg.mkPen(color=color, width=2), name=lc_chan_id, antialias=True)
 
     # Draw the markers on plot1, plot2. plot3.
     # marker_pen = pg.mkPen(color="red", width=2)
@@ -450,16 +450,16 @@ def init_display():
     global plot1, plot2, plot3, button1, button2, status_label, app, app_view, lc_channels, pw_channels, tm_channels
 
     lc_channels = {}
-    for chan_name, lc_config in sys_config.load_cells_configs().items():
-        lc_channels[chan_name] = LoadCellChannel(chan_name, lc_config, DisplaySeries())
+    for chan_id, lc_config in sys_config.load_cells_configs().items():
+        lc_channels[chan_id] = LoadCellChannel(chan_id, lc_config, DisplaySeries())
         
     pw_channels = {}
-    for chan_name, pw_config in sys_config.power_configs().items():
-        pw_channels[chan_name] = PowerChannel(chan_name, pw_config, DisplaySeries(), DisplaySeries(), DisplaySeries())
+    for chan_id, pw_config in sys_config.power_configs().items():
+        pw_channels[chan_id] = PowerChannel(chan_id, pw_config, DisplaySeries(), DisplaySeries(), DisplaySeries())
 
     tm_channels = {}
-    for chan_name, tm_config in sys_config.temperature_configs().items():
-        tm_channels[chan_name] = TemperatureChannel(chan_name, tm_config,
+    for chan_id, tm_config in sys_config.temperature_configs().items():
+        tm_channels[chan_id] = TemperatureChannel(chan_id, tm_config,
                                                              DisplaySeries())
 
     pg.setConfigOption('background', 'w')

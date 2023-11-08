@@ -20,12 +20,12 @@ class TestInfo:
     end_ms: int
 
 
-def load_tests_infos(tests_file_path: str, tests_selector: Optional[str]) -> List[TestInfo]:
+def load_tests_infos(tests_file_path: str, tests_selection_regex: Optional[str]) -> List[TestInfo]:
     """Extract the tests information from the tests file."""
     logger.info(f"Loading tests infos from the tests file [{tests_file_path}]")
-    logger.info(f"Tests selector is [{tests_selector}]")
+    logger.info(f"Tests selection regex is [{tests_selection_regex}]")
     df = pd.read_csv(tests_file_path, delimiter=',')
-    regex = re.compile(tests_selector) if tests_selector else re.compile(".*")
+    regex = re.compile(tests_selection_regex) if tests_selection_regex else re.compile(".*")
     result = []
     for i, row in df.iterrows():
         test_name = row["Test"]
@@ -48,12 +48,12 @@ class ChannelInfo:
     file_name: str
 
 
-def load_channels_infos(channels_file_path: str, channels_selector: Optional[str]) -> List[ChannelInfo]:
+def load_channels_infos(channels_file_path: str, channels_selector_regex: Optional[str]) -> List[ChannelInfo]:
     """Extract the channels information from the channels file."""
     logger.info(f"Loading channels infos from the channels file [{channels_file_path}]")
-    logger.info(f"Channels selector is [{channels_selector}]")
+    logger.info(f"Channels selector regex is [{channels_selector_regex}]")
     df = pd.read_csv(channels_file_path, delimiter=',')
-    regex = re.compile(channels_selector) if channels_selector else re.compile(".*")
+    regex = re.compile(channels_selector_regex) if channels_selector_regex else re.compile(".*")
     result = []
     for i, row in df.iterrows():
         channel_name = row["Name"]

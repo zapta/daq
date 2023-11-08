@@ -532,7 +532,7 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
   // logger.info("dt = %lu", time_util::millis() - packet_base_millis);
   {
     // Chan id. Load cell 1.
-    packet_data->write_uint8(0x11);
+    packet_data->write_str("lc1");
     // Offset of first value relative to packet start time.
     packet_data->write_uint16(0);
     // Num of load cell points in this packet. One per slot.
@@ -555,7 +555,9 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
   // in each cycle.
   for (uint32_t i = 0; i < kDmaNumTemperatureChans; i++) {
     // Temperature channel id.
-    packet_data->write_uint8(0x21 + i);
+    char ch_id[] = "tm?";
+    ch_id[2] = '1' + i;
+    packet_data->write_str(ch_id);
     // First item offset in ms from packet base time. Truncation of
     // a fraction of a ms is ok.
     const uint32_t first_pt_index =

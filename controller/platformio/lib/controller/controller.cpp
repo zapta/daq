@@ -143,7 +143,7 @@ void report_marker(const MarkerName& marker_name) {
     packet_data->write_uint8(1);                     // packet format version
     packet_data->write_uint32(session::id());        // Device session id.
     packet_data->write_uint32(time_util::millis());  // Base time.
-    packet_data->write_uint8(0x07);                  // Marker channel id
+    packet_data->write_str("mrk");                   // Marker channel id
     packet_data->write_uint16(0);                    // Relative time offset
     packet_data->write_uint16(1);                    // Num data points
     packet_data->write_str(marker_name.c_str());
@@ -159,20 +159,8 @@ void report_marker(const MarkerName& marker_name) {
     data_buffer = nullptr;
     packet_data = nullptr;
   }
-  // report_log_data(packet_data);
-
   // TODO: Implementing logging and reporting in status.
   logger.info("Marker: [%s]", marker_name.c_str());
 }
-
-// void report_log_data(const SerialPacketsData& data) {
-//   // logger.info("Controller, data = %hu", data.size());
-//   gpio_pins::TEST1.set_high();
-//   // Send to monitor.
-//   host_link::client.sendMessage(HostPorts::LOG_REPORT_MESSAGE, data);
-//   // Send to SD.
-//   data_recorder::append_log_record_if_recording(data);
-//   gpio_pins::TEST1.set_low();
-// }
 
 }  // namespace controller
