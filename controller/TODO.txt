@@ -1,1 +1,4 @@
 
+* Add type safety (e.g. using templates) to the user data pointer of static timer.
+
+* Use  MUST_USE_VALUE where applicable.
