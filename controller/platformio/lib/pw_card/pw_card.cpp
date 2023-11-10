@@ -21,12 +21,12 @@ static void pw_card_timer_cb(TimerHandle_t xTimer);
 // Each data point contains a pair of readings for voltage
 // and current respectivly.
 static constexpr uint16_t kDataPointsPerPacket = 8;
-static constexpr uint16_t kMsTimerTick = 25;
-static constexpr uint16_t kMsPerDataPoint = 2 * kMsTimerTick;
+static constexpr uint16_t kMsPerTimerTick = 25;
+static constexpr uint16_t kMsPerDataPoint = 2 * kMsPerTimerTick;
 
 // Timer with static allocation. 25ms interval, for 20 data points per
 // seconds (each data points includes two ADC readings)
-StaticTimer pw_card_timer(pw_card::pw_card_timer_cb, "PW", kMsTimerTick);
+static StaticTimer pw_card_timer(pw_card::pw_card_timer_cb, "PW", nullptr);
 
 static constexpr uint8_t kAds1115DeviceAddress = 0x48 << 1;
 
@@ -286,7 +286,7 @@ void pw_card_task_body(void* ignored_argument) {
   // Hardware found. Start the normal operation.
   setup();
 
-  if (!pw_card_timer.start()) {
+  if (!pw_card_timer.start(kMsPerTimerTick)) {
     error_handler::Panic(123);
   }
 
