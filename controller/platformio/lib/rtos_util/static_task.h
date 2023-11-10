@@ -21,7 +21,7 @@ class StaticTask {
   bool start() {
     if (_handle != nullptr) {
       logger.error("Task %s already started.", _name);
-      // Already started.
+      
       return false;
     }
     _handle =

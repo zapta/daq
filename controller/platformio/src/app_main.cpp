@@ -10,10 +10,10 @@
 #include "gpio.h"
 #include "gpio_pins.h"
 #include "host_link.h"
-#include "pw_card.h"
 #include "logger.h"
 #include "main.h"
 #include "printer_link_card.h"
+#include "pw_card.h"
 #include "serial.h"
 #include "session.h"
 #include "spi.h"
@@ -26,12 +26,23 @@
 #pragma GCC optimize("O0")
 
 // Tasks with static stack allocations.
-StaticTask<2000> host_link_rx_task(host_link::host_link_task_body, "Host RX", 6);
-StaticTask<2000> printer_link_task(printer_link_card::printer_link_task_body, "Printer Link",
-                                      3);
-StaticTask<2000> adc_card_task(adc_card::adc_card_task_body, "ADC", 5);
-StaticTask<2000> pw_card_task(pw_card::pw_card_task_body, "PW", 7);
-StaticTask<2000> data_queue_task(data_queue::data_queue_task_body, "DQUE", 4);
+static StaticTask<2000> host_link_rx_task(host_link::host_link_task_body,
+                                          "Host RX", 6);
+static StaticTask<2000> printer_link_task(
+    printer_link_card::printer_link_task_body, "Printer Link", 3);
+static StaticTask<2000> adc_card_task(adc_card::adc_card_task_body, "ADC", 5);
+static StaticTask<2000> pw_card_task(pw_card::pw_card_task_body, "PW", 7);
+static StaticTask<2000> data_queue_task(data_queue::data_queue_task_body,
+                                        "DQUE", 4);
+
+// I2c schedule
+static I2cSchedule i2c1_schedule = {
+    // 1000ms / (8 * 5) = 25ms per cycle.
+    .ms_per_slot = 8,
+    .slots_per_cycle = 5,
+    .slots = {
+        [0] = {.device = &pw_card::i2c1_pw1_device},
+    }};
 
 // Called from from the main FreeRTOS task.
 void app_main() {
@@ -70,6 +81,12 @@ void app_main() {
   }
   if (!pw_card_task.start()) {
     error_handler::Panic(88);
+  }
+
+  // Start the I2c schedulers. Must be done after the i2c devices 
+  // were initialized (e.g. via their tasks).
+  if (!i2c_scheduler::i2c1_scheduler.start(&i2c1_schedule)) {
+    error_handler::Panic(131);
   }
 
   // Start the main loop. It's used to provide visual feedback to the user.
