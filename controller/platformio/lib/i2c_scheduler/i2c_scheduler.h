@@ -8,9 +8,9 @@ class I2cDevice {
  public:
   I2cDevice() {}
 
-  // enum I2cErrorType { ERROR, ABORT };
-
-  // Returning true to indicate operation in this cycle is done.
+  virtual void on_scheduler_start(I2C_HandleTypeDef* scheduler_hi2c,
+                                  uint16_t slot_length_ms,
+                                  uint16_t slot_internval_ms) = 0;
   virtual void on_i2c_slot_timer(uint32_t slot_sys_time_millis) = 0;
   virtual void on_i2c_complete_isr() = 0;
   virtual void on_i2c_error_isr() = 0;
@@ -38,10 +38,8 @@ struct I2cSchedule {
 // Device scheduler for a single i2c channel (e.g. i2c1);
 class I2cScheduler : public TimerCallback {
  public:
-  I2cScheduler(I2C_HandleTypeDef* i2c_chan, const char* name)
-      : _i2c_chan(i2c_chan),
-        _name(name),
-        _timer(*this, name) {}
+  I2cScheduler(I2C_HandleTypeDef* hi2c, const char* name)
+      : _hi2c(hi2c), _name(name), _timer(*this, name) {}
 
   // Prevent copy and assignment.
   I2cScheduler(const I2cScheduler& other) = delete;
@@ -50,7 +48,7 @@ class I2cScheduler : public TimerCallback {
   bool start(I2cSchedule* schedule) MUST_USE_VALUE;
 
  private:
-  I2C_HandleTypeDef* const _i2c_chan;
+  I2C_HandleTypeDef* const _hi2c;
   const char* _name;
   StaticTimer _timer;
   I2cSchedule* _schedule = nullptr;
@@ -64,7 +62,8 @@ class I2cScheduler : public TimerCallback {
   static void i2c_shared_error_isr(I2C_HandleTypeDef* hi2c);
 
   // Maps hi2c to scheduler. Panic if not found.
-  static inline I2cScheduler* isr_hi2c_to_scheduler(const I2C_HandleTypeDef* hi2c);
+  static inline I2cScheduler* isr_hi2c_to_scheduler(
+      const I2C_HandleTypeDef* hi2c);
 
   // Called on each timer tick.
   void timer_callback();

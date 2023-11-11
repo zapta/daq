@@ -7,8 +7,8 @@
 
 namespace pw_card {
 
-// Tasks should start BEFORE devices.
-extern TaskBody& i2c1_pw1_device_task_body;
+// Power devcie "pw1".
 extern I2cDevice& i2c1_pw1_device;
+extern TaskBody& i2c1_pw1_device_task_body;
 
 }  // namespace pw_card

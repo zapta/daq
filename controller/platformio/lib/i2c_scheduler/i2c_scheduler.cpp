@@ -47,23 +47,33 @@ bool I2cScheduler::start(I2cSchedule* schedule) {
   // Register the shared ISR handlers. Note that we share the same
   // handler for transmit and recieve completion, and for error and
   // abort.
-  if (HAL_OK != HAL_I2C_RegisterCallback(&hi2c1,
+  if (HAL_OK != HAL_I2C_RegisterCallback(_hi2c,
                                          HAL_I2C_MASTER_TX_COMPLETE_CB_ID,
                                          i2c_shared_completion_isr)) {
     error_handler::Panic(111);
   }
-  if (HAL_OK != HAL_I2C_RegisterCallback(&hi2c1,
+  if (HAL_OK != HAL_I2C_RegisterCallback(_hi2c,
                                          HAL_I2C_MASTER_RX_COMPLETE_CB_ID,
                                          i2c_shared_completion_isr)) {
     error_handler::Panic(112);
   }
-  if (HAL_OK != HAL_I2C_RegisterCallback(&hi2c1, HAL_I2C_ERROR_CB_ID,
+  if (HAL_OK != HAL_I2C_RegisterCallback(_hi2c, HAL_I2C_ERROR_CB_ID,
                                          i2c_shared_error_isr)) {
     error_handler::Panic(113);
   }
-  if (HAL_OK != HAL_I2C_RegisterCallback(&hi2c1, HAL_I2C_ABORT_CB_ID,
+  if (HAL_OK != HAL_I2C_RegisterCallback(_hi2c, HAL_I2C_ABORT_CB_ID,
                                          i2c_shared_error_isr)) {
     error_handler::Panic(114);
+  }
+
+  // Call the on_start() method of each of the devices.
+  const uint8_t slots_per_cycle = _schedule->slots_per_cycle;
+  for (uint16_t i = 0; i < slots_per_cycle; i++) {
+    I2cDevice* const device = _schedule->slots[i].device;
+    if (device) {
+      device->on_scheduler_start(_hi2c, _schedule->ms_per_slot,
+                                 _schedule->ms_per_slot * slots_per_cycle);
+    }
   }
 
   // Start the timer. This starts to send ticks to the devices.
