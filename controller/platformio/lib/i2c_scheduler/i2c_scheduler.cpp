@@ -74,7 +74,8 @@ bool I2cScheduler::start(I2cSchedule* schedule) {
   return true;
 }
 
-void I2cScheduler::on_timer_slot_tick() {
+// This implements the method of the TimerCallback parent class.
+void I2cScheduler::timer_callback() {
   // Take a time snapshot as close as possible to the
   // begining of the tick to have deterministic intervals.
   uint32_t slot_sys_time_millis = time_util::millis();
@@ -103,14 +104,14 @@ void I2cScheduler::on_timer_slot_tick() {
 
 // This method is called from a timer so should not block.
 // It is static and common to all i2c schedulers.
-void I2cScheduler::i2c_shared_scheduler_timer_cb(TimerHandle_t xTimer) {
-  // Get the timer user id. It's a pointer to the target I2cScheduler.
-  I2cScheduler* scheduler = (I2cScheduler*)pvTimerGetTimerID(xTimer);
-  if (!scheduler) {
-    error_handler::Panic(129);
-  }
-  scheduler->on_timer_slot_tick();
-}
+// void I2cScheduler::i2c_shared_scheduler_timer_cb(TimerHandle_t xTimer) {
+//   // Get the timer user id. It's a pointer to the target I2cScheduler.
+//   I2cScheduler* scheduler = (I2cScheduler*)pvTimerGetTimerID(xTimer);
+//   if (!scheduler) {
+//     error_handler::Panic(129);
+//   }
+//   scheduler->on_timer_slot_tick();
+// }
 
 // Called from ISR to map the hi2c to a scheduler.
 inline I2cScheduler* I2cScheduler::isr_hi2c_to_scheduler(const I2C_HandleTypeDef* hi2c) {

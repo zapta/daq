@@ -36,12 +36,12 @@ struct I2cSchedule {
 };
 
 // Device scheduler for a single i2c channel (e.g. i2c1);
-class I2cScheduler {
+class I2cScheduler : public TimerCallback {
  public:
   I2cScheduler(I2C_HandleTypeDef* i2c_chan, const char* name)
       : _i2c_chan(i2c_chan),
         _name(name),
-        _timer(i2c_shared_scheduler_timer_cb, name, this) {}
+        _timer(*this, name) {}
 
   // Prevent copy and assignment.
   I2cScheduler(const I2cScheduler& other) = delete;
@@ -56,9 +56,8 @@ class I2cScheduler {
   I2cSchedule* _schedule = nullptr;
   uint8_t _slot_index_in_cycle = 0;
 
-  // A common timer callback that is dispatched to the destination I2cBus,
-  // by matching xTimer to _timer.
-  static void i2c_shared_scheduler_timer_cb(TimerHandle_t xTimer);
+  // The timer calls this method on each tick.
+  // void timer_callback(TimerHandle_t xTimer);
 
   // ISR handlers that are shared by all schedulers.
   static void i2c_shared_completion_isr(I2C_HandleTypeDef* hi2c);
@@ -68,7 +67,7 @@ class I2cScheduler {
   static inline I2cScheduler* isr_hi2c_to_scheduler(const I2C_HandleTypeDef* hi2c);
 
   // Called on each timer tick.
-  void on_timer_slot_tick();
+  void timer_callback();
 
   // Called from i2c isrs.
   void on_i2c_completion_isr();

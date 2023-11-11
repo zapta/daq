@@ -48,6 +48,7 @@ void Serial::uart_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size) {
 
   // Assertion: Wrap around cannot happen within one invocation
   // since the handler is invoked also by full complete.
+  // NOTE: May happen if breaking with a debugger. Try to disconnect the serial cable.
   if (new_pos < serial->_rx_last_pos) {
     Error_Handler();
   }

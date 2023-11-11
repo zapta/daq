@@ -12,15 +12,12 @@
 // Abstraction of a task body.
 class TaskBody {
  public:
-  TaskBody(){}
-  // Prevent copy and assignment.
-  TaskBody(const TaskBody& other) = delete;
-  TaskBody& operator=(const TaskBody& other) = delete;
+  // TaskBody(){}
   // Subclasses should implement this.
   virtual void task_body() = 0;
 };
 
-// Implementation of TaskBody that makes a C function TaskBody.
+// Implementation of TaskBody using a static function.
 class TaskBodyFunction : public TaskBody {
  public:
   TaskBodyFunction(TaskFunction_t task_function, void* const pvParameters)
@@ -36,8 +33,8 @@ class TaskBodyFunction : public TaskBody {
 class StaticTask {
  public:
 
-  StaticTask(TaskBody& runnable, const char* const name, UBaseType_t priority)
-      : _runnable(runnable), _name(name), _priority(priority) {}
+  StaticTask(TaskBody& task_body, const char* const name, UBaseType_t priority)
+      : _task_body(task_body), _name(name), _priority(priority) {}
 
   ~StaticTask() {
     // Static tasks should not be finalized.
@@ -55,7 +52,7 @@ bool start() {
 
   // Passing this StaticTask object as the private parameter to allow
   // dispatching to the runable.
-  _handle = xTaskCreateStatic(runnable_dispatcher, _name,
+  _handle = xTaskCreateStatic(task_body_dispatcher, _name,
                               sizeof(_stack) / sizeof(_stack[0]), this,
                               _priority, _stack, &_tcb);
   if (_handle == nullptr) {
@@ -80,7 +77,7 @@ bool start() {
   static constexpr uint32_t kStackSizeInStackType = kStackSizeInBytes / sizeof(StackType_t);
 
 
-  TaskBody&  _runnable;
+  TaskBody&  _task_body;
   const char* const _name;
   const UBaseType_t _priority;
 
@@ -88,11 +85,11 @@ bool start() {
   StaticTask_t _tcb;
   StackType_t _stack[kStackSizeInStackType];
 
-  // A shared FreeRTOS task body that dispatches to the runnable.
-  static void runnable_dispatcher(void* pvParameters) {
+  // A shared FreeRTOS task body that dispatches to the TaskBody.
+  static void task_body_dispatcher(void* pvParameters) {
     StaticTask* const static_task = (StaticTask*)pvParameters;
     // Not expected to return.
-    (static_task->_runnable).task_body();
+    (static_task->_task_body).task_body();
   }
 };
 

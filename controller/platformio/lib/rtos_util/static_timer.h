@@ -2,18 +2,36 @@
 
 #include <FreeRTOS.h>
 
-#include "timers.h"
 #include "common.h"
+#include "timers.h"
 
+// Abstraction of a timer callback.
+class TimerCallback {
+ public:
+  virtual void timer_callback() = 0;
+};
+
+// typedef void foo(void) TimerCallback_t;
+
+// Implementation of TimerCallback using a static function.
+class TimerCallbackFunction : public TimerCallback {
+ public:
+  typedef void (*TimerCbFunction_t)(void);
+
+  TimerCallbackFunction(TimerCbFunction_t timer_function)
+      : _timer_function(timer_function) {}
+  virtual void timer_callback() { _timer_function(); }
+
+ private:
+  TimerCbFunction_t const _timer_function;
+  // void* const _pvParameters;
+};
 
 class StaticTimer {
  public:
-  // User should call start() for the timer to start. pvTimerID is a user
-  // id that is that is accessible by the callback via the xTimer argument.
-  StaticTimer(TimerCallbackFunction_t timer_callback, const char* const name,
-              void* pvTimerID)
-      : _timer_callback(timer_callback), _name(name), _pv_timer_id(pvTimerID) {
-  }
+  // User should call start() for the timer to start.
+  StaticTimer(TimerCallback& timer_callback, const char* const name)
+      : _timer_callback(timer_callback), _name(name) {}
 
   // This will typically be used in testing only.
   ~StaticTimer() {
@@ -34,16 +52,24 @@ class StaticTimer {
     }
 
     static_assert(configTICK_RATE_HZ == 1000);
-    _handle = xTimerCreateStatic(_name, period_millis, pdTRUE, _pv_timer_id,
-                                 _timer_callback, &_tcb);
+    // We pass this StaticTimer as the user data of the RTOS timer.
+    _handle = xTimerCreateStatic(_name, period_millis, pdTRUE, this,
+                                 timer_callback_dispatcher, &_tcb);
     const BaseType_t status = xTimerStart(_handle, 0);
     return status == pdPASS;
   }
 
  private:
-  TimerCallbackFunction_t const _timer_callback;
+  TimerCallback& _timer_callback;
   const char* const _name;
-  void* const _pv_timer_id;
+  // void* const _pv_timer_id;
   StaticTimer_t _tcb;
   TimerHandle_t _handle = nullptr;
+
+  // A shared FreeRTOS timer callback that dispatches to the TimerCallback.
+  static void timer_callback_dispatcher(TimerHandle_t xTimer) {
+    StaticTimer* const static_timer = (StaticTimer*)pvTimerGetTimerID(xTimer);
+    // Not expected to return.
+    (static_timer->_timer_callback).timer_callback();
+  }
 };

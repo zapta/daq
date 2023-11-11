@@ -3,6 +3,8 @@
 
 * In pw_card, move all state variables and device specific consts to the device class. 
 
+* Have the I2C scheduler also passing the hi2c to the device.
+
 
 ------
 
@@ -19,7 +21,8 @@
 
 * Add type safety (e.g. using templates) to the user data pointer of static timer.
 
+* In i2c scheduler, try to avoid exposing the timer_callback as public.
+
+------
+
 * Use  MUST_USE_VALUE where applicable.
-
-* Have the I2C scheduler also passing the hi2c to the device.
-
