@@ -2,6 +2,7 @@
 
 #include "serial.h"
 #include "serial_packets_client.h"
+#include "static_task.h"
 
 // A callback handler for incoming host link commands. Implemented by 
 // the controller.
@@ -29,8 +30,6 @@ extern SerialPacketsClient client;
 // Main calls this once aupon initialization.
 void setup(Serial& serial);
 
-// Main allocates a task that executes this task body.
-// Doesn't return.
-void host_link_task_body(void* ignored_argument);
-
+// Caller should provide a task to run this runnable.
+extern StaticRunnable host_link_task_runnable;
 }  // namespace host_link

@@ -26,14 +26,13 @@
 #pragma GCC optimize("O0")
 
 // Tasks with static stack allocations.
-static StaticTask<2000> host_link_rx_task(host_link::host_link_task_body,
-                                          "Host RX", 6);
-static StaticTask<2000> printer_link_task(
-    printer_link_card::printer_link_task_body, "Printer Link", 3);
-static StaticTask<2000> adc_card_task(adc_card::adc_card_task_body, "ADC", 5);
-static StaticTask<2000> pw_card_task(pw_card::pw_card_task_body, "PW", 7);
-static StaticTask<2000> data_queue_task(data_queue::data_queue_task_body,
-                                        "DQUE", 4);
+static StaticTask host_link_task(host_link::host_link_task_runnable, "Host", 6);
+static StaticTask printer_link_task(
+    printer_link_card::printer_link_task_runnable, "Printer Link", 3);
+static StaticTask adc_card_task(adc_card::adc_card_task_runnable, "ADC", 5);
+static StaticTask pw_card_task(pw_card::pw_card_task_runnable, "PW", 7);
+static StaticTask data_queue_task(data_queue::data_queue_task_runnable, "DQUE",
+                                  4);
 
 // I2c schedule
 static I2cSchedule i2c1_schedule = {
@@ -70,7 +69,7 @@ void app_main() {
   if (!data_queue_task.start()) {
     error_handler::Panic(69);
   }
-  if (!host_link_rx_task.start()) {
+  if (!host_link_task.start()) {
     error_handler::Panic(86);
   }
   if (!printer_link_task.start()) {
@@ -83,7 +82,7 @@ void app_main() {
     error_handler::Panic(88);
   }
 
-  // Start the I2c schedulers. Must be done after the i2c devices 
+  // Start the I2c schedulers. Must be done after the i2c devices
   // were initialized (e.g. via their tasks).
   if (!i2c_scheduler::i2c1_scheduler.start(&i2c1_schedule)) {
     error_handler::Panic(131);

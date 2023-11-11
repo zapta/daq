@@ -301,7 +301,7 @@ static bool does_hardware_exist() {
 // }
 
 // Should start before the i2c scheduler.
-void pw_card_task_body(void* ignored_argument) {
+static void pw_card_task_body(void* ignored_argument) {
   if (state != STATE_UNDEFINED) {
     error_handler::Panic(119);
   }
@@ -538,5 +538,8 @@ inline void I2cPwDevice::step3_on_completion_from_isr() {
   // I2C transaction sequence completed.
   state = STATE_IDLE;
 }
+
+// The exported runnable.
+StaticRunnable pw_card_task_runnable(pw_card_task_body, nullptr);
 
 }  // namespace pw_card

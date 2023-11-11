@@ -10,3 +10,4 @@
 #include "time_util.h"
 
 #define MUST_USE_VALUE __attribute__((warn_unused_result))
+#define DOES_NOT_RETURN __attribute__((noreturn))

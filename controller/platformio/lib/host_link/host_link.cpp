@@ -13,10 +13,13 @@ void setup(Serial& serial) {
   client.begin(serial, controller::host_link_command_handler, controller::host_link_message_handler);
 }
 
-void host_link_task_body(void* ignored_argument) {
+static void host_link_task_body(void* ignored_argument) {
   // This method doesn't return.
   client.rx_task_body();
   error_handler::Panic(81);
 }
+
+// The exported runnable.
+StaticRunnable host_link_task_runnable(host_link_task_body, nullptr);
 
 }  // namespace host_link

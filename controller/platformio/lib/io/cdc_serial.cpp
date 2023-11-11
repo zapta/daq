@@ -38,7 +38,7 @@ static StaticMutex mutex;
 // Temp buffer for sending data.
 static uint8_t tx_buffer[100];
 
-void logger_task_body(void* argument) {
+static void logger_task_body(void* ignored_argument) {
   for (;;) {
     // Transfer a chunk of data to tx_buffer, if avaiable.
     uint16_t bytes_to_send = 0;
@@ -77,5 +77,8 @@ void write(const uint8_t* bfr, uint16_t len) {
     circular_buffer.write(bfr, len, true);
   }
 }
+
+// The exported runnable
+StaticRunnable logger_task_runnable(logger_task_body, nullptr);
 
 }  // namespace cdc_serial

@@ -48,6 +48,7 @@ void setup() {
   setup_completed = true;
 }
 
+// Not 'static' to allow declaration as a friend.
 void data_queue_task_body(void* ignored_argument) {
   if (!setup_completed) {
     error_handler::Panic(57);
@@ -167,5 +168,8 @@ void dump_state() {
               free_buffers_indexes_queue.size(), min_free,
               pending_buffers_indexes_queue.size(), max_pending);
 }
+
+// The exported runnable.
+StaticRunnable data_queue_task_runnable(data_queue_task_body, nullptr);
 
 }  // namespace data_queue

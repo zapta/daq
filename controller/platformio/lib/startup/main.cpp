@@ -23,6 +23,9 @@
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
 
+// #pragma GCC push_options
+// #pragma GCC optimize("O0")
+
 // There are several implementations of app_main(). One for the 
 // app (for release or debug modes) and one for each unit test.
 void app_main();
@@ -39,12 +42,13 @@ __attribute__((section(".rodata"))) const int uxTopUsedPriority =
     configMAX_PRIORITIES - 1;
 }
 
-void main_task_body(void* argument);
-StaticTask<2000> main_task(main_task_body, "Main", 2);
+static void main_task_body(void* argument);
+static StaticRunnable main_task_runnable(main_task_body, nullptr);
+static StaticTask main_task(main_task_runnable, "Main", 2);
 
-StaticTask<2000> cdc_logger_task(cdc_serial::logger_task_body, "Logger", 3);
+static StaticTask cdc_logger_task(cdc_serial::logger_task_runnable, "Logger", 3);
 
-void main_task_body(void* argument) {
+static void main_task_body(void* argument) {
   // NOTE: We delay to give the CDC chance to connect so we don't
   // loose the initial printouts.
   MX_USB_DEVICE_Init();

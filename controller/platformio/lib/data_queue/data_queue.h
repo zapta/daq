@@ -2,6 +2,7 @@
 
 #include <FreeRTOS.h>
 #include "serial_packets_data.h"
+#include "static_task.h"
 
 namespace data_queue {
 
@@ -42,10 +43,6 @@ class DataBuffer {
 
 void setup();
 
-// Body of data processing task. Never returns.
-// Should be called after setup().
-void data_queue_task_body(void* ignored_argument);
-
 // Non blocking. Panic if a buffer is not available. Guaranteed to 
 // returned a non null value.
 DataBuffer* grab_buffer();
@@ -55,5 +52,9 @@ void queue_buffer(DataBuffer* buffer);
 
 void dump_state();
 
+
+// Caller should provide a task to run this runnable.
+// Should be executed after setup.
+extern StaticRunnable data_queue_task_runnable;
 
 }  // namespace data_queue

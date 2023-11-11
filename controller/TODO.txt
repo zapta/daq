@@ -9,7 +9,6 @@
 
 * Add to the i2c devices a method on_scheduler_start() that passs scheduler info to the device (e.g. time between calls).
 
-
 * Make kAds1115DeviceAddress a constructor paramter of I2cPwDevice()
 
 * Add to i2c scheduler the ability to device cycle rate (per device). Add a cycle divider field.

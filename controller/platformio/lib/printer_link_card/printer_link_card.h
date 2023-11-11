@@ -1,6 +1,7 @@
 #pragma once
 
 #include "serial.h"
+#include "static_task.h"
 
 namespace printer_link_card {
 
@@ -8,8 +9,7 @@ namespace printer_link_card {
 // serial port to use.
 void setup(Serial* serial);
 
-// Main allocates a task that executes this task body.
-// Doesn't return.
-void printer_link_task_body(void* ignored_argument);
+// Caller should provide a task to run this runnable.
+extern StaticRunnable printer_link_task_runnable;
 
 }  // namespace printer_link_card

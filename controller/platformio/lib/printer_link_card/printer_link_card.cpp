@@ -3,6 +3,7 @@
 #include "controller.h"
 #include "logger.h"
 #include "time_util.h"
+#include "static_task.h"
 
 namespace printer_link_card {
 
@@ -88,7 +89,7 @@ static void process_next_rx_char(uint8_t c) {
   // Character added OK.
 }
 
-void printer_link_task_body(void* ignored_argument) {
+static void printer_link_task_body(void* ignored_argument) {
   if (!printer_link_serial) {
     // Setup not called.
     error_handler::Panic(55);
@@ -113,5 +114,8 @@ void printer_link_task_body(void* ignored_argument) {
     }
   }
 }
+
+// The exported runnable.
+StaticRunnable printer_link_task_runnable(printer_link_task_body, nullptr);
 
 }  // namespace printer_link_card
