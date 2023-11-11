@@ -8,8 +8,9 @@
 #pragma GCC optimize("O0")
 
 namespace i2c_scheduler {
+// Exported schedulers. One per I2C channel used.
 I2cScheduler i2c1_scheduler(&hi2c1, "I2C1");
-}
+}  // namespace i2c_scheduler
 
 bool I2cSchedule::is_valid() {
   // ms_per_slot should be non zero
@@ -43,11 +44,10 @@ bool I2cScheduler::start(I2cSchedule* schedule) {
   // The preincrement will cause the first tick to process slot zero.
   _slot_index_in_cycle = schedule->slots_per_cycle - 1;
 
-
-  // Register the shared ISR handlers. Note that we share the same 
-  // handler for transmit and recieve completion, and for error and 
+  // Register the shared ISR handlers. Note that we share the same
+  // handler for transmit and recieve completion, and for error and
   // abort.
-   if (HAL_OK != HAL_I2C_RegisterCallback(&hi2c1,
+  if (HAL_OK != HAL_I2C_RegisterCallback(&hi2c1,
                                          HAL_I2C_MASTER_TX_COMPLETE_CB_ID,
                                          i2c_shared_completion_isr)) {
     error_handler::Panic(111);
@@ -102,25 +102,14 @@ void I2cScheduler::timer_callback() {
   dev->on_i2c_slot_timer(slot_sys_time_millis);
 }
 
-// This method is called from a timer so should not block.
-// It is static and common to all i2c schedulers.
-// void I2cScheduler::i2c_shared_scheduler_timer_cb(TimerHandle_t xTimer) {
-//   // Get the timer user id. It's a pointer to the target I2cScheduler.
-//   I2cScheduler* scheduler = (I2cScheduler*)pvTimerGetTimerID(xTimer);
-//   if (!scheduler) {
-//     error_handler::Panic(129);
-//   }
-//   scheduler->on_timer_slot_tick();
-// }
-
 // Called from ISR to map the hi2c to a scheduler.
-inline I2cScheduler* I2cScheduler::isr_hi2c_to_scheduler(const I2C_HandleTypeDef* hi2c) {
+inline I2cScheduler* I2cScheduler::isr_hi2c_to_scheduler(
+    const I2C_HandleTypeDef* hi2c) {
   if (hi2c == &hi2c1) {
     return &i2c_scheduler::i2c1_scheduler;
   }
   error_handler::Panic(132);
 }
-
 
 // Dispatch the shared ISR to the sepcific scheduler.
 void I2cScheduler::i2c_shared_completion_isr(I2C_HandleTypeDef* hi2c) {
@@ -139,7 +128,7 @@ void I2cScheduler::on_i2c_completion_isr() {
   if (!dev) {
     error_handler::Panic(133);
   }
-  dev -> on_i2c_complete_isr();
+  dev->on_i2c_complete_isr();
 }
 
 // Scheduler specifoc error and abort isr.
@@ -148,5 +137,5 @@ void I2cScheduler::on_i2c_error_isr() {
   if (!dev) {
     error_handler::Panic(134);
   }
-  dev -> on_i2c_error_isr();
+  dev->on_i2c_error_isr();
 }
