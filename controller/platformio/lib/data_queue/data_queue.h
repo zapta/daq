@@ -1,6 +1,7 @@
 #pragma once
 
 #include <FreeRTOS.h>
+
 #include "serial_packets_data.h"
 #include "static_task.h"
 
@@ -25,9 +26,9 @@ class DataBuffer {
 
  private:
   friend void data_queue::setup();
-  friend void data_queue::data_queue_task_body(void*) ;
+  friend void data_queue::data_queue_task_body_impl(void*);
   friend DataBuffer* data_queue::grab_buffer();
-  friend void data_queue::queue_buffer(DataBuffer*) ;
+  friend void data_queue::queue_buffer(DataBuffer*);
 
   uint8_t _buffer_index = 0;
   State _state = FREE;
@@ -38,23 +39,21 @@ class DataBuffer {
     _state = FREE;
     _packet_data.clear();
   }
-
 };
 
 void setup();
 
-// Non blocking. Panic if a buffer is not available. Guaranteed to 
+// Non blocking. Panic if a buffer is not available. Guaranteed to
 // returned a non null value.
 DataBuffer* grab_buffer();
 
-// Non blocking. 
+// Non blocking.
 void queue_buffer(DataBuffer* buffer);
 
 void dump_state();
 
-
-// Caller should provide a task to run this runnable.
-// Should be executed after setup.
-extern StaticRunnable data_queue_task_runnable;
+// Caller should provide a task to run this task body..
+// Should be started after setup.
+extern TaskBodyFunction data_queue_task_body;
 
 }  // namespace data_queue

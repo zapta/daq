@@ -42,13 +42,13 @@ __attribute__((section(".rodata"))) const int uxTopUsedPriority =
     configMAX_PRIORITIES - 1;
 }
 
-static void main_task_body(void* argument);
-static StaticRunnable main_task_runnable(main_task_body, nullptr);
-static StaticTask main_task(main_task_runnable, "Main", 2);
+static void main_task_body_impl(void* argument);
+static TaskBodyFunction main_task_body(main_task_body_impl, nullptr);
+static StaticTask main_task(main_task_body, "Main", 2);
 
-static StaticTask cdc_logger_task(cdc_serial::logger_task_runnable, "Logger", 3);
+static StaticTask cdc_logger_task(cdc_serial::logger_task_body, "Logger", 3);
 
-static void main_task_body(void* argument) {
+static void main_task_body_impl(void* argument) {
   // NOTE: We delay to give the CDC chance to connect so we don't
   // loose the initial printouts.
   MX_USB_DEVICE_Init();

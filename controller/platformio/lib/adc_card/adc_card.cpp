@@ -633,7 +633,7 @@ void verify_static_registers_values() {
   }
 }
 
-static void adc_card_task_body(void *ignored_argument) {
+static void adc_card_task_body_impl(void *ignored_argument) {
   setup();
 
   // If no hardware, stay in a do nothing loop.
@@ -669,8 +669,8 @@ static void adc_card_task_body(void *ignored_argument) {
   }
 }
 
-// The exported task runnable.
-StaticRunnable adc_card_task_runnable(adc_card_task_body, nullptr);
+// The exported task body.
+TaskBodyFunction adc_card_task_body(adc_card_task_body_impl, nullptr);
 
 
 }  // namespace adc_card

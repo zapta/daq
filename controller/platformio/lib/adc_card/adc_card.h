@@ -9,8 +9,8 @@
 
 namespace adc_card {
 
-// Caller should provide a task to run this runnable.
-extern StaticRunnable adc_card_task_runnable;
+// Caller should provide a task for this task body.
+extern TaskBodyFunction adc_card_task_body;
 
 void dump_state();
 

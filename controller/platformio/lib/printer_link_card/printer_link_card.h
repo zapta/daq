@@ -9,7 +9,8 @@ namespace printer_link_card {
 // serial port to use.
 void setup(Serial* serial);
 
-// Caller should provide a task to run this runnable.
-extern StaticRunnable printer_link_task_runnable;
+// Caller should provide a task to run this task body.
+// Should be started after setup().
+extern TaskBodyFunction printer_link_task_body;
 
 }  // namespace printer_link_card

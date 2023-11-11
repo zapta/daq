@@ -10,22 +10,22 @@
 // #pragma GCC optimize("O0")
 
 // Abstraction of a task body.
-class Runnable {
+class TaskBody {
  public:
-  Runnable(){}
+  TaskBody(){}
   // Prevent copy and assignment.
-  Runnable(const Runnable& other) = delete;
-  Runnable& operator=(const Runnable& other) = delete;
+  TaskBody(const TaskBody& other) = delete;
+  TaskBody& operator=(const TaskBody& other) = delete;
   // Subclasses should implement this.
-  virtual void run() = 0;
+  virtual void task_body() = 0;
 };
 
-// Implementation of Runnable that makes a C function Runnable.
-class StaticRunnable : public Runnable {
+// Implementation of TaskBody that makes a C function TaskBody.
+class TaskBodyFunction : public TaskBody {
  public:
-  StaticRunnable(TaskFunction_t task_function, void* const pvParameters)
+  TaskBodyFunction(TaskFunction_t task_function, void* const pvParameters)
       : _task_function(task_function), _pvParameters(pvParameters) {}
-  virtual void run() { _task_function(_pvParameters); }
+  virtual void task_body() { _task_function(_pvParameters); }
 
  private:
   TaskFunction_t const _task_function;
@@ -36,7 +36,7 @@ class StaticRunnable : public Runnable {
 class StaticTask {
  public:
 
-  StaticTask(Runnable& runnable, const char* const name, UBaseType_t priority)
+  StaticTask(TaskBody& runnable, const char* const name, UBaseType_t priority)
       : _runnable(runnable), _name(name), _priority(priority) {}
 
   ~StaticTask() {
@@ -80,7 +80,7 @@ bool start() {
   static constexpr uint32_t kStackSizeInStackType = kStackSizeInBytes / sizeof(StackType_t);
 
 
-  Runnable&  _runnable;
+  TaskBody&  _runnable;
   const char* const _name;
   const UBaseType_t _priority;
 
@@ -92,7 +92,7 @@ bool start() {
   static void runnable_dispatcher(void* pvParameters) {
     StaticTask* const static_task = (StaticTask*)pvParameters;
     // Not expected to return.
-    (static_task->_runnable).run();
+    (static_task->_runnable).task_body();
   }
 };
 

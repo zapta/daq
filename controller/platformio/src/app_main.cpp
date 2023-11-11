@@ -26,12 +26,12 @@
 #pragma GCC optimize("O0")
 
 // Tasks with static stack allocations.
-static StaticTask host_link_task(host_link::host_link_task_runnable, "Host", 6);
+static StaticTask host_link_task(host_link::host_link_task_body, "Host", 6);
 static StaticTask printer_link_task(
-    printer_link_card::printer_link_task_runnable, "Printer Link", 3);
-static StaticTask adc_card_task(adc_card::adc_card_task_runnable, "ADC", 5);
-static StaticTask pw_card_task(pw_card::pw_card_task_runnable, "PW", 7);
-static StaticTask data_queue_task(data_queue::data_queue_task_runnable, "DQUE",
+    printer_link_card::printer_link_task_body, "Printer Link", 3);
+static StaticTask adc_card_task(adc_card::adc_card_task_body, "ADC", 5);
+static StaticTask pw_card_task(pw_card::pw_card_task_body, "PW", 7);
+static StaticTask data_queue_task(data_queue::data_queue_task_body, "DQUE",
                                   4);
 
 // I2c schedule

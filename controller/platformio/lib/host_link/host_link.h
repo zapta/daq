@@ -30,6 +30,6 @@ extern SerialPacketsClient client;
 // Main calls this once aupon initialization.
 void setup(Serial& serial);
 
-// Caller should provide a task to run this runnable.
-extern StaticRunnable host_link_task_runnable;
+// Caller should provide a task to run this task body.
+extern TaskBodyFunction host_link_task_body;
 }  // namespace host_link
