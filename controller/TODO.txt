@@ -1,25 +1,19 @@
 
-* In the pw_card, move all the function to the device class, as methods.
 
-* In pw_card, move all state variables and device specific consts to the device class. 
+* In pw_card, clean up all consts.
 
-* Have the I2C scheduler also passing the hi2c to the device.
+* Have the I2C scheduler also verifying the hi2c of the device.
 
+* Add to the i2c devices a method on_scheduler_start() that passs scheduler info to the device (e.g. ms between calls).
+
+* Implement the hardware detection is the pw_card class.
 
 ------
 
 
-* Add to the i2c devices a method on_scheduler_start() that passs scheduler info to the device (e.g. time between calls).
-
-* Make kAds1115DeviceAddress a constructor paramter of I2cPwDevice()
-
 * Add to i2c scheduler the ability to device cycle rate (per device). Add a cycle divider field.
 
 * i2c scheduler should pass the cycle interval to the devices.
-
-* move the i2c irqs handles to the scheduler
-
-* Add type safety (e.g. using templates) to the user data pointer of static timer.
 
 * In i2c scheduler, try to avoid exposing the timer_callback as public.
 

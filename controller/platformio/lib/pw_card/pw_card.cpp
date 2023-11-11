@@ -14,18 +14,62 @@
 #pragma GCC push_options
 #pragma GCC optimize("O0")
 
-namespace pw_card {
+// namespace pw_card {
 
 // kAds1115DeviceAddress
 
-class I2cPwDevice : public I2cDevice {
+// The IRQ sequence sends these events to the processing task, each
+// time a new conversion value is read from the ADC.
+struct IrqEvent {
+  uint32_t timestamp_millis;
+  uint8_t ch;
+  int16_t adc_value;
+};
+
+// I2c device implementation for the ADS1115B ADC.
+class I2cPwDevice : public I2cDevice, public TaskBody {
  public:
-  // I2cPwDevice() {}
+  I2cPwDevice(I2C_HandleTypeDef* hi2c, uint8_t device_address,
+              const char* chan_id)
+      : _hi2c(hi2c), _i2c_device_address(device_address), _pw_chan_id(chan_id) {}
+
+  // Prevent copy and assignment.
+  I2cPwDevice(const I2cPwDevice& other) = delete;
+  I2cPwDevice& operator=(const I2cPwDevice& other) = delete;
+
+  // Methods of I2cDevice
   virtual void on_i2c_slot_timer(uint32_t slot_sys_time_millis);
   virtual void on_i2c_complete_isr();
   virtual void on_i2c_error_isr();
 
  private:
+  // Module states.
+  enum State {
+    // Initial state, before setup.
+    STATE_UNDEFINED,
+    // Ready for next sampling cycle.
+    STATE_IDLE,
+    // Started I2C operation 1 (select register 0 to read)
+    STATE_STEP1,
+    // Started I2C operation 2 (read ADC value from selected register.)
+    STATE_STEP2,
+    // Started I2c operation 3 (start conversion of next channel)
+    STATE_STEP3
+  };
+
+  // The I2C channel.
+  I2C_HandleTypeDef* const _hi2c;
+  // The defice address on the I2c bus. E.g.  0x48 << 1
+  const uint8_t _i2c_device_address;
+  const char* _pw_chan_id;
+  // The current ADC channel we process. Either 0 or 1.
+  uint8_t _current_adc_channel_index = 0;
+  uint8_t _dma_data_buffer[4] = {0};
+  uint32_t _current_event_timestamp_millis = 0;
+  uint32_t _next_event_timestamp_millis = 0;
+  StaticQueue<IrqEvent, 5> _irq_event_queue;
+  State _state = STATE_UNDEFINED;
+
   // const uint8_t _device_address;
   void step1_start_from_timer();
   void step1_on_completion_from_isr();
@@ -33,11 +77,10 @@ class I2cPwDevice : public I2cDevice {
   void step2_on_completion_from_isr(BaseType_t* task_woken);
   void step3_start_from_isr();
   void step3_on_completion_from_isr();
-};
 
-// We export just a reference to the base class.
-static I2cPwDevice _i2c1_pw1_device;
-I2cDevice& i2c1_pw1_device = _i2c1_pw1_device;
+  // Implemenation of TaskBody parent
+  void task_body();
+};
 
 // static void pw_card_timer_cb(TimerHandle_t xTimer);
 
@@ -51,7 +94,7 @@ static constexpr uint16_t kMsPerDataPoint = 2 * kMsPerTimerTick;
 // seconds (each data points includes two ADC readings)
 // static StaticTimer pw_card_timer(pw_card::pw_card_timer_cb, "PW", nullptr);
 
-static constexpr uint8_t kAds1115DeviceAddress = 0x48 << 1;
+// static constexpr uint8_t kAds1115DeviceAddress = 0x48 << 1;
 
 // Sampling time 1/128 sec. 4.096V full scale. Single mode.
 static constexpr uint16_t kAds1115BaseConfig = 0b0000001110000000;
@@ -61,91 +104,88 @@ static constexpr uint16_t kAds1115ConfigStartCh1 =
     kAds1115BaseConfig | 0b1 << 15 | 0b0101 << 12;
 
 // Buffer for DMA transactions.
-static uint8_t data_buffer[5];
+// static uint8_t data_buffer[5];
 
 // We update the conversion timestamps at the timer tick handler
 // to have more consistent timestamp intervals.
-static uint32_t current_event_timestamp_millis = 0;
-static uint32_t next_event_timestamp_millis = 0;
+// static uint32_t current_event_timestamp_millis = 0;
+// static uint32_t next_event_timestamp_millis = 0;
 
 // Module states.
-enum State {
-  // Initial state, before setup.
-  STATE_UNDEFINED,
-  // Ready for next sampling cycle.
-  STATE_IDLE,
-  // Started I2C operation 1 (select register 0 to read)
-  STATE_STEP1,
-  // Started I2C operation 2 (read ADC value from selected register.)
-  STATE_STEP2,
-  // Started I2c operation 3 (start conversion of next channel)
-  STATE_STEP3
-};
+// enum State {
+//   // Initial state, before setup.
+//   STATE_UNDEFINED,
+//   // Ready for next sampling cycle.
+//   STATE_IDLE,
+//   // Started I2C operation 1 (select register 0 to read)
+//   STATE_STEP1,
+//   // Started I2C operation 2 (read ADC value from selected register.)
+//   STATE_STEP2,
+//   // Started I2c operation 3 (start conversion of next channel)
+//   STATE_STEP3
+// };
 
-static State state = STATE_UNDEFINED;
+// static State state = STATE_UNDEFINED;
 
-// The IRQ sequence sends these events to the processing task, each
-// time a new conversion value is read from the ADC.
-struct IrqEvent {
-  uint32_t timestamp_millis;
-  uint8_t ch;
-  int16_t adc_value;
-};
-
-static StaticQueue<IrqEvent, 5> irq_event_queue;
+// static StaticQueue<IrqEvent, 5> irq_event_queue;
 
 // 0 -> ADC chan 0 (voltage)
 // 1 -> ADC chan 1 (current)
-static uint8_t channel = 0;
+// static uint8_t channel = 0;
 
+// TODO: Figure out how to implement this under the I2C scheduler.
+//
 // Called before setup to test if the pw card is plugged in.
 // Allows to support system with and without the pw card, during
 // transition.
-static bool does_hardware_exist() {
-  if (state != STATE_UNDEFINED) {
-    error_handler::Panic(311);
-  }
+// static bool does_hardware_exist() {
+//   if (state != STATE_UNDEFINED) {
+//     error_handler::Panic(311);
+//   }
 
-  // Three attemps to read conversion register 0.
-  for (int i = 0; i < 3; i++) {
-    // Select ADC register 0 for reading (conversion data)
-    static_assert(sizeof(data_buffer[0]) == 1);
-    static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 1);
-    data_buffer[0] = 0;
-    static_assert(configTICK_RATE_HZ == 1000);
-    HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(
-        &hi2c1, kAds1115DeviceAddress, data_buffer, 1, 50);
-    if (status != HAL_OK) {
-      // Retry, just in case.
-      continue;
-    }
-    // Read selected register
-    static_assert(sizeof(data_buffer[0]) == 1);
-    static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 2);
-    data_buffer[0] = 0;
-    data_buffer[1] = 0;
-    static_assert(configTICK_RATE_HZ == 1000);
-    status = HAL_I2C_Master_Receive(&hi2c1, kAds1115DeviceAddress, data_buffer,
-                                    2, 50);
-    if (status == HAL_OK) {
-      return true;
-    }
-  }
-  return false;
-}
+//   // Three attemps to read conversion register 0.
+//   for (int i = 0; i < 3; i++) {
+//     // Select ADC register 0 for reading (conversion data)
+//     static_assert(sizeof(data_buffer[0]) == 1);
+//     static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 1);
+//     data_buffer[0] = 0;
+//     static_assert(configTICK_RATE_HZ == 1000);
+//     HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(
+//         &hi2c1, kAds1115DeviceAddress, data_buffer, 1, 50);
+//     if (status != HAL_OK) {
+//       // Retry, just in case.
+//       continue;
+//     }
+//     // Read selected register
+//     static_assert(sizeof(data_buffer[0]) == 1);
+//     static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 2);
+//     data_buffer[0] = 0;
+//     data_buffer[1] = 0;
+//     static_assert(configTICK_RATE_HZ == 1000);
+//     status = HAL_I2C_Master_Receive(&hi2c1, kAds1115DeviceAddress,
+//     data_buffer,
+//                                     2, 50);
+//     if (status == HAL_OK) {
+//       return true;
+//     }
+//   }
+//   return false;
+// }
 
 // Should start before the i2c scheduler.
-static void pw_card_task_body_impl(void* ignored_argument) {
-  if (state != STATE_UNDEFINED) {
+void I2cPwDevice::task_body() {
+  if (_state != STATE_UNDEFINED) {
     error_handler::Panic(119);
   }
 
-  if (!does_hardware_exist()) {
-    for (;;) {
-      logger.warning("Heater card not found. Ignoring channel pw1.");
-      time_util::delay_millis(3000);
-    }
-  }
+  // TODO: Figure out how to implement this under the I2C scheduler.
+  //
+  // if (!does_hardware_exist()) {
+  //   for (;;) {
+  //     logger.warning("Heater card not found. Ignoring channel pw1.");
+  //     time_util::delay_millis(3000);
+  //   }
+  // }
 
   // Hardware found. Start the normal operation.
   // setup();
@@ -161,14 +201,14 @@ static void pw_card_task_body_impl(void* ignored_argument) {
 
   bool is_first_iteration = true;
 
-  state = STATE_IDLE;
+  _state = STATE_IDLE;
 
   // Process the ADC reading. Each data point is a pair of readings, from
   // chan 0 and from chan 1, respectivly.
   for (;;) {
     // Get channel 0 value.
     IrqEvent event0;
-    bool ok = irq_event_queue.consume_from_task(&event0, portMAX_DELAY);
+    bool ok = _irq_event_queue.consume_from_task(&event0, portMAX_DELAY);
     if (!ok) {
       error_handler::Panic(122);
     }
@@ -178,7 +218,7 @@ static void pw_card_task_body_impl(void* ignored_argument) {
 
     // Get channel 1 value.
     IrqEvent event1;
-    ok = irq_event_queue.consume_from_task(&event1, portMAX_DELAY);
+    ok = _irq_event_queue.consume_from_task(&event1, portMAX_DELAY);
     if (!ok) {
       error_handler::Panic(125);
     }
@@ -211,8 +251,8 @@ static void pw_card_task_body_impl(void* ignored_argument) {
       packet_data->write_uint32(start_time);  // Device session id.
 
       // Fill in the channgel header
-      packet_data->write_str("pw1");  // Channel id
-      packet_data->write_uint16(0);   // Time offset from packet start time.
+      packet_data->write_str(_pw_chan_id);
+      packet_data->write_uint16(0);  // Time offset from packet start time.
       packet_data->write_uint16(
           kDataPointsPerPacket);  // Num of data points we plan to add
       packet_data->write_uint16(kMsPerDataPoint);  // Interval between points.
@@ -232,7 +272,7 @@ static void pw_card_task_body_impl(void* ignored_argument) {
       items_in_buffer = 0;
 
       // Dump the last data point, for sanity check.
-      logger.info("pw1 %hd, %hd", event0.adc_value, event1.adc_value);
+      logger.info("%s %hd, %hd", _pw_chan_id, event0.adc_value, event1.adc_value);
     }
   }
 }
@@ -250,16 +290,15 @@ static void pw_card_task_body_impl(void* ignored_argument) {
 
 void I2cPwDevice::on_i2c_slot_timer(uint32_t slot_sys_time_millis) {
   // Track slot timestamp
-  pw_card::current_event_timestamp_millis =
-      pw_card::next_event_timestamp_millis;
-  pw_card::next_event_timestamp_millis = slot_sys_time_millis;
+  _current_event_timestamp_millis = _next_event_timestamp_millis;
+  _next_event_timestamp_millis = slot_sys_time_millis;
 
   // Start the dma sequences.
   step1_start_from_timer();
 }
 
 void I2cPwDevice::on_i2c_complete_isr() {
-  switch (state) {
+  switch (_state) {
     case STATE_STEP1:
       step1_on_completion_from_isr();
       step2_start_from_isr();
@@ -269,9 +308,9 @@ void I2cPwDevice::on_i2c_complete_isr() {
       BaseType_t task_woken = pdFALSE;
       step2_on_completion_from_isr(&task_woken);
       // Select next channel
-      channel++;
-      if (channel > 1) {
-        channel = 0;
+      _current_adc_channel_index++;
+      if (_current_adc_channel_index > 1) {
+        _current_adc_channel_index = 0;
       }
       step3_start_from_isr();
       // In case the queue push above requires a task switch.
@@ -293,15 +332,15 @@ void I2cPwDevice::on_i2c_complete_isr() {
 inline void I2cPwDevice::on_i2c_error_isr() { error_handler::Panic(117); }
 
 inline void I2cPwDevice::step1_start_from_timer() {
-  if (state != STATE_IDLE) {
+  if (_state != STATE_IDLE) {
     error_handler::Panic(216);
   }
-  static_assert(sizeof(data_buffer[0]) == 1);
-  static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 1);
-  data_buffer[0] = 0;
-  state = STATE_STEP1;
+  static_assert(sizeof(_dma_data_buffer[0]) == 1);
+  static_assert(sizeof(_dma_data_buffer) / sizeof(_dma_data_buffer[0]) >= 1);
+  _dma_data_buffer[0] = 0;
+  _state = STATE_STEP1;
   HAL_StatusTypeDef status = HAL_I2C_Master_Transmit_DMA(
-      &hi2c1, kAds1115DeviceAddress, data_buffer, 1);
+      &hi2c1, _i2c_device_address, _dma_data_buffer, 1);
   if (status != HAL_OK) {
     error_handler::Panic(213);
   }
@@ -312,17 +351,17 @@ inline void I2cPwDevice::step1_on_completion_from_isr() {
 }
 
 void I2cPwDevice::step2_start_from_isr() {
-  if (state != STATE_STEP1) {
+  if (_state != STATE_STEP1) {
     error_handler::Panic(217);
   }
   // Start reading the conversion value from the selected register 0.
-  static_assert(sizeof(data_buffer[0]) == 1);
-  static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 2);
-  data_buffer[0] = 0;
-  data_buffer[1] = 0;
-  state = STATE_STEP2;
-  const HAL_StatusTypeDef status =
-      HAL_I2C_Master_Receive_DMA(&hi2c1, kAds1115DeviceAddress, data_buffer, 2);
+  static_assert(sizeof(_dma_data_buffer[0]) == 1);
+  static_assert(sizeof(_dma_data_buffer) / sizeof(_dma_data_buffer[0]) >= 2);
+  _dma_data_buffer[0] = 0;
+  _dma_data_buffer[1] = 0;
+  _state = STATE_STEP2;
+  const HAL_StatusTypeDef status = HAL_I2C_Master_Receive_DMA(
+      &hi2c1, _i2c_device_address, _dma_data_buffer, 2);
   if (status != HAL_OK) {
     error_handler::Panic(212);
   }
@@ -330,16 +369,16 @@ void I2cPwDevice::step2_start_from_isr() {
 
 inline void I2cPwDevice::step2_on_completion_from_isr(BaseType_t* task_woken) {
   // static void on_completion_from_isr(BaseType_t* task_woken) {
-  if (state != STATE_STEP2) {
+  if (_state != STATE_STEP2) {
     error_handler::Panic(218);
   }
   // Here when completed to read the conversion value from reg 0.
   // Use the value conversion value.
-  const uint16_t reg_value = ((uint16_t)data_buffer[0] << 8) | data_buffer[1];
-  const IrqEvent event = {.timestamp_millis = current_event_timestamp_millis,
-                          .ch = channel,
+  const uint16_t reg_value = ((uint16_t)_dma_data_buffer[0] << 8) | _dma_data_buffer[1];
+  const IrqEvent event = {.timestamp_millis = _current_event_timestamp_millis,
+                          .ch = _current_adc_channel_index,
                           .adc_value = (int16_t)reg_value};
-  if (!irq_event_queue.add_from_isr(event, task_woken)) {
+  if (!_irq_event_queue.add_from_isr(event, task_woken)) {
     // Comment this out for debugging with breakpoints
     error_handler::Panic(214);
   }
@@ -347,33 +386,37 @@ inline void I2cPwDevice::step2_on_completion_from_isr(BaseType_t* task_woken) {
 
 // Start conversion of the channel whose index is in 'channel'.
 inline void I2cPwDevice::step3_start_from_isr() {
-  if (state != STATE_STEP2) {
+  if (_state != STATE_STEP2) {
     error_handler::Panic(219);
   }
   const uint16_t config_value =
-      channel == 0 ? kAds1115ConfigStartCh0 : kAds1115ConfigStartCh1;
-  static_assert(sizeof(data_buffer[0]) == 1);
-  static_assert(sizeof(data_buffer) / sizeof(data_buffer[0]) >= 3);
-  data_buffer[0] = 0x01;  // config reg address
-  data_buffer[1] = (uint8_t)(config_value >> 8);
-  data_buffer[2] = (uint8_t)config_value;
-  state = STATE_STEP3;
+      _current_adc_channel_index == 0 ? kAds1115ConfigStartCh0 : kAds1115ConfigStartCh1;
+  static_assert(sizeof(_dma_data_buffer[0]) == 1);
+  static_assert(sizeof(_dma_data_buffer) / sizeof(_dma_data_buffer[0]) >= 3);
+  _dma_data_buffer[0] = 0x01;  // config reg address
+  _dma_data_buffer[1] = (uint8_t)(config_value >> 8);
+  _dma_data_buffer[2] = (uint8_t)config_value;
+  _state = STATE_STEP3;
   const HAL_StatusTypeDef status = HAL_I2C_Master_Transmit_DMA(
-      &hi2c1, kAds1115DeviceAddress, data_buffer, 3);
+      &hi2c1, _i2c_device_address, _dma_data_buffer, 3);
   if (status != HAL_OK) {
     error_handler::Panic(215);
   }
 }
 
 inline void I2cPwDevice::step3_on_completion_from_isr() {
-  if (state != STATE_STEP3) {
+  if (_state != STATE_STEP3) {
     error_handler::Panic(221);
   }
   // I2C transaction sequence completed.
-  state = STATE_IDLE;
+  _state = STATE_IDLE;
 }
 
-// The exported task body.
-TaskBodyFunction pw_card_task_body(pw_card_task_body_impl, nullptr);
+namespace pw_card {
+
+// The the device and task body as references to the base classes.
+static I2cPwDevice _i2c1_pw1_device(&hi2c1, 0x48 << 1, "pw1");
+TaskBody& i2c1_pw1_device_task_body = _i2c1_pw1_device;
+I2cDevice& i2c1_pw1_device = _i2c1_pw1_device;
 
 }  // namespace pw_card
