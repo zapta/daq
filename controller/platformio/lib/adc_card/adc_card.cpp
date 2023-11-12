@@ -39,6 +39,16 @@ namespace adc_card {
 // * Cycle - A group of slots in which we read each of the temperaute channels
 //   once.
 //
+// Hierarchy:
+// DMA Buffer (1)
+//   Half DMA buffer (2, double buffering)
+//     Cycle (40)
+//       Slot (3, one per temp channel x)
+//          LC1 data point (ignored)
+//          LC1 data point (ignored)
+//          LC1 data Point (used)
+//          TMx data point (used)
+//
 // Examples of cycle points when reading the load cell three times. The
 // '*' indicates the values we actually use.
 // (LC, LC, *Lc, *T1), (LC, LC, *LC, *T2), (LC, LC, *LC, *T3)
@@ -49,6 +59,7 @@ constexpr uint32_t kDmaNumTemperatureChans = 3;
 constexpr uint32_t kDmaConsecutiveLcPoints = 3;
 
 constexpr uint32_t kDmaPointsPerSlot = kDmaConsecutiveLcPoints + 1;
+constexpr uint32_t kDmaBytesPerSlot = kDmaPointsPerSlot * kDmaBytesPerPoint;
 constexpr uint32_t kDmaSlotsPerCycle = kDmaNumTemperatureChans;
 constexpr uint32_t kDmaPointsPerCycle = kDmaSlotsPerCycle * kDmaPointsPerSlot;
 constexpr uint32_t kDmaBytesPerCycle = kDmaPointsPerCycle * kDmaBytesPerPoint;
@@ -56,6 +67,10 @@ constexpr uint32_t kDmaCyclesPerHalf = 40;
 constexpr uint32_t kDmaSlotsPerHalf = kDmaSlotsPerCycle * kDmaCyclesPerHalf;
 constexpr uint32_t kDmaPointsPerHalf = kDmaPointsPerCycle * kDmaCyclesPerHalf;
 constexpr uint32_t kDmaBytesPerHalf = kDmaPointsPerHalf * kDmaBytesPerPoint;
+
+// We have an integer number of cycles, slots, and data points in a second.
+static_assert(kDmaPointsPerCycle % kDmaPointsPerCycle == 0);
+static_assert(kDmaPointsPerCycle % kDmaPointsPerSlot == 0);
 
 // The offset of the 3 bytes conversion data within the
 // kBytesPerPoint bytes of a single point SPI transfer.
@@ -70,15 +85,19 @@ constexpr uint32_t kDmaRegValOffsetInPoint = 7;
 // divided by 9.
 constexpr uint16_t kDmaPointsPerSec = 2000;
 
+// Time in ms per a half, cycle and slot. Values should divide evently.
+static_assert((1000 * kDmaPointsPerHalf) % kDmaPointsPerSec == 0);
+static_assert((1000 * kDmaPointsPerCycle) % kDmaPointsPerSec == 0);
+static_assert((1000 * kDmaPointsPerSlot) % kDmaPointsPerSec == 0);
+
+constexpr uint32_t kMsPerHalf = (1000 * kDmaPointsPerHalf) / kDmaPointsPerSec;
+constexpr uint32_t kMsPerCycle = (1000 * kDmaPointsPerCycle) / kDmaPointsPerSec;
+constexpr uint32_t kMsPerSlot = (1000 * kDmaPointsPerSlot) / kDmaPointsPerSec;
+
 // Each of tx/rx buffer contains two halves that are used
 // as dual buffers with the DMA circular mode.
 static uint8_t tx_buffer[2 * kDmaBytesPerHalf] = {};
 static uint8_t rx_buffer[2 * kDmaBytesPerHalf] = {};
-
-// static SerialPacketsData packet_data;
-
-// static const char kNoHardwareMessage[] =
-//     "adc card not found. Ignoring channels lc1, tm1, tm2, tm3";
 
 // Represent the type of an event that is passed from the ISR handlers to the
 // worker thread.
@@ -514,7 +533,7 @@ void dump_state() {
               _event_full_count, _irq_error_count);
 }
 
-void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
+void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *half_buffer) {
   // Allocate a data buffer. Non blocking. Guaranteed to be non null.
   data_queue::DataBuffer *data_buffer = data_queue::grab_buffer();
   SerialPacketsData *packet_data = &data_buffer->packet_data();
@@ -533,21 +552,39 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
   {
     // Chan id. Load cell 1.
     packet_data->write_str("lc1");
+
     // Offset of first value relative to packet start time.
-    packet_data->write_uint16(0);
+    // packet_data->write_uint16(0);
+
+    // Channel start time in ms relative to the packet start time.
+    // Here we do allow truncation.
+    static constexpr uint32_t kLcFirstDataPointIndex =
+        kDmaConsecutiveLcPoints - 1;
+    packet_data->write_uint16((1000 * kLcFirstDataPointIndex) /
+                              kDmaPointsPerSec);
+
     // Num of load cell points in this packet. One per slot.
     packet_data->write_uint16(kDmaSlotsPerHalf);
+
     // Millis between load cell values. We don't allow truncation.
-    static_assert(kDmaPointsPerSec % kDmaPointsPerSlot == 0);
-    static_assert((kDmaPointsPerSlot * 1000) % kDmaPointsPerSec == 0);
-    // Every slot has a single loadcell reading.
-    packet_data->write_uint16((kDmaPointsPerSlot * 1000) / kDmaPointsPerSec);
+    // static_assert(kDmaPointsPerSec % kDmaPointsPerSlot == 0);
+    // static_assert((kDmaPointsPerSlot * 1000) % kDmaPointsPerSec == 0);
+    // Channel data points interval in ms. One lcx reading per slot.
+    // packet_data->write_uint16((kDmaPointsPerSlot * 1000) / kDmaPointsPerSec);
+
+    // static constexpr uint16_t xxxx = (kDmaPointsPerSlot * 1000) /
+    // kDmaPointsPerSec;
+    //     packet_data->write_uint16(xxxx);
+
+    // Millis between LC data points is the same as slot interval.
+    packet_data->write_uint16(kMsPerSlot);
     // Write the values. They are already in big endian order.
     // We collect last load cell point of each slot.
-    for (uint32_t i = kDmaConsecutiveLcPoints - 1; i < kDmaPointsPerHalf;
-         i += kDmaPointsPerSlot) {
-      packet_data->write_bytes(
-          &bfr[(i * kDmaBytesPerPoint) + kDmaRxDataOffsetInPoint], 3);
+    uint32_t byte_index =
+        (kLcFirstDataPointIndex * kDmaBytesPerPoint) + kDmaRxDataOffsetInPoint;
+    for (uint32_t slot = 0 ; slot < kDmaSlotsPerHalf; slot++) {
+      packet_data->write_bytes(&half_buffer[byte_index], 3);
+      byte_index += kDmaBytesPerSlot;
     }
   }
 
@@ -560,21 +597,32 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
     packet_data->write_str(ch_id);
     // First item offset in ms from packet base time. Truncation of
     // a fraction of a ms is ok.
-    const uint32_t first_pt_index =
+    const uint32_t first_datapoint_index =
         kDmaConsecutiveLcPoints + i * kDmaPointsPerSlot;
-    packet_data->write_uint16((1000 * first_pt_index) / kDmaPointsPerSec);
+
+    // Channel start time in ms relative to the packet start time.
+    // Here we do allow truncation.
+    packet_data->write_uint16((1000 * first_datapoint_index) / kDmaPointsPerSec);
+
     // Number of values in this channel report. Each temperature channel
     // has a single slot in each cycle.
     packet_data->write_uint16(kDmaCyclesPerHalf);
+
     // Millis between values. We don't allow truncation.
-    static_assert(kDmaCyclesPerHalf > 1);
-    static_assert((1000 * kDmaPointsPerCycle) % kDmaPointsPerSec == 0);
-    packet_data->write_uint16((1000 * kDmaPointsPerCycle) / kDmaPointsPerSec);
+    // static_assert(kDmaCyclesPerHalf > 1);
+    // static_assert((1000 * kDmaPointsPerCycle) % kDmaPointsPerSec == 0);
+    // // Channel data points interval in ms. One tmx reading per cycle.
+    // packet_data->write_uint16((1000 * kDmaPointsPerCycle) /
+    // kDmaPointsPerSec);
+
+    // Millis between TMx data points is the same as cycle interval.
+    packet_data->write_uint16(kMsPerCycle);
+
     // Write the values. They are already in big endian order.
     uint32_t byte_index =
-        (first_pt_index * kDmaBytesPerPoint) + kDmaRxDataOffsetInPoint;
+        (first_datapoint_index * kDmaBytesPerPoint) + kDmaRxDataOffsetInPoint;
     for (uint32_t cycle = 0; cycle < kDmaCyclesPerHalf; cycle++) {
-      packet_data->write_bytes(&bfr[byte_index], 3);
+      packet_data->write_bytes(&half_buffer[byte_index], 3);
       byte_index += kDmaBytesPerCycle;
     }
   }
@@ -588,16 +636,16 @@ void process_rx_dma_half_buffer(int id, uint32_t isr_millis, uint8_t *bfr) {
   // we read as part of the continious DMA (one static reg value per
   // point)
   for (uint32_t i = 0; i < kNumRegsInfo; i++) {
-    regs_values[i] = bfr[i * kDmaBytesPerPoint + kDmaRegValOffsetInPoint];
+    regs_values[i] = half_buffer[i * kDmaBytesPerPoint + kDmaRegValOffsetInPoint];
   }
 
   // Debugging info.
   if (true) {
     logger.info(
         "ADC [%d] %ld, %ld, %ld", id,
-        decode_int24(&bfr[kDmaRxDataOffsetInPoint]),
-        decode_int24(&bfr[kDmaRxDataOffsetInPoint + 2 * kDmaBytesPerPoint]),
-        decode_int24(&bfr[kDmaRxDataOffsetInPoint + 4 * kDmaBytesPerPoint]));
+        decode_int24(&half_buffer[kDmaRxDataOffsetInPoint]),
+        decode_int24(&half_buffer[kDmaRxDataOffsetInPoint + 2 * kDmaBytesPerPoint]),
+        decode_int24(&half_buffer[kDmaRxDataOffsetInPoint + 4 * kDmaBytesPerPoint]));
   }
 
   // Send to monitor and maybe to SD.
@@ -645,7 +693,14 @@ static void adc_card_task_body_impl(void *ignored_argument) {
     }
   }
 
-  // Hardware found. Do the service loop.
+  // Here when hardware found. Report data rates.
+  logger.info("lc1 data point interval %lu ms", kMsPerSlot);
+  for (int i = 1; i <= 3; i++) {
+     logger.info("tm%d data point interval %lu ms", i,  kMsPerCycle);
+  }
+
+  // Infite service loop of recieving completed half DMAs from the ISR
+  // and processing their data.
   for (;;) {
     IrqEvent event;
     if (!irq_event_queue.consume_from_task(&event, 300)) {
@@ -671,6 +726,5 @@ static void adc_card_task_body_impl(void *ignored_argument) {
 
 // The exported task body.
 TaskBodyFunction adc_card_task_body(adc_card_task_body_impl, nullptr);
-
 
 }  // namespace adc_card
