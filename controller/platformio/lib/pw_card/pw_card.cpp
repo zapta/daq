@@ -8,7 +8,6 @@
 #include "error_handler.h"
 #include "session.h"
 #include "static_queue.h"
-// #include "static_timer.h"
 #include "time_util.h"
 
 #pragma GCC push_options
@@ -36,9 +35,8 @@ enum AdcChan {
 // An event that is sent to the task via the event queue. Uses
 // to syncrhonize between tasks and ISRs.
 enum EventType {
-  SCHEDULER_STARTED = 1,
-  HARDWARE_STATUS = 2,
-  ADC_READING = 3,
+  HARDWARE_STATUS,
+  ADC_READING,
 };
 
 struct AdcReading {
@@ -71,7 +69,8 @@ class I2cPwDevice : public I2cDevice, public TaskBody {
   I2cPwDevice& operator=(const I2cPwDevice& other) = delete;
 
   // Methods of I2cDevice
-  virtual void on_scheduler_start(I2C_HandleTypeDef* scheduler_hi2c, uint16_t slot_length_ms,
+  virtual void on_scheduler_start(I2C_HandleTypeDef* scheduler_hi2c,
+                                  uint16_t slot_length_ms,
                                   uint16_t slot_internval_ms);
   virtual void on_i2c_slot_timer(uint32_t slot_sys_time_millis);
   virtual void on_i2c_complete_isr();
@@ -80,16 +79,25 @@ class I2cPwDevice : public I2cDevice, public TaskBody {
  private:
   // Module states.
   enum State {
-    // Initial state.
+    // Initial state. on_scheduler_start() transition to
+    // STATE_SCHEDULER_STARTED.
     STATE_UNDEFINED,
+    // Scheduler started. on_on_i2c_slot_timer() calls
+    STATE_SCHEDULER_STARTED,
+    // Writing selected reg address.
+    STATE_HARDWARE_TESTING_STEP1,
+    // Reading selected reg.
+    STATE_HARDWARE_TESTING_STEP2,
+    //
+    STATE_HARDWARE_TESTING_COMPLETED,
     // Everything OK and DMA is IDLE to start the normal ADC readings.
-    STATE_IDLE,
+    STATE_ADC_READY,
     // Started I2C operation 1 (select register 0 to read)
-    STATE_STEP1,
+    STATE_ADC_STEP1,
     // Started I2C operation 2 (read ADC value from selected register.)
-    STATE_STEP2,
+    STATE_ADC_STEP2,
     // Started I2c operation 3 (start conversion of next channel)
-    STATE_STEP3
+    STATE_ADC_STEP3
   };
 
   // The I2C channel.
@@ -100,20 +108,26 @@ class I2cPwDevice : public I2cDevice, public TaskBody {
   // The current ADC channel we process. Either 0 or 1.
   AdcChan _current_adc_channel = ADC_CHAN0;
   uint8_t _dma_data_buffer[4] = {0};
-  uint32_t _current_event_timestamp_millis = 0;
-  uint32_t _next_event_timestamp_millis = 0;
-  StaticQueue<Event, 5> _irq_event_queue;
+  uint32_t _prev_slot_timestamp_millis = 0;
+  uint32_t _current_slot_timestamp_millis = 0;
+  StaticQueue<Event, 5> _event_queue;
   State _state = STATE_UNDEFINED;
   // Set by on_scheduler_start()
   uint16_t _data_point_internval_ms = 0;
 
-  // const uint8_t _device_address;
-  void step1_start_from_timer();
-  void step1_on_completion_from_isr();
-  void step2_start_from_isr();
-  void step2_on_completion_from_isr(BaseType_t* task_woken);
-  void step3_start_from_isr();
-  void step3_on_completion_from_isr();
+  // Handlers for hardware testing steps.
+  // void hardware_testing_step1_start_from_timer();
+  // void hardware_testing_step1_completion_from_timer();
+  // void hardware_testing_step2_start_from_isr();
+  // void hardware_testing_step2_completion_from_is();
+
+  // Handler for ADC reading.
+  void adc_step1_start_from_timer();
+  void adc_step1_on_completion_from_isr();
+  void adc_step2_start_from_isr();
+  void adc_step2_on_completion_from_isr(BaseType_t* task_woken);
+  void adc_step3_start_from_isr();
+  void adc_step3_on_completion_from_isr();
 
   // Implemenation of TaskBody parent
   void task_body();
@@ -160,55 +174,49 @@ class I2cPwDevice : public I2cDevice, public TaskBody {
 
 // Should start before the i2c scheduler.
 void I2cPwDevice::task_body() {
-  if (_state != STATE_UNDEFINED) {
+  // Hardware testing in progress.
+  if (_state >= STATE_ADC_READY) {
     error_handler::Panic(119);
   }
 
-  // Wait for scheduler to start
+  // Wait for the hardware status event.
   Event event;
-  bool ok = _irq_event_queue.consume_from_task(&event, 3000);
+  bool ok = _event_queue.consume_from_task(&event, 3000);
   if (!ok) {
     error_handler::Panic(138);
   }
-  if (event.type != EventType::SCHEDULER_STARTED) {
+  if (event.type != EventType::HARDWARE_STATUS) {
     error_handler::Panic(139);
   }
+  if (_state != STATE_HARDWARE_TESTING_COMPLETED) {
+    error_handler::Panic(142);
+  }
 
-  // _state = STATE_IDLE;
+  // If hardware not found, do not advance STATE_ADC_READY.
+  if (!event.hardware_exists) {
+    for (;;) {
+      logger.warning("%s card not found, igoring channel.", _pw_chan_id);
+      time_util::delay_millis(3000);
+    }
+  }
 
-  // TODO: Figure out how to implement this under the I2C scheduler.
-  //
-  // if (!does_hardware_exist()) {
-  //   for (;;) {
-  //     logger.warning("Heater card not found. Ignoring channel pw1.");
-  //     time_util::delay_millis(3000);
-  //   }
-  // }
+  // Here when hardware found.
+  _state = State::STATE_ADC_READY;
 
-  // Hardware found. Start the normal operation.
-  // setup();
-
-  // if (!pw_card_timer.start(kMsPerTimerTick)) {
-  //   error_handler::Panic(123);
-  // }
-
-  // We allocate the buffer on demand.
+  // Track the log data buffer. We allocate it upon demand, wher we
+  // know the timestamp of the first data point in the buffer.
   data_queue::DataBuffer* data_buffer = nullptr;
   SerialPacketsData* packet_data = nullptr;
   uint16_t items_in_buffer = 0;
 
   bool is_first_data_point = true;
 
-  // From this point, the scheduler callbacks will start to
-  // send ADC readings.
-  _state = STATE_IDLE;
-
   // Process the ADC reading. Each data point is a pair of readings, from
   // chan 0 and from chan 1, respectivly.
   for (;;) {
     // Get channel 0 value.
     Event event0;
-    bool ok = _irq_event_queue.consume_from_task(&event0, portMAX_DELAY);
+    bool ok = _event_queue.consume_from_task(&event0, portMAX_DELAY);
     if (!ok) {
       error_handler::Panic(122);
     }
@@ -218,7 +226,7 @@ void I2cPwDevice::task_body() {
 
     // Get channel 1 value.
     Event event1;
-    ok = _irq_event_queue.consume_from_task(&event1, portMAX_DELAY);
+    ok = _event_queue.consume_from_task(&event1, portMAX_DELAY);
     if (!ok) {
       error_handler::Panic(125);
     }
@@ -280,7 +288,9 @@ void I2cPwDevice::task_body() {
   }
 }
 
-void I2cPwDevice::on_scheduler_start(I2C_HandleTypeDef* _scheduler_hi2c, uint16_t slot_length_ms,
+// This is called before the first tick.
+void I2cPwDevice::on_scheduler_start(I2C_HandleTypeDef* _scheduler_hi2c,
+                                     uint16_t slot_length_ms,
                                      uint16_t slot_internval_ms) {
   if (_scheduler_hi2c != _hi2c) {
     error_handler::Panic(141);
@@ -300,56 +310,69 @@ void I2cPwDevice::on_scheduler_start(I2C_HandleTypeDef* _scheduler_hi2c, uint16_
   }
 
   // Tell the task the scheduler is ready.
-  const Event event = {.type = EventType::SCHEDULER_STARTED};
-  if (!_irq_event_queue.add_from_task(event, 0)) {
-    error_handler::Panic(137);
-  }
+  // const Event event = {.type = EventType::SCHEDULER_STARTED};
+  // if (!_irq_event_queue.add_from_task(event, 0)) {
+  //   error_handler::Panic(137);
+  // }
 
-  // _state = STATE_SCHEDULER_STARTED;
+  // From here, the ticks will do the hardware testing.
+  _state = STATE_SCHEDULER_STARTED;
 }
 
 void I2cPwDevice::on_i2c_slot_timer(uint32_t slot_sys_time_millis) {
   // Do nothing if still initializing.
-  if (_state == STATE_UNDEFINED) {
-    return;
+  // if (_state == STATE_UNDEFINED) {
+  //   return;
+  // }
+
+  // Track slot timestamps
+  // TODO: Add a sanity check that the slot intervals are as expected.
+  _prev_slot_timestamp_millis = _current_slot_timestamp_millis;
+  _current_slot_timestamp_millis = slot_sys_time_millis;
+
+  switch (_state) {
+    // TODO: Impelement the hardware testing sequence.
+    case State::STATE_SCHEDULER_STARTED: {
+      _state = State::STATE_HARDWARE_TESTING_COMPLETED;
+      const Event event = {.type = EventType::HARDWARE_STATUS,
+                           {.hardware_exists = true}};
+      if (!_event_queue.add_from_task(event, 0)) {
+        error_handler::Panic(144);
+      }
+    } break;
+
+    case State::STATE_ADC_READY:
+      adc_step1_start_from_timer();
+      break;
+
+    default:
+      error_handler::Panic(143);
   }
-
-  // TODO: Add sanity check that the scheduler intervals are as expected.
-
-  // Track slot timestamp
-  _current_event_timestamp_millis = _next_event_timestamp_millis;
-  _next_event_timestamp_millis = slot_sys_time_millis;
-
-  // Start the dma sequences.
-  step1_start_from_timer();
 }
 
 void I2cPwDevice::on_i2c_complete_isr() {
   switch (_state) {
-    case STATE_STEP1:
-      step1_on_completion_from_isr();
-      step2_start_from_isr();
+    case STATE_ADC_STEP1:
+      adc_step1_on_completion_from_isr();
+      adc_step2_start_from_isr();
       break;
 
-    case STATE_STEP2: {
+    case STATE_ADC_STEP2: {
       BaseType_t task_woken = pdFALSE;
-      step2_on_completion_from_isr(&task_woken);
+      adc_step2_on_completion_from_isr(&task_woken);
       // Select next channel
       _current_adc_channel =
           (_current_adc_channel == ADC_CHAN0) ? ADC_CHAN1 : ADC_CHAN0;
-      // if (_current_adc_channel > 1) {
-      //   _current_adc_channel = 0;
-      // }
-      step3_start_from_isr();
+      adc_step3_start_from_isr();
       // In case the queue push above requires a task switch.
       portYIELD_FROM_ISR(task_woken)
 
     } break;
 
-    case STATE_STEP3:
+    case STATE_ADC_STEP3:
       // Cycle completed OK.
-      // state = STATE_IDLE;
-      step3_on_completion_from_isr();
+      adc_step3_on_completion_from_isr();
+      _state = STATE_ADC_READY;
       break;
 
     default:
@@ -359,14 +382,14 @@ void I2cPwDevice::on_i2c_complete_isr() {
 
 inline void I2cPwDevice::on_i2c_error_isr() { error_handler::Panic(117); }
 
-inline void I2cPwDevice::step1_start_from_timer() {
-  if (_state != STATE_IDLE) {
+inline void I2cPwDevice::adc_step1_start_from_timer() {
+  if (_state != STATE_ADC_READY) {
     error_handler::Panic(216);
   }
   static_assert(sizeof(_dma_data_buffer[0]) == 1);
   static_assert(sizeof(_dma_data_buffer) / sizeof(_dma_data_buffer[0]) >= 1);
   _dma_data_buffer[0] = 0;
-  _state = STATE_STEP1;
+  _state = STATE_ADC_STEP1;
   HAL_StatusTypeDef status = HAL_I2C_Master_Transmit_DMA(
       &hi2c1, _i2c_device_address, _dma_data_buffer, 1);
   if (status != HAL_OK) {
@@ -374,12 +397,12 @@ inline void I2cPwDevice::step1_start_from_timer() {
   }
 }
 
-inline void I2cPwDevice::step1_on_completion_from_isr() {
+inline void I2cPwDevice::adc_step1_on_completion_from_isr() {
   // Nothing to do here
 }
 
-void I2cPwDevice::step2_start_from_isr() {
-  if (_state != STATE_STEP1) {
+void I2cPwDevice::adc_step2_start_from_isr() {
+  if (_state != STATE_ADC_STEP1) {
     error_handler::Panic(217);
   }
   // Start reading the conversion value from the selected register 0.
@@ -387,7 +410,7 @@ void I2cPwDevice::step2_start_from_isr() {
   static_assert(sizeof(_dma_data_buffer) / sizeof(_dma_data_buffer[0]) >= 2);
   _dma_data_buffer[0] = 0;
   _dma_data_buffer[1] = 0;
-  _state = STATE_STEP2;
+  _state = STATE_ADC_STEP2;
   const HAL_StatusTypeDef status = HAL_I2C_Master_Receive_DMA(
       &hi2c1, _i2c_device_address, _dma_data_buffer, 2);
   if (status != HAL_OK) {
@@ -395,29 +418,32 @@ void I2cPwDevice::step2_start_from_isr() {
   }
 }
 
-inline void I2cPwDevice::step2_on_completion_from_isr(BaseType_t* task_woken) {
+inline void I2cPwDevice::adc_step2_on_completion_from_isr(
+    BaseType_t* task_woken) {
   // static void on_completion_from_isr(BaseType_t* task_woken) {
-  if (_state != STATE_STEP2) {
+  if (_state != STATE_ADC_STEP2) {
     error_handler::Panic(218);
   }
   // Here when completed to read the conversion value from reg 0.
   // Use the value conversion value.
   const uint16_t ads_reg_value =
       ((uint16_t)_dma_data_buffer[0] << 8) | _dma_data_buffer[1];
+  // We use the timestamp of previous slot since this is when we
+  // started the conversion.
   const Event event = {
       .type = ADC_READING,
-      {.adc_reading = {.timestamp_millis = _current_event_timestamp_millis,
+      {.adc_reading = {.timestamp_millis = _prev_slot_timestamp_millis,
                        .chan = _current_adc_channel,
                        .value = (int16_t)ads_reg_value}}};
-  if (!_irq_event_queue.add_from_isr(event, task_woken)) {
+  if (!_event_queue.add_from_isr(event, task_woken)) {
     // Comment this out for debugging with breakpoints
     error_handler::Panic(214);
   }
 }
 
 // Start conversion of the channel whose index is in 'channel'.
-inline void I2cPwDevice::step3_start_from_isr() {
-  if (_state != STATE_STEP2) {
+inline void I2cPwDevice::adc_step3_start_from_isr() {
+  if (_state != STATE_ADC_STEP2) {
     error_handler::Panic(219);
   }
   const uint16_t config_value = (_current_adc_channel == ADC_CHAN0)
@@ -428,7 +454,7 @@ inline void I2cPwDevice::step3_start_from_isr() {
   _dma_data_buffer[0] = 0x01;  // config reg address
   _dma_data_buffer[1] = (uint8_t)(config_value >> 8);
   _dma_data_buffer[2] = (uint8_t)config_value;
-  _state = STATE_STEP3;
+  _state = STATE_ADC_STEP3;
   const HAL_StatusTypeDef status = HAL_I2C_Master_Transmit_DMA(
       &hi2c1, _i2c_device_address, _dma_data_buffer, 3);
   if (status != HAL_OK) {
@@ -436,12 +462,8 @@ inline void I2cPwDevice::step3_start_from_isr() {
   }
 }
 
-inline void I2cPwDevice::step3_on_completion_from_isr() {
-  if (_state != STATE_STEP3) {
-    error_handler::Panic(221);
-  }
-  // I2C transaction sequence completed.
-  _state = STATE_IDLE;
+inline void I2cPwDevice::adc_step3_on_completion_from_isr() {
+  // Nothing to do here.
 }
 
 namespace pw_card {

@@ -1,8 +1,4 @@
 
-
-
-* In pw_card, track via state the start of the scheduler and the task.
-
 * Implement the hardware detection is the pw_card class.
 
 
