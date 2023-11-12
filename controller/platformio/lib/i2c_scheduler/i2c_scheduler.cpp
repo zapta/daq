@@ -71,8 +71,11 @@ bool I2cScheduler::start(I2cSchedule* schedule) {
   for (uint16_t i = 0; i < slots_per_cycle; i++) {
     I2cDevice* const device = _schedule->slots[i].device;
     if (device) {
-      device->on_scheduler_start(_hi2c, _schedule->ms_per_slot,
-                                 _schedule->ms_per_slot * slots_per_cycle);
+      device->on_scheduler_init(_hi2c, _schedule->ms_per_slot,
+                                _schedule->ms_per_slot * slots_per_cycle);
+      if (device->is_i2c_bus_in_use()) {
+        error_handler::Panic(151);
+      }
     }
   }
 
@@ -90,6 +93,14 @@ void I2cScheduler::timer_callback() {
   // begining of the tick to have deterministic intervals.
   uint32_t slot_sys_time_millis = time_util::millis();
 
+  // Verify that the device from the preious slot doesn't use the I2C bus.
+  // NOTE: We could verify all the device each time but verifying just the last
+  // one seems to be sufficient.
+  I2cDevice* const prev_device = _schedule->slots[_slot_index_in_cycle].device;
+  if (prev_device && prev_device->is_i2c_bus_in_use()) {
+    error_handler::Panic(149);
+  }
+
   // Increment the slot index.
   // We keep the slot index stable throughout the slot
   // since it's used also by isrs. Since the timer handler
@@ -101,15 +112,13 @@ void I2cScheduler::timer_callback() {
   }
 
   // Do nothing if the slot is not active.
-  I2cDevice* const dev = _schedule->slots[_slot_index_in_cycle].device;
-  if (!dev) {
-    return;
+  I2cDevice* const next_device = _schedule->slots[_slot_index_in_cycle].device;
+  if (next_device) {
+    // Call the start method of the device. This typically triggers
+    // one or more I2C DMA/IT transfers that should complete before the
+    // end of the slot, freeing the bus to the next device.
+    next_device->on_i2c_slot_begin(slot_sys_time_millis);
   }
-
-  // Call the start method of the device. This typically triggers
-  // one or more I2C DMA/IT transfers that should complete before the
-  // end of the slot, freeing the bus to the next device.
-  dev->on_i2c_slot_timer(slot_sys_time_millis);
 }
 
 // Called from ISR to map the hi2c to a scheduler.

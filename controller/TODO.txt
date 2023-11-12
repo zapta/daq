@@ -1,13 +1,6 @@
 
-* Implement the hardware detection is the pw_card class.
-
-
-------
-
 
 * Add to i2c scheduler the ability to device cycle rate (per device). Add a cycle divider field.
-
-* In i2c scheduler, try to avoid exposing the timer_callback as public.
 
 ------
 

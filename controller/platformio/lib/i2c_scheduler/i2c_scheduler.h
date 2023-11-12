@@ -8,12 +8,13 @@ class I2cDevice {
  public:
   I2cDevice() {}
 
-  virtual void on_scheduler_start(I2C_HandleTypeDef* scheduler_hi2c,
+  virtual void on_scheduler_init(I2C_HandleTypeDef* scheduler_hi2c,
                                   uint16_t slot_length_ms,
                                   uint16_t slot_internval_ms) = 0;
-  virtual void on_i2c_slot_timer(uint32_t slot_sys_time_millis) = 0;
+  virtual void on_i2c_slot_begin(uint32_t slot_sys_time_millis) = 0;
   virtual void on_i2c_complete_isr() = 0;
   virtual void on_i2c_error_isr() = 0;
+  virtual bool is_i2c_bus_in_use() = 0;
 };
 
 struct I2cSlot {
