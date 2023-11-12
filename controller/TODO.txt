@@ -1,4 +1,6 @@
 
+* Verify with logic analyzer that the sdata link is not saturated.
+
 * Print the data point interval of lc1, tm1, tm2, tm3
 
 ------
