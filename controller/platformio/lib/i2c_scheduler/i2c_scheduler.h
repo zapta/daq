@@ -11,14 +11,23 @@ class I2cDevice {
   virtual void on_scheduler_init(I2C_HandleTypeDef* scheduler_hi2c,
                                   uint16_t slot_length_ms,
                                   uint16_t slot_internval_ms) = 0;
-  virtual void on_i2c_slot_begin(uint32_t slot_sys_time_millis) = 0;
+  virtual void on_i2c_slot_begin(uint32_t slot_sys_timestamp_ms) = 0;
   virtual void on_i2c_complete_isr() = 0;
   virtual void on_i2c_error_isr() = 0;
   virtual bool is_i2c_bus_in_use() = 0;
 };
 
-struct I2cSlot {
+struct I2cScheduleSlot {
   I2cDevice* const device;
+  // The device is called only every N'th cycles. Used to recude the
+  // slot rate of a specific device. Should be >= 1.
+  uint16_t const rate_divider;
+
+  bool is_valid() const {
+    const bool device_exist = device;
+    const bool divider_exists = rate_divider;
+    return device_exist == divider_exists;
+  }
 };
 
 // Describes the schedule of a single I2C bugs (e.g. i2c1).
@@ -31,7 +40,7 @@ struct I2cSchedule {
   // The number of slots in each cycle. Not all slots have to be
   // active with actual devices.
   const uint8_t slots_per_cycle;
-  const I2cSlot slots[kMaxSlotsperSycle];
+  const I2cScheduleSlot slots[kMaxSlotsperSycle];
 
   bool is_valid() MUST_USE_VALUE;
 };
@@ -54,9 +63,7 @@ class I2cScheduler : public TimerCallback {
   StaticTimer _timer;
   I2cSchedule* _schedule = nullptr;
   uint8_t _slot_index_in_cycle = 0;
-
-  // The timer calls this method on each tick.
-  // void timer_callback(TimerHandle_t xTimer);
+  uint16_t _cycle_div_counters[I2cSchedule::kMaxSlotsperSycle];
 
   // ISR handlers that are shared by all schedulers.
   static void i2c_shared_completion_isr(I2C_HandleTypeDef* hi2c);

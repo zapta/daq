@@ -36,11 +36,13 @@ static StaticTask data_queue_task(data_queue::data_queue_task_body, "DQUE",
 
 // I2c schedule
 static I2cSchedule i2c1_schedule = {
-    // 1000ms / (8 * 5) = 25ms per cycle.
-    .ms_per_slot = 8,
+    // 10ms per cycle (100hz cycles)
+    .ms_per_slot = 2,
     .slots_per_cycle = 5,
     .slots = {
-        [0] = {.device = &pw_card::i2c1_pw1_device},
+        // For power device, two slots form a data points.
+        // With a divider of 2, the data point interval is 40ms (25 Hz)
+        [0] = {.device = &pw_card::i2c1_pw1_device, .rate_divider=2},
     }};
 
 // Called from from the main FreeRTOS task.

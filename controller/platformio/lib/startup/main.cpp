@@ -60,7 +60,7 @@ static void main_task_body_impl(void* argument) {
   logger.info("Serial USB started");
   // Make sure the symbol uxTopUsedPriority is not optimized
   // out by the linker. The OpenOCD debugger needs it.
-  logger.info("&uxTopUsedPriority = %p", &uxTopUsedPriority);
+  logger.info("uxTopUsedPriority address = %p", &uxTopUsedPriority);
 
   // Should not return.
   app_main();

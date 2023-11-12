@@ -73,7 +73,7 @@ class I2cPwDevice : public I2cDevice, public TaskBody {
   virtual void on_scheduler_init(I2C_HandleTypeDef* scheduler_hi2c,
                                  uint16_t slot_length_ms,
                                  uint16_t slot_internval_ms);
-  virtual void on_i2c_slot_begin(uint32_t slot_sys_time_millis);
+  virtual void on_i2c_slot_begin(uint32_t slot_sys_timestamp_ms);
   virtual void on_i2c_complete_isr();
   virtual void on_i2c_error_isr();
   virtual bool is_i2c_bus_in_use() {
@@ -291,6 +291,7 @@ void I2cPwDevice::on_scheduler_init(I2C_HandleTypeDef* _scheduler_hi2c,
   // and a slot to read the current, the data point rate is half
   // of that slot rate.
   _data_point_internval_ms = 2 * slot_internval_ms;
+  logger.info("%s data point interval = %hu ms", _pw_chan_id, _data_point_internval_ms);
 
   // We expect at least 2ms reserved time per slot and data rate of 10Hz.
   if (slot_length_ms < 2 || _data_point_internval_ms > 100) {
@@ -307,7 +308,7 @@ void I2cPwDevice::on_scheduler_init(I2C_HandleTypeDef* _scheduler_hi2c,
   _state = STATE_SCHEDULER_STARTED;
 }
 
-void I2cPwDevice::on_i2c_slot_begin(uint32_t slot_sys_time_millis) {
+void I2cPwDevice::on_i2c_slot_begin(uint32_t slot_sys_timestamp_ms) {
   // Do nothing if still initializing.
   // if (_state == STATE_UNDEFINED) {
   //   return;
@@ -316,7 +317,7 @@ void I2cPwDevice::on_i2c_slot_begin(uint32_t slot_sys_time_millis) {
   // Track slot timestamps
   // TODO: Add a sanity check that the slot intervals are as expected.
   _prev_slot_timestamp_millis = _current_slot_timestamp_millis;
-  _current_slot_timestamp_millis = slot_sys_time_millis;
+  _current_slot_timestamp_millis = slot_sys_timestamp_ms;
 
   switch (_state) {
     // TODO: Impelement the hardware testing sequence.

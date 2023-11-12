@@ -23,13 +23,18 @@ bool I2cSchedule::is_valid() {
     return false;
   }
 
-  // All usused slots should have no device.
-  for (uint8_t i = slots_per_cycle; i < kMaxSlotsperSycle; i++) {
-    if (slots[i].device != nullptr) {
+  for (uint8_t i = 0; i < kMaxSlotsperSycle; i++) {
+    const I2cScheduleSlot& slot = slots[i];
+    if (!slot.is_valid()) {
+      return false;
+    }
+    // Left over slots that are beyond the cycle should not have a device.
+    if (i >= slots_per_cycle && slot.device) {
       return false;
     }
   }
 
+  // All ok.
   return true;
 }
 
@@ -68,12 +73,16 @@ bool I2cScheduler::start(I2cSchedule* schedule) {
 
   // Call the on_start() method of each of the devices.
   const uint8_t slots_per_cycle = _schedule->slots_per_cycle;
+  const uint8_t cycle_time_ms = _schedule->ms_per_slot * slots_per_cycle;
   for (uint16_t i = 0; i < slots_per_cycle; i++) {
-    I2cDevice* const device = _schedule->slots[i].device;
-    if (device) {
-      device->on_scheduler_init(_hi2c, _schedule->ms_per_slot,
-                                _schedule->ms_per_slot * slots_per_cycle);
-      if (device->is_i2c_bus_in_use()) {
+    _cycle_div_counters[i] = 0;
+    const I2cScheduleSlot& schedule_slot = _schedule->slots[i];
+    // I2cDevice* const device = schedule_slot.device;
+    if (schedule_slot.device) {
+      schedule_slot.device->on_scheduler_init(
+          _hi2c, _schedule->ms_per_slot,
+          cycle_time_ms * schedule_slot.rate_divider);
+      if (schedule_slot.device->is_i2c_bus_in_use()) {
         error_handler::Panic(151);
       }
     }
@@ -112,12 +121,24 @@ void I2cScheduler::timer_callback() {
   }
 
   // Do nothing if the slot is not active.
-  I2cDevice* const next_device = _schedule->slots[_slot_index_in_cycle].device;
-  if (next_device) {
+  const I2cScheduleSlot& scheduler_slot =
+      _schedule->slots[_slot_index_in_cycle];
+  // I2cDevice* const next_device =
+  // _schedule->slots[_slot_index_in_cycle].device;
+  if (!scheduler_slot.device) {
+    return;
+  }
+
+  // This slot has a device. Check its cycle rate divider.
+  uint16_t& device_cycle_rate_counter =
+      _cycle_div_counters[_slot_index_in_cycle];
+  device_cycle_rate_counter++;
+  if (device_cycle_rate_counter >= scheduler_slot.rate_divider) {
+    device_cycle_rate_counter = 0;
     // Call the start method of the device. This typically triggers
     // one or more I2C DMA/IT transfers that should complete before the
     // end of the slot, freeing the bus to the next device.
-    next_device->on_i2c_slot_begin(slot_sys_time_millis);
+    scheduler_slot.device->on_i2c_slot_begin(slot_sys_time_millis);
   }
 }
 

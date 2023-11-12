@@ -1,6 +1,5 @@
 
-
-* Add to i2c scheduler the ability to device cycle rate (per device). Add a cycle divider field.
+* Print the data point interval of lc1, tm1, tm2, tm3
 
 ------
 
