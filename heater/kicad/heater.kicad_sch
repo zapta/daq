@@ -3687,7 +3687,7 @@
   (symbol (lib_id "heater:+5VF") (at 72.39 111.76 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 016b1617-8a46-4a43-8c61-16aaaf291d42)
-    (property "Reference" "#PWR026" (at 72.39 115.57 0)
+    (property "Reference" "#PWR08" (at 72.39 115.57 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5VF" (at 72.39 107.815 0)
@@ -3703,7 +3703,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR026") (unit 1)
+          (reference "#PWR08") (unit 1)
         )
       )
     )
@@ -3712,7 +3712,7 @@
   (symbol (lib_id "common:GND") (at 304.8 150.495 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 0221f36b-ecf2-4cfd-85f8-c5d5e3bedfc3)
-    (property "Reference" "#PWR02" (at 304.8 156.845 0)
+    (property "Reference" "#PWR069" (at 304.8 156.845 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 304.8 154.059 0)
@@ -3728,7 +3728,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR02") (unit 1)
+          (reference "#PWR069") (unit 1)
         )
       )
     )
@@ -3737,7 +3737,7 @@
   (symbol (lib_id "heater:+5VF") (at 154.94 111.76 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 027ea758-227f-4475-8054-d1e39344367c)
-    (property "Reference" "#PWR028" (at 154.94 115.57 0)
+    (property "Reference" "#PWR029" (at 154.94 115.57 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5VF" (at 154.94 107.815 0)
@@ -3753,7 +3753,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR028") (unit 1)
+          (reference "#PWR029") (unit 1)
         )
       )
     )
@@ -3762,7 +3762,7 @@
   (symbol (lib_id "heater:+3V3") (at 285.115 48.895 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 029d3113-37fb-4f60-8822-f53d99fb865a)
-    (property "Reference" "#PWR024" (at 285.115 52.705 0)
+    (property "Reference" "#PWR062" (at 285.115 52.705 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+3V3" (at 285.115 45.085 0)
@@ -3778,7 +3778,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR024") (unit 1)
+          (reference "#PWR062") (unit 1)
         )
       )
     )
@@ -3787,7 +3787,7 @@
   (symbol (lib_id "heater:GNDF") (at 95.25 187.325 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 0531e3b9-340a-4668-af83-94303b116564)
-    (property "Reference" "#PWR023" (at 95.25 193.675 0)
+    (property "Reference" "#PWR015" (at 95.25 193.675 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 95.25 191.27 0)
@@ -3803,7 +3803,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR023") (unit 1)
+          (reference "#PWR015") (unit 1)
         )
       )
     )
@@ -3812,7 +3812,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 113.665 195.58 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 05645002-4846-4173-a4b3-cd50107996b3)
-    (property "Reference" "R22" (at 110.49 198.12 90)
+    (property "Reference" "R13" (at 110.49 198.12 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "5K1" (at 115.57 198.12 90)
@@ -3832,7 +3832,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R22") (unit 1)
+          (reference "R13") (unit 1)
         )
       )
     )
@@ -3841,7 +3841,7 @@
   (symbol (lib_id "common:GND") (at 306.07 205.105 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 0606b8e7-b1e6-40b3-ba49-52898bf4f7ce)
-    (property "Reference" "#PWR012" (at 306.07 211.455 0)
+    (property "Reference" "#PWR071" (at 306.07 211.455 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 306.07 208.669 0)
@@ -3857,7 +3857,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR012") (unit 1)
+          (reference "#PWR071") (unit 1)
         )
       )
     )
@@ -3866,7 +3866,7 @@
   (symbol (lib_id "heater:+5VF") (at 85.725 185.42 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 0627ecfd-c1a5-43b5-9443-375868b1f6c1)
-    (property "Reference" "#PWR034" (at 85.725 189.23 0)
+    (property "Reference" "#PWR012" (at 85.725 189.23 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5VF" (at 85.725 181.475 0)
@@ -3882,7 +3882,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR034") (unit 1)
+          (reference "#PWR012") (unit 1)
         )
       )
     )
@@ -3891,7 +3891,7 @@
   (symbol (lib_id "common:TestPoint") (at 133.35 59.055 0) (unit 1)
     (in_bom no) (on_board yes) (dnp no)
     (uuid 07cd7a47-b069-4631-84be-89187deaca01)
-    (property "Reference" "TP13" (at 132.08 53.34 0)
+    (property "Reference" "TP6" (at 132.08 53.34 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "TestPoint" (at 123.19 57.785 0)
@@ -3910,7 +3910,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "TP13") (unit 1)
+          (reference "TP6") (unit 1)
         )
       )
     )
@@ -3919,7 +3919,7 @@
   (symbol (lib_id "Device:C_Small") (at 120.015 113.03 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 07db1278-273a-4226-ae30-c0a42ecaa6fd)
-    (property "Reference" "C7" (at 122.555 109.22 90)
+    (property "Reference" "C4" (at 122.555 109.22 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "100n" (at 123.19 111.76 90)
@@ -3939,7 +3939,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C7") (unit 1)
+          (reference "C4") (unit 1)
         )
       )
     )
@@ -3948,7 +3948,7 @@
   (symbol (lib_id "Device:C_Small") (at 229.87 200.025 0) (mirror x) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 08a5e388-5e0b-4faa-b8e2-337aeff9c462)
-    (property "Reference" "C9" (at 227.33 201.93 0)
+    (property "Reference" "C16" (at 227.33 201.93 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "10u 16V" (at 229.87 198.12 0)
@@ -3968,7 +3968,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C9") (unit 1)
+          (reference "C16") (unit 1)
         )
       )
     )
@@ -3977,7 +3977,7 @@
   (symbol (lib_id "heater:GNDF") (at 43.18 85.09 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 0fd797e3-6f17-4e1b-bd5c-6920de6421af)
-    (property "Reference" "#PWR073" (at 43.18 91.44 0)
+    (property "Reference" "#PWR02" (at 43.18 91.44 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 43.18 89.035 0)
@@ -3993,7 +3993,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR073") (unit 1)
+          (reference "#PWR02") (unit 1)
         )
       )
     )
@@ -4002,7 +4002,7 @@
   (symbol (lib_name "ESD5344D_1") (lib_id "common:ESD5344D") (at 288.29 80.01 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 10458c3d-cd30-4958-9826-8433c5159200)
-    (property "Reference" "U2" (at 283.21 71.755 0)
+    (property "Reference" "U11" (at 283.21 71.755 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "ESD5344D-TP" (at 294.005 69.215 0)
@@ -4025,7 +4025,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "U2") (unit 1)
+          (reference "U11") (unit 1)
         )
       )
     )
@@ -4034,7 +4034,7 @@
   (symbol (lib_id "common:PCIE_98_EDGE") (at 339.725 85.09 0) (unit 1)
     (in_bom no) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 1048ca45-28e6-49d1-ad56-f0d28c91eb95)
-    (property "Reference" "J5" (at 340.995 41.91 0)
+    (property "Reference" "J3" (at 340.995 41.91 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "pcie_98" (at 340.995 44.45 0)
@@ -4150,7 +4150,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "J5") (unit 1)
+          (reference "J3") (unit 1)
         )
       )
     )
@@ -4159,7 +4159,7 @@
   (symbol (lib_id "heater:GNDF") (at 172.72 205.105 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 138bce31-7d69-4556-95c7-d1cdcc4aa129)
-    (property "Reference" "#PWR033" (at 172.72 211.455 0)
+    (property "Reference" "#PWR036" (at 172.72 211.455 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 172.72 209.05 0)
@@ -4175,7 +4175,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR033") (unit 1)
+          (reference "#PWR036") (unit 1)
         )
       )
     )
@@ -4184,7 +4184,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 224.155 55.245 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 14136688-bfd4-4cfe-9cf1-aad74233c6cd)
-    (property "Reference" "R8" (at 224.155 52.705 0)
+    (property "Reference" "R22" (at 224.155 52.705 0)
       (effects (font (size 1.27 1.27)) (justify right))
     )
     (property "Value" "1K8" (at 224.155 58.42 0)
@@ -4204,7 +4204,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R8") (unit 1)
+          (reference "R22") (unit 1)
         )
       )
     )
@@ -4213,7 +4213,7 @@
   (symbol (lib_id "heater:GNDF") (at 135.255 139.065 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 15a93e4f-a2ad-4a4e-a9ed-4c0feeeff59e)
-    (property "Reference" "#PWR060" (at 135.255 145.415 0)
+    (property "Reference" "#PWR025" (at 135.255 145.415 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 135.255 143.01 0)
@@ -4229,7 +4229,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR060") (unit 1)
+          (reference "#PWR025") (unit 1)
         )
       )
     )
@@ -4238,7 +4238,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 214.63 71.12 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 15caa4b4-1fe4-41ac-ac3d-821888ea42cf)
-    (property "Reference" "R16" (at 210.82 69.215 90)
+    (property "Reference" "R19" (at 210.82 69.215 90)
       (effects (font (size 1.27 1.27)) (justify right))
     )
     (property "Value" "0R" (at 215.9 69.215 90)
@@ -4258,7 +4258,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R16") (unit 1)
+          (reference "R19") (unit 1)
         )
       )
     )
@@ -4267,7 +4267,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 70.485 180.975 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 17a0a214-6527-4038-9c76-cb06ca8d02b7)
-    (property "Reference" "R12" (at 67.31 179.705 0)
+    (property "Reference" "R8" (at 67.31 179.705 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "2K" (at 66.675 181.61 0)
@@ -4287,7 +4287,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R12") (unit 1)
+          (reference "R8") (unit 1)
         )
       )
     )
@@ -4296,7 +4296,7 @@
   (symbol (lib_id "heater:GNDF") (at 72.39 139.065 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 17b5b558-ce7e-4102-b145-225c18ec60ca)
-    (property "Reference" "#PWR055" (at 72.39 145.415 0)
+    (property "Reference" "#PWR09" (at 72.39 145.415 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 72.39 143.01 0)
@@ -4312,7 +4312,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR055") (unit 1)
+          (reference "#PWR09") (unit 1)
         )
       )
     )
@@ -4321,7 +4321,7 @@
   (symbol (lib_id "heater:GNDF") (at 153.035 52.07 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 1843f5c5-beed-479c-afa0-bffdc5081f54)
-    (property "Reference" "#PWR071" (at 153.035 58.42 0)
+    (property "Reference" "#PWR028" (at 153.035 58.42 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 153.035 56.015 0)
@@ -4337,7 +4337,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR071") (unit 1)
+          (reference "#PWR028") (unit 1)
         )
       )
     )
@@ -4346,7 +4346,7 @@
   (symbol (lib_id "heater:OPA863SIDBVR") (at 146.685 60.96 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 19245699-c044-4ca1-b1fc-c52110affde7)
-    (property "Reference" "U13" (at 135.255 71.12 0)
+    (property "Reference" "U5" (at 135.255 71.12 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "OPA863SIDBVR" (at 135.89 73.66 0)
@@ -4370,7 +4370,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "U13") (unit 1)
+          (reference "U5") (unit 1)
         )
       )
     )
@@ -4379,7 +4379,7 @@
   (symbol (lib_id "heater:GNDF") (at 22.86 72.39 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 1ac441ab-6821-42db-b175-00d97a9063c8)
-    (property "Reference" "#PWR057" (at 22.86 78.74 0)
+    (property "Reference" "#PWR01" (at 22.86 78.74 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 22.86 76.335 0)
@@ -4395,7 +4395,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR057") (unit 1)
+          (reference "#PWR01") (unit 1)
         )
       )
     )
@@ -4404,7 +4404,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 285.115 54.61 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 1b4d8075-c9a7-4974-9710-493f90d5fbd6)
-    (property "Reference" "R9" (at 285.75 52.07 0)
+    (property "Reference" "R23" (at 285.75 52.07 0)
       (effects (font (size 1.27 1.27)) (justify right))
     )
     (property "Value" "1K8" (at 285.75 56.515 0)
@@ -4424,7 +4424,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R9") (unit 1)
+          (reference "R23") (unit 1)
         )
       )
     )
@@ -4433,7 +4433,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 306.07 193.04 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 1d078ae7-e675-43d4-83b3-330a58dac044)
-    (property "Reference" "R15" (at 302.895 191.77 0)
+    (property "Reference" "R25" (at 302.895 191.77 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "3K3" (at 302.895 194.31 0)
@@ -4453,7 +4453,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R15") (unit 1)
+          (reference "R25") (unit 1)
         )
       )
     )
@@ -4495,7 +4495,7 @@
   (symbol (lib_id "common:GND") (at 354.965 48.895 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 20018086-b725-4b58-86eb-b051c33b65a5)
-    (property "Reference" "#PWR05" (at 354.965 55.245 0)
+    (property "Reference" "#PWR076" (at 354.965 55.245 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 354.965 52.459 0)
@@ -4511,7 +4511,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR05") (unit 1)
+          (reference "#PWR076") (unit 1)
         )
       )
     )
@@ -4520,7 +4520,7 @@
   (symbol (lib_id "Device:C_Small") (at 92.075 186.69 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 24d7a5ed-39bb-46d4-b2b1-491207f3607e)
-    (property "Reference" "C11" (at 94.615 182.88 90)
+    (property "Reference" "C2" (at 94.615 182.88 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "100n" (at 95.25 185.42 90)
@@ -4540,7 +4540,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C11") (unit 1)
+          (reference "C2") (unit 1)
         )
       )
     )
@@ -4549,7 +4549,7 @@
   (symbol (lib_id "common:TestPoint") (at 141.605 119.38 0) (unit 1)
     (in_bom no) (on_board yes) (dnp no)
     (uuid 26cf6db4-f72f-4e1e-a79f-bdd58b7ee92b)
-    (property "Reference" "TP5" (at 140.335 113.665 0)
+    (property "Reference" "TP7" (at 140.335 113.665 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "TestPoint" (at 131.445 118.11 0)
@@ -4568,7 +4568,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "TP5") (unit 1)
+          (reference "TP7") (unit 1)
         )
       )
     )
@@ -4577,7 +4577,7 @@
   (symbol (lib_id "common:GND") (at 267.335 71.12 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 28fe9898-1829-4b3b-a7fe-269359244a30)
-    (property "Reference" "#PWR09" (at 267.335 77.47 0)
+    (property "Reference" "#PWR054" (at 267.335 77.47 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 267.335 74.684 0)
@@ -4593,7 +4593,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR09") (unit 1)
+          (reference "#PWR054") (unit 1)
         )
       )
     )
@@ -4602,7 +4602,7 @@
   (symbol (lib_id "heater:+5VF") (at 116.205 111.76 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 2af42144-b9c8-4de1-8a60-d07c3f68886b)
-    (property "Reference" "#PWR027" (at 116.205 115.57 0)
+    (property "Reference" "#PWR020" (at 116.205 115.57 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5VF" (at 116.205 107.815 0)
@@ -4618,7 +4618,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR027") (unit 1)
+          (reference "#PWR020") (unit 1)
         )
       )
     )
@@ -4627,7 +4627,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 156.845 73.66 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 2b60cf12-6795-4640-85dc-8e2889141356)
-    (property "Reference" "R18" (at 160.02 73.025 0)
+    (property "Reference" "R15" (at 160.02 73.025 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "10K" (at 160.02 75.565 0)
@@ -4647,7 +4647,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R18") (unit 1)
+          (reference "R15") (unit 1)
         )
       )
     )
@@ -4656,7 +4656,7 @@
   (symbol (lib_id "common:GND") (at 274.955 55.245 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 2e43478c-2896-462c-8760-f0b3e5459d91)
-    (property "Reference" "#PWR021" (at 274.955 61.595 0)
+    (property "Reference" "#PWR058" (at 274.955 61.595 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 274.955 58.809 0)
@@ -4672,7 +4672,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR021") (unit 1)
+          (reference "#PWR058") (unit 1)
         )
       )
     )
@@ -4681,7 +4681,7 @@
   (symbol (lib_id "heater:GNDF") (at 113.665 52.07 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 303c013e-a7f7-42ef-9983-67f189d41a95)
-    (property "Reference" "#PWR046" (at 113.665 58.42 0)
+    (property "Reference" "#PWR019" (at 113.665 58.42 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 113.665 56.015 0)
@@ -4697,7 +4697,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR046") (unit 1)
+          (reference "#PWR019") (unit 1)
         )
       )
     )
@@ -4706,7 +4706,7 @@
   (symbol (lib_id "heater:GNDF") (at 124.46 113.665 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 341b18f1-b5ac-4826-ab4c-c89043b12f5b)
-    (property "Reference" "#PWR044" (at 124.46 120.015 0)
+    (property "Reference" "#PWR024" (at 124.46 120.015 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 124.46 117.61 0)
@@ -4722,7 +4722,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR044") (unit 1)
+          (reference "#PWR024") (unit 1)
         )
       )
     )
@@ -4731,7 +4731,7 @@
   (symbol (lib_id "heater:GNDF") (at 154.94 139.065 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 3797fa02-4fc0-4fb6-ab88-a2c922b8fdaa)
-    (property "Reference" "#PWR064" (at 154.94 145.415 0)
+    (property "Reference" "#PWR030" (at 154.94 145.415 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 154.94 143.01 0)
@@ -4747,7 +4747,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR064") (unit 1)
+          (reference "#PWR030") (unit 1)
         )
       )
     )
@@ -4756,7 +4756,7 @@
   (symbol (lib_id "common:TestPoint") (at 161.925 193.675 0) (mirror y) (unit 1)
     (in_bom no) (on_board yes) (dnp no)
     (uuid 39c68587-4754-4bb7-9492-4d5b9fc298cc)
-    (property "Reference" "TP7" (at 163.195 187.96 0)
+    (property "Reference" "TP8" (at 163.195 187.96 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "TestPoint" (at 172.085 192.405 0)
@@ -4775,7 +4775,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "TP7") (unit 1)
+          (reference "TP8") (unit 1)
         )
       )
     )
@@ -4784,7 +4784,7 @@
   (symbol (lib_id "power:+5V") (at 313.055 137.16 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 3a2340e6-6ca6-4070-b1dc-f1ee259ae5e9)
-    (property "Reference" "#PWR04" (at 313.055 140.97 0)
+    (property "Reference" "#PWR073" (at 313.055 140.97 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5V" (at 313.055 133.35 0)
@@ -4800,7 +4800,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR04") (unit 1)
+          (reference "#PWR073") (unit 1)
         )
       )
     )
@@ -4809,7 +4809,7 @@
   (symbol (lib_id "heater:GNDF") (at 156.845 77.47 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 3c676735-dfa3-4012-af20-29a89d273103)
-    (property "Reference" "#PWR072" (at 156.845 83.82 0)
+    (property "Reference" "#PWR031" (at 156.845 83.82 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 156.845 81.415 0)
@@ -4825,7 +4825,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR072") (unit 1)
+          (reference "#PWR031") (unit 1)
         )
       )
     )
@@ -4834,7 +4834,7 @@
   (symbol (lib_id "heater:LTC1968") (at 105.41 65.405 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 3d8ad07e-40de-4135-9e7c-c4dae4bd8a89)
-    (property "Reference" "U6" (at 111.76 74.93 0)
+    (property "Reference" "U3" (at 111.76 74.93 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "LTC1968" (at 108.585 77.47 0)
@@ -4860,7 +4860,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "U6") (unit 1)
+          (reference "U3") (unit 1)
         )
       )
     )
@@ -4932,7 +4932,7 @@
   (symbol (lib_id "heater:GNDF") (at 243.84 77.47 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 434db695-6cb9-4939-a666-ca940fa4fd79)
-    (property "Reference" "#PWR062" (at 243.84 83.82 0)
+    (property "Reference" "#PWR052" (at 243.84 83.82 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 243.84 81.415 0)
@@ -4948,7 +4948,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR062") (unit 1)
+          (reference "#PWR052") (unit 1)
         )
       )
     )
@@ -4957,7 +4957,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 167.64 135.255 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 436d4b5d-2b31-4e00-8c43-bdbbd867dd92)
-    (property "Reference" "R5" (at 170.815 134.62 0)
+    (property "Reference" "R17" (at 170.815 134.62 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "10K" (at 170.815 137.16 0)
@@ -4977,7 +4977,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R5") (unit 1)
+          (reference "R17") (unit 1)
         )
       )
     )
@@ -4986,7 +4986,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 70.485 171.45 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 4434099b-6fcd-4727-92d5-e6b2c29ede38)
-    (property "Reference" "R11" (at 67.31 169.545 0)
+    (property "Reference" "R7" (at 67.31 169.545 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "50K" (at 67.31 172.085 0)
@@ -5006,7 +5006,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R11") (unit 1)
+          (reference "R7") (unit 1)
         )
       )
     )
@@ -5015,7 +5015,7 @@
   (symbol (lib_id "common:GND") (at 288.29 86.36 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 44f7bd7c-91f0-4f1d-ae3e-75328fdc95bc)
-    (property "Reference" "#PWR015" (at 288.29 92.71 0)
+    (property "Reference" "#PWR064" (at 288.29 92.71 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 288.29 89.924 0)
@@ -5031,7 +5031,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR015") (unit 1)
+          (reference "#PWR064") (unit 1)
         )
       )
     )
@@ -5040,7 +5040,7 @@
   (symbol (lib_id "heater:OPA863SIDBVR") (at 157.48 122.555 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 474eff5f-5a21-4f09-83b8-b7e34a13425d)
-    (property "Reference" "U12" (at 146.05 132.715 0)
+    (property "Reference" "U6" (at 146.05 132.715 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "OPA863SIDBVR" (at 146.685 135.255 0)
@@ -5064,7 +5064,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "U12") (unit 1)
+          (reference "U6") (unit 1)
         )
       )
     )
@@ -5073,7 +5073,7 @@
   (symbol (lib_id "heater:LTC1968") (at 116.205 127 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 48c265e5-9e16-40da-974d-1d2c555bbac6)
-    (property "Reference" "U15" (at 122.555 136.525 0)
+    (property "Reference" "U4" (at 122.555 136.525 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "LTC1968" (at 119.38 139.065 0)
@@ -5099,7 +5099,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "U15") (unit 1)
+          (reference "U4") (unit 1)
         )
       )
     )
@@ -5108,7 +5108,7 @@
   (symbol (lib_id "heater:GNDF") (at 215.9 205.105 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 4d7ff613-18ab-4e9e-8c1d-cf4d89197e6e)
-    (property "Reference" "#PWR030" (at 215.9 211.455 0)
+    (property "Reference" "#PWR043" (at 215.9 211.455 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 215.9 209.05 0)
@@ -5124,7 +5124,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR030") (unit 1)
+          (reference "#PWR043") (unit 1)
         )
       )
     )
@@ -5133,7 +5133,7 @@
   (symbol (lib_id "heater:+5VF") (at 224.155 50.165 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 51ec35b2-1af4-407e-bad0-8c7d23a05a3e)
-    (property "Reference" "#PWR068" (at 224.155 53.975 0)
+    (property "Reference" "#PWR045" (at 224.155 53.975 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5VF" (at 224.155 46.22 0)
@@ -5149,7 +5149,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR068") (unit 1)
+          (reference "#PWR045") (unit 1)
         )
       )
     )
@@ -5158,7 +5158,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 85.09 126.365 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 52e25bd4-ed2c-4852-8feb-e8e272b7f10c)
-    (property "Reference" "R1" (at 88.9 124.46 0)
+    (property "Reference" "R9" (at 88.9 124.46 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "10K" (at 88.9 127.635 0)
@@ -5178,7 +5178,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R1") (unit 1)
+          (reference "R9") (unit 1)
         )
       )
     )
@@ -5187,7 +5187,7 @@
   (symbol (lib_id "power:PWR_FLAG") (at 60.325 246.38 270) (mirror x) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 533c613f-07cd-4767-9868-bdf5e28dc8e1)
-    (property "Reference" "#FLG03" (at 62.23 246.38 0)
+    (property "Reference" "#FLG01" (at 62.23 246.38 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "PWR_FLAG" (at 63.5 247.015 90)
@@ -5203,7 +5203,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#FLG03") (unit 1)
+          (reference "#FLG01") (unit 1)
         )
       )
     )
@@ -5212,7 +5212,7 @@
   (symbol (lib_id "common:TestPoint") (at 166.37 60.96 0) (unit 1)
     (in_bom no) (on_board yes) (dnp no)
     (uuid 5529db25-37c5-4d42-ad7a-37fb95c8ff90)
-    (property "Reference" "TP14" (at 164.465 55.245 0)
+    (property "Reference" "TP9" (at 164.465 55.245 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "TestPoint" (at 156.21 59.69 0)
@@ -5231,7 +5231,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "TP14") (unit 1)
+          (reference "TP9") (unit 1)
         )
       )
     )
@@ -5240,7 +5240,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 291.465 54.61 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 557dc8a2-6982-4a3b-b86a-7f2d28a35b55)
-    (property "Reference" "R10" (at 292.1 52.07 0)
+    (property "Reference" "R24" (at 292.1 52.07 0)
       (effects (font (size 1.27 1.27)) (justify right))
     )
     (property "Value" "1K8" (at 292.1 56.515 0)
@@ -5260,7 +5260,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R10") (unit 1)
+          (reference "R24") (unit 1)
         )
       )
     )
@@ -5269,7 +5269,7 @@
   (symbol (lib_id "common:GND") (at 281.94 205.105 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 58570d0f-c5af-49a1-958f-3be390a70442)
-    (property "Reference" "#PWR049" (at 281.94 211.455 0)
+    (property "Reference" "#PWR060" (at 281.94 211.455 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 281.94 208.669 0)
@@ -5285,7 +5285,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR049") (unit 1)
+          (reference "#PWR060") (unit 1)
         )
       )
     )
@@ -5294,7 +5294,7 @@
   (symbol (lib_id "Isolator:ISO1541") (at 255.27 62.23 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 5a5a90f9-c2c9-4fed-acc0-2ac70c095e02)
-    (property "Reference" "U5" (at 255.27 52.705 0)
+    (property "Reference" "U9" (at 255.27 52.705 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "ISO1541" (at 255.27 55.245 0)
@@ -5317,7 +5317,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "U5") (unit 1)
+          (reference "U9") (unit 1)
         )
       )
     )
@@ -5326,7 +5326,7 @@
   (symbol (lib_id "Device:C_Small") (at 203.2 49.53 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 5b2f5fe7-7a70-4690-924e-53e5dd6ee071)
-    (property "Reference" "C15" (at 200.025 51.054 90)
+    (property "Reference" "C13" (at 200.025 51.054 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "100n" (at 206.629 50.8 90)
@@ -5346,7 +5346,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C15") (unit 1)
+          (reference "C13") (unit 1)
         )
       )
     )
@@ -5355,7 +5355,7 @@
   (symbol (lib_id "heater:+5VF") (at 144.145 50.165 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 5bf9fe85-4af3-441a-90f4-e77544a4915f)
-    (property "Reference" "#PWR069" (at 144.145 53.975 0)
+    (property "Reference" "#PWR026" (at 144.145 53.975 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5VF" (at 144.145 46.22 0)
@@ -5371,7 +5371,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR069") (unit 1)
+          (reference "#PWR026") (unit 1)
         )
       )
     )
@@ -5380,7 +5380,7 @@
   (symbol (lib_id "heater:+5VF") (at 243.84 50.165 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 5c04bbc3-fbe0-4af7-bad8-eeb953312797)
-    (property "Reference" "#PWR063" (at 243.84 53.975 0)
+    (property "Reference" "#PWR051" (at 243.84 53.975 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5VF" (at 243.586 46.101 0)
@@ -5396,7 +5396,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR063") (unit 1)
+          (reference "#PWR051") (unit 1)
         )
       )
     )
@@ -5405,7 +5405,7 @@
   (symbol (lib_id "heater:GNDF") (at 242.57 205.105 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 5cd13619-8586-4780-802a-e5010a258709)
-    (property "Reference" "#PWR08" (at 242.57 211.455 0)
+    (property "Reference" "#PWR050" (at 242.57 211.455 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 242.57 209.05 0)
@@ -5421,7 +5421,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR08") (unit 1)
+          (reference "#PWR050") (unit 1)
         )
       )
     )
@@ -5430,7 +5430,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 167.64 126.365 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 5dbc2b8a-a9d4-4580-8a6c-bc0afadcda93)
-    (property "Reference" "R3" (at 170.815 126.365 0)
+    (property "Reference" "R16" (at 170.815 126.365 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "30K" (at 170.815 128.905 0)
@@ -5450,7 +5450,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R3") (unit 1)
+          (reference "R16") (unit 1)
         )
       )
     )
@@ -5459,7 +5459,7 @@
   (symbol (lib_id "heater:+3V3") (at 273.685 138.43 90) (mirror x) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 5e604bd5-f773-4f99-8640-fad198a320c2)
-    (property "Reference" "#PWR010" (at 277.495 138.43 0)
+    (property "Reference" "#PWR056" (at 277.495 138.43 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+3V3" (at 269.875 139.065 90)
@@ -5475,7 +5475,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR010") (unit 1)
+          (reference "#PWR056") (unit 1)
         )
       )
     )
@@ -5484,7 +5484,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 36.195 63.5 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 606dcc90-da5a-4469-92b1-3e1f16de4820)
-    (property "Reference" "R4" (at 36.195 66.04 90)
+    (property "Reference" "R2" (at 36.195 66.04 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "0R025 50ppm" (at 34.925 61.595 90)
@@ -5504,7 +5504,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R4") (unit 1)
+          (reference "R2") (unit 1)
         )
       )
     )
@@ -5513,7 +5513,7 @@
   (symbol (lib_id "Device:C_Small") (at 109.22 51.435 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 640f1a93-693b-4728-a874-7fa0b3023189)
-    (property "Reference" "C12" (at 113.03 47.625 90)
+    (property "Reference" "C3" (at 113.03 47.625 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "100n" (at 113.03 50.165 90)
@@ -5533,7 +5533,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C12") (unit 1)
+          (reference "C3") (unit 1)
         )
       )
     )
@@ -5542,7 +5542,7 @@
   (symbol (lib_id "heater:GNDF") (at 85.09 139.065 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 64125ad1-deef-4447-8a3a-124dad73e16a)
-    (property "Reference" "#PWR056" (at 85.09 145.415 0)
+    (property "Reference" "#PWR011" (at 85.09 145.415 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 85.09 143.01 0)
@@ -5558,7 +5558,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR056") (unit 1)
+          (reference "#PWR011") (unit 1)
         )
       )
     )
@@ -5567,7 +5567,7 @@
   (symbol (lib_id "Device:C_Small") (at 281.94 200.025 0) (mirror x) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 66620d42-10a2-424c-abb9-e99e9b0a2f8a)
-    (property "Reference" "C14" (at 279.4 203.2 0)
+    (property "Reference" "C22" (at 279.4 203.2 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "10u" (at 279.4 198.12 0)
@@ -5587,7 +5587,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C14") (unit 1)
+          (reference "C22") (unit 1)
         )
       )
     )
@@ -5596,7 +5596,7 @@
   (symbol (lib_id "Device:C_Small") (at 240.03 53.34 270) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 66b63731-7819-4c59-af9e-30134ee35690)
-    (property "Reference" "C16" (at 238.125 48.26 90)
+    (property "Reference" "C18" (at 238.125 48.26 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "100n" (at 239.395 50.8 90)
@@ -5616,7 +5616,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C16") (unit 1)
+          (reference "C18") (unit 1)
         )
       )
     )
@@ -5625,7 +5625,7 @@
   (symbol (lib_id "Device:C_Small") (at 165.735 200.025 0) (mirror x) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 69497f39-c416-4925-94df-a63558c62f2f)
-    (property "Reference" "C28" (at 163.195 203.2 0)
+    (property "Reference" "C9" (at 163.195 203.2 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "10u" (at 163.195 198.12 0)
@@ -5645,7 +5645,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C28") (unit 1)
+          (reference "C9") (unit 1)
         )
       )
     )
@@ -5654,7 +5654,7 @@
   (symbol (lib_id "common:TestPoint") (at 170.815 123.19 0) (unit 1)
     (in_bom no) (on_board yes) (dnp no)
     (uuid 6b294463-67c9-40ff-9f41-e254dd021fef)
-    (property "Reference" "TP3" (at 169.545 117.475 0)
+    (property "Reference" "TP10" (at 169.545 117.475 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "TestPoint" (at 160.655 121.92 0)
@@ -5673,7 +5673,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "TP3") (unit 1)
+          (reference "TP10") (unit 1)
         )
       )
     )
@@ -5682,7 +5682,7 @@
   (symbol (lib_id "Device:C_Small") (at 278.13 145.415 0) (mirror x) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 6bfe07c0-134d-4bf3-8a46-a6d31d8db329)
-    (property "Reference" "C4" (at 276.225 142.875 0)
+    (property "Reference" "C21" (at 276.225 142.875 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "10u" (at 275.59 147.955 0)
@@ -5702,7 +5702,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C4") (unit 1)
+          (reference "C21") (unit 1)
         )
       )
     )
@@ -5711,7 +5711,7 @@
   (symbol (lib_id "common:GND") (at 274.32 205.105 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 6c801e05-47d0-45c7-b7f6-234912285c00)
-    (property "Reference" "#PWR074" (at 274.32 211.455 0)
+    (property "Reference" "#PWR057" (at 274.32 211.455 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 274.32 208.669 0)
@@ -5727,7 +5727,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR074") (unit 1)
+          (reference "#PWR057") (unit 1)
         )
       )
     )
@@ -5736,7 +5736,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 156.845 64.77 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 6d4ba7c3-690a-4a0b-a1bf-afef4368484b)
-    (property "Reference" "R17" (at 160.02 64.77 0)
+    (property "Reference" "R14" (at 160.02 64.77 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "30K" (at 160.02 67.31 0)
@@ -5756,7 +5756,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R17") (unit 1)
+          (reference "R14") (unit 1)
         )
       )
     )
@@ -5765,7 +5765,7 @@
   (symbol (lib_id "heater:GNDF") (at 192.405 205.105 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 6dcad4b9-09ac-4432-ad38-26d20caaa9cd)
-    (property "Reference" "#PWR032" (at 192.405 211.455 0)
+    (property "Reference" "#PWR038" (at 192.405 211.455 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 192.405 209.05 0)
@@ -5781,7 +5781,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR032") (unit 1)
+          (reference "#PWR038") (unit 1)
         )
       )
     )
@@ -5790,7 +5790,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 213.995 80.645 90) (unit 1)
     (in_bom no) (on_board yes) (dnp yes)
     (uuid 6e387fd4-5c8f-4d4d-88b7-decb6eb11467)
-    (property "Reference" "R13" (at 209.55 78.74 90)
+    (property "Reference" "R18" (at 209.55 78.74 90)
       (effects (font (size 1.27 1.27)) (justify right))
     )
     (property "Value" "0R" (at 214.63 78.74 90)
@@ -5810,7 +5810,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R13") (unit 1)
+          (reference "R18") (unit 1)
         )
       )
     )
@@ -5848,7 +5848,7 @@
   (symbol (lib_id "Device:C_Small") (at 179.705 200.025 0) (mirror x) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 6fa142d1-ba43-4742-bc64-99b0a75db690)
-    (property "Reference" "C20" (at 177.8 202.565 0)
+    (property "Reference" "C11" (at 177.8 202.565 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "10n" (at 177.165 198.12 0)
@@ -5868,7 +5868,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C20") (unit 1)
+          (reference "C11") (unit 1)
         )
       )
     )
@@ -5877,7 +5877,7 @@
   (symbol (lib_id "heater:+3V3") (at 291.465 48.895 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 7595f23f-dbb5-4d47-9c82-9fefe404d193)
-    (property "Reference" "#PWR025" (at 291.465 52.705 0)
+    (property "Reference" "#PWR066" (at 291.465 52.705 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+3V3" (at 291.465 45.085 0)
@@ -5893,7 +5893,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR025") (unit 1)
+          (reference "#PWR066") (unit 1)
         )
       )
     )
@@ -5902,7 +5902,7 @@
   (symbol (lib_id "heater:GNDF") (at 60.325 248.285 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 7a2860fb-fe0b-4dc2-9bc7-a7b231127cb4)
-    (property "Reference" "#PWR047" (at 60.325 254.635 0)
+    (property "Reference" "#PWR05" (at 60.325 254.635 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 60.325 252.23 0)
@@ -5918,7 +5918,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR047") (unit 1)
+          (reference "#PWR05") (unit 1)
         )
       )
     )
@@ -5927,7 +5927,7 @@
   (symbol (lib_id "power:+5V") (at 327.025 46.99 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 7abd7913-984d-4a43-ba6e-5267f826e45b)
-    (property "Reference" "#PWR011" (at 330.835 46.99 0)
+    (property "Reference" "#PWR075" (at 330.835 46.99 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5V" (at 323.469 46.99 90)
@@ -5943,7 +5943,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR011") (unit 1)
+          (reference "#PWR075") (unit 1)
         )
       )
     )
@@ -5952,7 +5952,7 @@
   (symbol (lib_id "common:GND") (at 267.97 205.105 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 7aeb9911-daa5-4aa6-bfd3-5b3e0dd951ca)
-    (property "Reference" "#PWR043" (at 267.97 211.455 0)
+    (property "Reference" "#PWR055" (at 267.97 211.455 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 267.97 208.669 0)
@@ -5968,7 +5968,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR043") (unit 1)
+          (reference "#PWR055") (unit 1)
         )
       )
     )
@@ -5977,7 +5977,7 @@
   (symbol (lib_id "common:GND") (at 278.13 150.495 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 7d02ddc7-a959-4f6d-9d9e-e71853e55805)
-    (property "Reference" "#PWR07" (at 278.13 156.845 0)
+    (property "Reference" "#PWR059" (at 278.13 156.845 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 278.13 154.059 0)
@@ -5993,7 +5993,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR07") (unit 1)
+          (reference "#PWR059") (unit 1)
         )
       )
     )
@@ -6002,7 +6002,7 @@
   (symbol (lib_id "Device:LED") (at 119.38 189.865 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 7ed42c73-2968-44c6-8b9f-582b42902677)
-    (property "Reference" "D1" (at 122.555 187.325 90)
+    (property "Reference" "D2" (at 122.555 187.325 90)
       (effects (font (size 1.27 1.27)) (justify right))
     )
     (property "Value" "RED" (at 122.555 190.5 90)
@@ -6022,7 +6022,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "D1") (unit 1)
+          (reference "D2") (unit 1)
         )
       )
     )
@@ -6031,7 +6031,7 @@
   (symbol (lib_id "power:PWR_FLAG") (at 354.965 46.99 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 861bb651-c2ba-4a9b-9b8c-3935e91206a9)
-    (property "Reference" "#FLG02" (at 354.965 45.085 0)
+    (property "Reference" "#FLG03" (at 354.965 45.085 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "PWR_FLAG" (at 354.965 43.045 0)
@@ -6047,7 +6047,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#FLG02") (unit 1)
+          (reference "#FLG03") (unit 1)
         )
       )
     )
@@ -6056,7 +6056,7 @@
   (symbol (lib_id "common:GND") (at 315.595 205.105 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 876be2d6-ff7c-4b2e-905c-66f87c4dac26)
-    (property "Reference" "#PWR020" (at 315.595 211.455 0)
+    (property "Reference" "#PWR074" (at 315.595 211.455 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 315.595 208.669 0)
@@ -6072,7 +6072,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR020") (unit 1)
+          (reference "#PWR074") (unit 1)
         )
       )
     )
@@ -6081,7 +6081,7 @@
   (symbol (lib_id "common:TestPoint") (at 100.33 123.19 0) (unit 1)
     (in_bom no) (on_board yes) (dnp no)
     (uuid 87fa9a1e-ad79-4ffc-94a0-04ab36b721d4)
-    (property "Reference" "TP11" (at 99.06 117.475 0)
+    (property "Reference" "TP4" (at 99.06 117.475 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "TestPoint" (at 90.17 121.92 0)
@@ -6100,7 +6100,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "TP11") (unit 1)
+          (reference "TP4") (unit 1)
         )
       )
     )
@@ -6109,7 +6109,7 @@
   (symbol (lib_id "heater:GNDF") (at 92.075 77.47 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 8821965d-5366-4256-ab45-4565ede85ab8)
-    (property "Reference" "#PWR037" (at 92.075 83.82 0)
+    (property "Reference" "#PWR014" (at 92.075 83.82 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 92.075 81.415 0)
@@ -6125,7 +6125,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR037") (unit 1)
+          (reference "#PWR014") (unit 1)
         )
       )
     )
@@ -6134,7 +6134,7 @@
   (symbol (lib_id "Device:C_Small") (at 149.86 51.435 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 89810cae-4037-4a5f-8a63-994fb77c4a9a)
-    (property "Reference" "C17" (at 153.67 47.625 90)
+    (property "Reference" "C7" (at 153.67 47.625 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "100n" (at 153.67 50.165 90)
@@ -6154,7 +6154,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C17") (unit 1)
+          (reference "C7") (unit 1)
         )
       )
     )
@@ -6163,7 +6163,7 @@
   (symbol (lib_id "power:+5V") (at 285.75 193.04 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 89a510b1-af06-44e9-a3a7-0aeb42585628)
-    (property "Reference" "#PWR042" (at 285.75 196.85 0)
+    (property "Reference" "#PWR063" (at 285.75 196.85 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5V" (at 285.75 189.095 0)
@@ -6179,7 +6179,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR042") (unit 1)
+          (reference "#PWR063") (unit 1)
         )
       )
     )
@@ -6188,7 +6188,7 @@
   (symbol (lib_id "heater:GNDF") (at 102.87 139.065 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 8ce8acd5-3485-484a-ba67-a3668b0afb44)
-    (property "Reference" "#PWR058" (at 102.87 145.415 0)
+    (property "Reference" "#PWR016" (at 102.87 145.415 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 102.87 143.01 0)
@@ -6204,7 +6204,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR058") (unit 1)
+          (reference "#PWR016") (unit 1)
         )
       )
     )
@@ -6213,7 +6213,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 22.86 67.945 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 8f4a88f8-f998-42fc-a48f-15a9d8aa502a)
-    (property "Reference" "R23" (at 26.67 68.58 0)
+    (property "Reference" "R1" (at 26.67 68.58 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "0R" (at 26.035 70.485 0)
@@ -6233,7 +6233,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R23") (unit 1)
+          (reference "R1") (unit 1)
         )
       )
     )
@@ -6242,7 +6242,7 @@
   (symbol (lib_id "Regulator_Linear:LP2985-5.0") (at 192.405 196.215 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 913a155f-0f1d-4961-8084-0d51e2c52a91)
-    (property "Reference" "U3" (at 186.69 187.325 0)
+    (property "Reference" "U7" (at 186.69 187.325 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "LP2985-5.0" (at 191.135 189.865 0)
@@ -6265,7 +6265,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "U3") (unit 1)
+          (reference "U7") (unit 1)
         )
       )
     )
@@ -6274,7 +6274,7 @@
   (symbol (lib_id "common:XC6206P332MR") (at 294.005 140.97 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 939fc029-8c7a-4056-aa37-661c9b4c03b1)
-    (property "Reference" "U9" (at 294.005 129.54 0)
+    (property "Reference" "U13" (at 294.005 129.54 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "XC6206P332MR" (at 294.005 132.08 0)
@@ -6295,7 +6295,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "U9") (unit 1)
+          (reference "U13") (unit 1)
         )
       )
     )
@@ -6304,7 +6304,7 @@
   (symbol (lib_id "heater:GNDF") (at 49.53 248.285 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 94e438a6-5217-46f9-802f-c551b6b95e46)
-    (property "Reference" "#PWR014" (at 49.53 254.635 0)
+    (property "Reference" "#PWR04" (at 49.53 254.635 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 49.53 252.23 0)
@@ -6320,7 +6320,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR014") (unit 1)
+          (reference "#PWR04") (unit 1)
         )
       )
     )
@@ -6329,7 +6329,7 @@
   (symbol (lib_id "heater:+5VF") (at 70.485 167.64 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 98dc039f-4ae5-40d6-8924-77ab22cb22f2)
-    (property "Reference" "#PWR019" (at 70.485 171.45 0)
+    (property "Reference" "#PWR06" (at 70.485 171.45 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5VF" (at 70.485 163.695 0)
@@ -6345,7 +6345,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR019") (unit 1)
+          (reference "#PWR06") (unit 1)
         )
       )
     )
@@ -6354,7 +6354,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 85.09 135.255 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 998df94b-28cb-4885-a032-feb1f41b69e1)
-    (property "Reference" "R2" (at 88.265 134.62 0)
+    (property "Reference" "R10" (at 88.265 134.62 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "1K" (at 88.265 137.16 0)
@@ -6374,7 +6374,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R2") (unit 1)
+          (reference "R10") (unit 1)
         )
       )
     )
@@ -6383,7 +6383,7 @@
   (symbol (lib_id "power:+5V") (at 298.45 98.425 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 9ae5baf1-c618-4537-a1da-10b0c7fb54e4)
-    (property "Reference" "#PWR052" (at 298.45 102.235 0)
+    (property "Reference" "#PWR068" (at 298.45 102.235 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5V" (at 298.45 94.48 0)
@@ -6399,7 +6399,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR052") (unit 1)
+          (reference "#PWR068") (unit 1)
         )
       )
     )
@@ -6408,7 +6408,7 @@
   (symbol (lib_id "heater:GNDF") (at 236.855 205.105 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 9ba16e9a-cabf-4b17-a243-e2b34e52b24c)
-    (property "Reference" "#PWR075" (at 236.855 211.455 0)
+    (property "Reference" "#PWR049" (at 236.855 211.455 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 236.855 209.05 0)
@@ -6424,7 +6424,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR075") (unit 1)
+          (reference "#PWR049") (unit 1)
         )
       )
     )
@@ -6433,7 +6433,7 @@
   (symbol (lib_id "power:PWR_FLAG") (at 328.93 46.99 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 9e54698b-0661-44e4-ade9-55417680cb76)
-    (property "Reference" "#FLG01" (at 328.93 45.085 0)
+    (property "Reference" "#FLG02" (at 328.93 45.085 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "PWR_FLAG" (at 328.93 43.045 0)
@@ -6449,7 +6449,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#FLG01") (unit 1)
+          (reference "#FLG02") (unit 1)
         )
       )
     )
@@ -6458,7 +6458,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 214.63 75.565 90) (unit 1)
     (in_bom no) (on_board yes) (dnp yes)
     (uuid 9e75c44f-3ecb-4f48-9e03-ef3c40608d85)
-    (property "Reference" "R14" (at 210.185 73.66 90)
+    (property "Reference" "R20" (at 210.185 73.66 90)
       (effects (font (size 1.27 1.27)) (justify right))
     )
     (property "Value" "0R" (at 215.265 73.66 90)
@@ -6478,7 +6478,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R14") (unit 1)
+          (reference "R20") (unit 1)
         )
       )
     )
@@ -6487,7 +6487,7 @@
   (symbol (lib_id "common:GND") (at 309.88 150.495 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 9fc1c4a1-a2d9-4adc-a15e-8197a3e6cd38)
-    (property "Reference" "#PWR01" (at 309.88 156.845 0)
+    (property "Reference" "#PWR072" (at 309.88 156.845 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 309.88 154.059 0)
@@ -6503,7 +6503,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR01") (unit 1)
+          (reference "#PWR072") (unit 1)
         )
       )
     )
@@ -6541,7 +6541,7 @@
   (symbol (lib_id "heater:OPA863SIDBVR") (at 88.265 195.58 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid a163bab5-df26-4e9c-be8d-aa1543bf681a)
-    (property "Reference" "U11" (at 92.075 200.025 0)
+    (property "Reference" "U2" (at 92.075 200.025 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "OPA863SIDBVR" (at 97.155 202.565 0)
@@ -6565,7 +6565,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "U11") (unit 1)
+          (reference "U2") (unit 1)
         )
       )
     )
@@ -6574,7 +6574,7 @@
   (symbol (lib_id "heater:GNDF") (at 208.28 205.105 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid a3871946-8f88-4b0a-a5da-10416436a6ca)
-    (property "Reference" "#PWR031" (at 208.28 211.455 0)
+    (property "Reference" "#PWR041" (at 208.28 211.455 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 208.28 209.05 0)
@@ -6590,7 +6590,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR031") (unit 1)
+          (reference "#PWR041") (unit 1)
         )
       )
     )
@@ -6599,7 +6599,7 @@
   (symbol (lib_id "heater:+3V3") (at 306.07 189.23 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid a95f2e94-c3df-436a-9085-5616cd6a0931)
-    (property "Reference" "#PWR017" (at 306.07 193.04 0)
+    (property "Reference" "#PWR070" (at 306.07 193.04 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+3V3" (at 303.276 185.42 0)
@@ -6615,7 +6615,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR017") (unit 1)
+          (reference "#PWR070") (unit 1)
         )
       )
     )
@@ -6624,7 +6624,7 @@
   (symbol (lib_id "Device:C_Small") (at 271.145 53.34 270) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid a9bb72bd-af58-4ac2-b378-22050fa8ae04)
-    (property "Reference" "C10" (at 271.78 48.26 90)
+    (property "Reference" "C19" (at 271.78 48.26 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "100n" (at 272.415 50.165 90)
@@ -6644,7 +6644,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C10") (unit 1)
+          (reference "C19") (unit 1)
         )
       )
     )
@@ -6653,7 +6653,7 @@
   (symbol (lib_id "Device:C_Small") (at 124.46 64.77 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid aa5e728e-b0be-4958-915a-b22e13b0ff8d)
-    (property "Reference" "C13" (at 128.27 64.77 0)
+    (property "Reference" "C5" (at 128.27 64.77 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "2u2" (at 128.27 67.31 0)
@@ -6673,7 +6673,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C13") (unit 1)
+          (reference "C5") (unit 1)
         )
       )
     )
@@ -6682,7 +6682,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 43.18 68.58 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid aaf2c4bd-c7c9-497c-affe-8738f1e4a6d0)
-    (property "Reference" "R19" (at 46.355 67.31 0)
+    (property "Reference" "R3" (at 46.355 67.31 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "100k" (at 46.99 69.215 0)
@@ -6702,7 +6702,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R19") (unit 1)
+          (reference "R3") (unit 1)
         )
       )
     )
@@ -6711,7 +6711,7 @@
   (symbol (lib_id "heater:GNDF") (at 70.485 184.785 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid ad825d44-178e-40d8-b30e-a5718325e958)
-    (property "Reference" "#PWR029" (at 70.485 191.135 0)
+    (property "Reference" "#PWR07" (at 70.485 191.135 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 70.485 188.73 0)
@@ -6727,7 +6727,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR029") (unit 1)
+          (reference "#PWR07") (unit 1)
         )
       )
     )
@@ -6736,7 +6736,7 @@
   (symbol (lib_id "common:TestPoint") (at 60.325 246.38 0) (unit 1)
     (in_bom no) (on_board yes) (dnp no)
     (uuid b1339d5b-bd58-4e3d-97b2-2840e317e37e)
-    (property "Reference" "TP10" (at 59.055 240.665 0)
+    (property "Reference" "TP1" (at 59.055 240.665 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "TestPoint" (at 50.165 245.11 0)
@@ -6755,7 +6755,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "TP10") (unit 1)
+          (reference "TP1") (unit 1)
         )
       )
     )
@@ -6764,7 +6764,7 @@
   (symbol (lib_id "common:TestPoint") (at 62.865 120.65 0) (unit 1)
     (in_bom no) (on_board yes) (dnp no)
     (uuid b1be26c0-fc12-4a94-87e0-fde77b343ca1)
-    (property "Reference" "TP8" (at 61.595 114.935 0)
+    (property "Reference" "TP2" (at 61.595 114.935 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "TestPoint" (at 52.705 119.38 0)
@@ -6783,7 +6783,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "TP8") (unit 1)
+          (reference "TP2") (unit 1)
         )
       )
     )
@@ -6792,7 +6792,7 @@
   (symbol (lib_id "heater:+3V3") (at 267.335 48.895 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid b21131b6-a703-40d9-b79c-fbdcd04b55f1)
-    (property "Reference" "#PWR013" (at 267.335 52.705 0)
+    (property "Reference" "#PWR053" (at 267.335 52.705 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+3V3" (at 267.335 45.085 0)
@@ -6808,7 +6808,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR013") (unit 1)
+          (reference "#PWR053") (unit 1)
         )
       )
     )
@@ -6817,7 +6817,7 @@
   (symbol (lib_id "heater:GNDF") (at 236.22 55.245 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid b5f209d7-dfbf-48ca-a37a-9f5829ed43e8)
-    (property "Reference" "#PWR066" (at 236.22 61.595 0)
+    (property "Reference" "#PWR048" (at 236.22 61.595 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 236.22 59.19 0)
@@ -6833,7 +6833,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR066") (unit 1)
+          (reference "#PWR048") (unit 1)
         )
       )
     )
@@ -6842,7 +6842,7 @@
   (symbol (lib_id "heater:GNDF") (at 229.87 205.105 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid b8793578-9f78-45de-a1e7-68fd80bbdef1)
-    (property "Reference" "#PWR048" (at 229.87 211.455 0)
+    (property "Reference" "#PWR047" (at 229.87 211.455 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 229.87 209.05 0)
@@ -6858,7 +6858,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR048") (unit 1)
+          (reference "#PWR047") (unit 1)
         )
       )
     )
@@ -6867,7 +6867,7 @@
   (symbol (lib_id "common:GND") (at 294.005 150.495 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid bda28f7e-70db-44bb-9336-a4a963519718)
-    (property "Reference" "#PWR03" (at 294.005 156.845 0)
+    (property "Reference" "#PWR067" (at 294.005 156.845 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 294.005 154.059 0)
@@ -6883,7 +6883,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR03") (unit 1)
+          (reference "#PWR067") (unit 1)
         )
       )
     )
@@ -6892,7 +6892,7 @@
   (symbol (lib_id "common:TestPoint") (at 315.595 205.105 0) (unit 1)
     (in_bom no) (on_board yes) (dnp no)
     (uuid c0e69022-4605-43f6-b8b2-589e89deac0e)
-    (property "Reference" "TP1" (at 314.325 199.39 0)
+    (property "Reference" "TP13" (at 314.325 199.39 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "TestPoint" (at 305.435 203.835 0)
@@ -6911,7 +6911,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "TP1") (unit 1)
+          (reference "TP13") (unit 1)
         )
       )
     )
@@ -6920,7 +6920,7 @@
   (symbol (lib_id "Device:C_Small") (at 208.28 200.025 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid c429b9d8-2211-4fc1-ad3c-c0031c1f5516)
-    (property "Reference" "C24" (at 205.74 198.12 0)
+    (property "Reference" "C14" (at 205.74 198.12 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "100n 16V" (at 207.645 202.565 0)
@@ -6940,7 +6940,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C24") (unit 1)
+          (reference "C14") (unit 1)
         )
       )
     )
@@ -6949,7 +6949,7 @@
   (symbol (lib_id "heater:GNDF") (at 179.705 205.105 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid c44be5dc-5fa9-4df8-a8b0-45d82a076620)
-    (property "Reference" "#PWR076" (at 179.705 211.455 0)
+    (property "Reference" "#PWR037" (at 179.705 211.455 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 179.705 209.05 0)
@@ -6965,7 +6965,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR076") (unit 1)
+          (reference "#PWR037") (unit 1)
         )
       )
     )
@@ -6974,7 +6974,7 @@
   (symbol (lib_id "heater:GNDF") (at 81.915 113.665 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid c4cad9ac-7d37-492e-b33f-091d97fc7d96)
-    (property "Reference" "#PWR041" (at 81.915 120.015 0)
+    (property "Reference" "#PWR010" (at 81.915 120.015 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 81.915 117.61 0)
@@ -6990,7 +6990,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR041") (unit 1)
+          (reference "#PWR010") (unit 1)
         )
       )
     )
@@ -6999,7 +6999,7 @@
   (symbol (lib_id "Device:C_Small") (at 172.72 200.025 0) (mirror x) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid c51c0b21-156e-4cfa-b3e3-43eb5b8eb0d5)
-    (property "Reference" "C27" (at 170.815 202.565 0)
+    (property "Reference" "C10" (at 170.815 202.565 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "100n" (at 170.18 198.12 0)
@@ -7019,7 +7019,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C27") (unit 1)
+          (reference "C10") (unit 1)
         )
       )
     )
@@ -7028,7 +7028,7 @@
   (symbol (lib_id "heater:+5VF") (at 105.41 50.165 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid c6ba6c5a-d51e-4753-9de2-40eaa8442421)
-    (property "Reference" "#PWR038" (at 105.41 53.975 0)
+    (property "Reference" "#PWR017" (at 105.41 53.975 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5VF" (at 105.41 46.22 0)
@@ -7044,7 +7044,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR038") (unit 1)
+          (reference "#PWR017") (unit 1)
         )
       )
     )
@@ -7053,7 +7053,7 @@
   (symbol (lib_id "heater:GNDF") (at 144.145 77.47 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid c74edbbd-b744-4a43-9331-2e05c39ff076)
-    (property "Reference" "#PWR070" (at 144.145 83.82 0)
+    (property "Reference" "#PWR027" (at 144.145 83.82 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 144.145 81.415 0)
@@ -7069,7 +7069,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR070") (unit 1)
+          (reference "#PWR027") (unit 1)
         )
       )
     )
@@ -7078,7 +7078,7 @@
   (symbol (lib_id "heater:+5VF") (at 49.53 227.965 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid cb4a263a-2387-4134-b932-a06ded55e79d)
-    (property "Reference" "#PWR018" (at 49.53 231.775 0)
+    (property "Reference" "#PWR03" (at 49.53 231.775 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5VF" (at 49.53 224.79 90)
@@ -7094,7 +7094,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR018") (unit 1)
+          (reference "#PWR03") (unit 1)
         )
       )
     )
@@ -7103,7 +7103,7 @@
   (symbol (lib_id "heater:GNDF") (at 124.46 77.47 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid cdb8e554-9925-43c4-99ec-5554e4b906f5)
-    (property "Reference" "#PWR051" (at 124.46 83.82 0)
+    (property "Reference" "#PWR023" (at 124.46 83.82 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 124.46 81.415 0)
@@ -7119,7 +7119,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR051") (unit 1)
+          (reference "#PWR023") (unit 1)
         )
       )
     )
@@ -7128,7 +7128,7 @@
   (symbol (lib_id "heater:GNDF") (at 167.64 139.065 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid ce7d3c43-c8b0-4548-86d4-ea3b31dcaf4f)
-    (property "Reference" "#PWR065" (at 167.64 145.415 0)
+    (property "Reference" "#PWR035" (at 167.64 145.415 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 167.64 143.01 0)
@@ -7144,7 +7144,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR065") (unit 1)
+          (reference "#PWR035") (unit 1)
         )
       )
     )
@@ -7153,7 +7153,7 @@
   (symbol (lib_name "ESD5344D_1") (lib_id "common:ESD5344D") (at 288.29 104.775 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid d0826757-89f5-4077-8fd5-1a318c45e35d)
-    (property "Reference" "U4" (at 295.91 113.03 0)
+    (property "Reference" "U12" (at 295.91 113.03 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "ESD5344D-TP" (at 306.705 110.49 0)
@@ -7176,7 +7176,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "U4") (unit 1)
+          (reference "U12") (unit 1)
         )
       )
     )
@@ -7185,7 +7185,7 @@
   (symbol (lib_id "Device:C_Small") (at 283.21 145.415 0) (mirror x) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid d16d35de-5906-4f70-b7bd-1e6aa293c5d8)
-    (property "Reference" "C3" (at 285.75 142.875 0)
+    (property "Reference" "C23" (at 285.75 142.875 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "100n" (at 285.75 147.32 0)
@@ -7205,7 +7205,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C3") (unit 1)
+          (reference "C23") (unit 1)
         )
       )
     )
@@ -7214,7 +7214,7 @@
   (symbol (lib_id "Device:LED") (at 306.07 200.025 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid d427ffa3-ce91-4a77-9574-8d72cfc0a1df)
-    (property "Reference" "D2" (at 300.99 200.66 90)
+    (property "Reference" "D3" (at 300.99 200.66 90)
       (effects (font (size 1.27 1.27)) (justify right))
     )
     (property "Value" "GRN" (at 300.355 202.565 90)
@@ -7234,7 +7234,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "D2") (unit 1)
+          (reference "D3") (unit 1)
         )
       )
     )
@@ -7243,7 +7243,7 @@
   (symbol (lib_id "heater:+5VF") (at 119.38 184.785 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid d44a4eda-17f5-45e6-9937-f143b2f386a1)
-    (property "Reference" "#PWR016" (at 119.38 188.595 0)
+    (property "Reference" "#PWR022" (at 119.38 188.595 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5VF" (at 119.38 180.84 0)
@@ -7259,7 +7259,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR016") (unit 1)
+          (reference "#PWR022") (unit 1)
         )
       )
     )
@@ -7268,7 +7268,7 @@
   (symbol (lib_id "common:GND") (at 288.29 111.125 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid d5e49520-a1a1-42b9-b37d-4f2109db4c7b)
-    (property "Reference" "#PWR077" (at 288.29 117.475 0)
+    (property "Reference" "#PWR065" (at 288.29 117.475 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 288.29 114.689 0)
@@ -7284,7 +7284,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR077") (unit 1)
+          (reference "#PWR065") (unit 1)
         )
       )
     )
@@ -7293,7 +7293,7 @@
   (symbol (lib_id "Device:C_Small") (at 78.74 113.03 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid d629e337-296c-4b9a-8137-d44962f0fda1)
-    (property "Reference" "C6" (at 81.28 109.22 90)
+    (property "Reference" "C1" (at 81.28 109.22 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "100n" (at 81.915 111.76 90)
@@ -7313,7 +7313,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C6") (unit 1)
+          (reference "C1") (unit 1)
         )
       )
     )
@@ -7322,7 +7322,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 58.42 93.345 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid d688b2bd-fc53-4a07-a91d-43ab3348e2d0)
-    (property "Reference" "R21" (at 62.23 91.44 0)
+    (property "Reference" "R6" (at 62.23 91.44 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "10K" (at 62.23 94.615 0)
@@ -7342,7 +7342,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R21") (unit 1)
+          (reference "R6") (unit 1)
         )
       )
     )
@@ -7351,7 +7351,7 @@
   (symbol (lib_id "heater:+5VF") (at 158.75 193.675 90) (mirror x) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid d7acdae9-5e65-4305-9ed3-304ee1faad27)
-    (property "Reference" "#PWR039" (at 162.56 193.675 0)
+    (property "Reference" "#PWR032" (at 162.56 193.675 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5VF" (at 155.321 193.421 90)
@@ -7367,7 +7367,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR039") (unit 1)
+          (reference "#PWR032") (unit 1)
         )
       )
     )
@@ -7376,7 +7376,7 @@
   (symbol (lib_id "heater:GNDF") (at 85.725 205.105 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid d9b2b268-8880-4638-a191-f32e49155cb6)
-    (property "Reference" "#PWR022" (at 85.725 211.455 0)
+    (property "Reference" "#PWR013" (at 85.725 211.455 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 85.725 209.05 0)
@@ -7392,7 +7392,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR022") (unit 1)
+          (reference "#PWR013") (unit 1)
         )
       )
     )
@@ -7401,7 +7401,7 @@
   (symbol (lib_id "heater:GNDF") (at 105.41 77.47 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid dc07e6bc-4454-4240-bfbf-1828fdc67432)
-    (property "Reference" "#PWR040" (at 105.41 83.82 0)
+    (property "Reference" "#PWR018" (at 105.41 83.82 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 105.41 81.415 0)
@@ -7417,7 +7417,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR040") (unit 1)
+          (reference "#PWR018") (unit 1)
         )
       )
     )
@@ -7426,7 +7426,7 @@
   (symbol (lib_id "Device:C_Small") (at 203.2 45.085 270) (mirror x) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid dc8327e4-2ba0-4787-8411-53ea054201ff)
-    (property "Reference" "C21" (at 200.152 46.355 90)
+    (property "Reference" "C12" (at 200.152 46.355 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "10u" (at 206.248 46.355 90)
@@ -7446,7 +7446,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C21") (unit 1)
+          (reference "C12") (unit 1)
         )
       )
     )
@@ -7455,7 +7455,7 @@
   (symbol (lib_id "common:TestPoint") (at 88.265 61.595 0) (unit 1)
     (in_bom no) (on_board yes) (dnp no)
     (uuid dd609e74-710e-405f-aba8-96e63e3853da)
-    (property "Reference" "TP12" (at 86.995 55.88 0)
+    (property "Reference" "TP3" (at 86.995 55.88 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "TestPoint" (at 78.105 60.325 0)
@@ -7474,7 +7474,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "TP12") (unit 1)
+          (reference "TP3") (unit 1)
         )
       )
     )
@@ -7483,7 +7483,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 218.44 55.245 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid e2066836-9a52-462f-8175-cd484354fee1)
-    (property "Reference" "R7" (at 218.44 52.705 0)
+    (property "Reference" "R21" (at 218.44 52.705 0)
       (effects (font (size 1.27 1.27)) (justify right))
     )
     (property "Value" "1K8" (at 218.44 58.42 0)
@@ -7503,7 +7503,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R7") (unit 1)
+          (reference "R21") (unit 1)
         )
       )
     )
@@ -7512,7 +7512,7 @@
   (symbol (lib_id "heater:GNDF") (at 165.735 205.105 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid e2159ea7-2ed1-4881-9852-8be43d6492fb)
-    (property "Reference" "#PWR054" (at 165.735 211.455 0)
+    (property "Reference" "#PWR034" (at 165.735 211.455 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 165.735 209.05 0)
@@ -7528,7 +7528,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR054") (unit 1)
+          (reference "#PWR034") (unit 1)
         )
       )
     )
@@ -7537,7 +7537,7 @@
   (symbol (lib_id "heater:GNDF") (at 163.83 113.665 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid e2ddfd4b-9a44-4a6d-a07b-1fcb8bed779b)
-    (property "Reference" "#PWR045" (at 163.83 120.015 0)
+    (property "Reference" "#PWR033" (at 163.83 120.015 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 163.83 117.61 0)
@@ -7553,7 +7553,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR045") (unit 1)
+          (reference "#PWR033") (unit 1)
         )
       )
     )
@@ -7562,7 +7562,7 @@
   (symbol (lib_id "common:GND") (at 283.21 150.495 0) (mirror y) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid ebc8d325-9d38-43ea-9baf-8f25c63fb4d7)
-    (property "Reference" "#PWR06" (at 283.21 156.845 0)
+    (property "Reference" "#PWR061" (at 283.21 156.845 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 283.21 154.059 0)
@@ -7578,7 +7578,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR06") (unit 1)
+          (reference "#PWR061") (unit 1)
         )
       )
     )
@@ -7616,7 +7616,7 @@
   (symbol (lib_id "heater:+5VF") (at 196.85 43.18 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid f086c1cf-4a4a-4092-8ab3-adf561721a57)
-    (property "Reference" "#PWR053" (at 196.85 46.99 0)
+    (property "Reference" "#PWR039" (at 196.85 46.99 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5VF" (at 196.85 39.235 0)
@@ -7632,7 +7632,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR053") (unit 1)
+          (reference "#PWR039") (unit 1)
         )
       )
     )
@@ -7641,7 +7641,7 @@
   (symbol (lib_id "Device:C_Small") (at 215.9 200.025 0) (mirror x) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid f091c485-bd37-48ea-8fee-a7717981ccce)
-    (property "Reference" "C26" (at 218.44 202.565 0)
+    (property "Reference" "C15" (at 218.44 202.565 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "10u 16V" (at 215.9 198.12 0)
@@ -7661,7 +7661,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C26") (unit 1)
+          (reference "C15") (unit 1)
         )
       )
     )
@@ -7670,7 +7670,7 @@
   (symbol (lib_id "Device:C_Small") (at 274.32 200.025 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid f096e09a-f6ea-4f31-b5fa-8fb72801ffc3)
-    (property "Reference" "C18" (at 271.78 198.12 0)
+    (property "Reference" "C20" (at 271.78 198.12 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "100n" (at 271.145 202.565 0)
@@ -7690,7 +7690,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C18") (unit 1)
+          (reference "C20") (unit 1)
         )
       )
     )
@@ -7699,7 +7699,7 @@
   (symbol (lib_id "heater:GNDF") (at 116.205 139.065 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid f23effd3-c8cc-495c-9d37-588875dc2bbf)
-    (property "Reference" "#PWR059" (at 116.205 145.415 0)
+    (property "Reference" "#PWR021" (at 116.205 145.415 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 116.205 143.01 0)
@@ -7715,7 +7715,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR059") (unit 1)
+          (reference "#PWR021") (unit 1)
         )
       )
     )
@@ -7724,7 +7724,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 94.615 122.555 270) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid f33515a3-7965-471d-adab-3a6a54098675)
-    (property "Reference" "R6" (at 94.615 125.095 90)
+    (property "Reference" "R12" (at 94.615 125.095 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "0R" (at 94.615 127 90)
@@ -7744,7 +7744,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R6") (unit 1)
+          (reference "R12") (unit 1)
         )
       )
     )
@@ -7753,7 +7753,7 @@
   (symbol (lib_id "Device:C_Small") (at 304.8 145.415 0) (mirror x) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid f3d4e67e-b330-4a9f-935e-8a042dd24e22)
-    (property "Reference" "C2" (at 302.26 143.51 0)
+    (property "Reference" "C24" (at 302.26 143.51 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "100n" (at 302.26 147.955 0)
@@ -7773,7 +7773,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C2") (unit 1)
+          (reference "C24") (unit 1)
         )
       )
     )
@@ -7782,7 +7782,7 @@
   (symbol (lib_id "Device:C_Small") (at 236.855 200.025 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid f42a3c8d-6ede-4fc1-ace7-a07203ef8807)
-    (property "Reference" "C19" (at 238.76 198.12 0)
+    (property "Reference" "C17" (at 238.76 198.12 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "100n 16V" (at 236.22 202.565 0)
@@ -7802,7 +7802,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C19") (unit 1)
+          (reference "C17") (unit 1)
         )
       )
     )
@@ -7811,7 +7811,7 @@
   (symbol (lib_id "Device:C_Small") (at 309.88 145.415 0) (mirror x) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid f43a147e-2e4f-4f01-a559-8293c47f4785)
-    (property "Reference" "C1" (at 312.42 143.51 0)
+    (property "Reference" "C25" (at 312.42 143.51 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "10u" (at 312.42 147.32 0)
@@ -7831,7 +7831,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C1") (unit 1)
+          (reference "C25") (unit 1)
         )
       )
     )
@@ -7840,7 +7840,7 @@
   (symbol (lib_id "heater:GNDF") (at 196.85 77.47 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid f4be80ff-3253-432d-83f8-f1927ac3ac59)
-    (property "Reference" "#PWR050" (at 196.85 83.82 0)
+    (property "Reference" "#PWR040" (at 196.85 83.82 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 196.85 81.415 0)
@@ -7856,7 +7856,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR050") (unit 1)
+          (reference "#PWR040") (unit 1)
         )
       )
     )
@@ -7865,7 +7865,7 @@
   (symbol (lib_id "Device:LED") (at 49.53 241.935 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid f5bed2ff-ee55-49c0-9438-0178c2e1dc39)
-    (property "Reference" "D5" (at 44.45 242.57 90)
+    (property "Reference" "D1" (at 44.45 242.57 90)
       (effects (font (size 1.27 1.27)) (justify right))
     )
     (property "Value" "GRN" (at 43.815 244.475 90)
@@ -7885,7 +7885,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "D5") (unit 1)
+          (reference "D1") (unit 1)
         )
       )
     )
@@ -7894,7 +7894,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 43.18 80.01 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid f6ffc568-9e31-44e6-9562-2efe003c8ded)
-    (property "Reference" "R20" (at 39.37 78.74 0)
+    (property "Reference" "R4" (at 39.37 78.74 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "3K3" (at 39.37 81.28 0)
@@ -7914,7 +7914,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R20") (unit 1)
+          (reference "R4") (unit 1)
         )
       )
     )
@@ -7923,7 +7923,7 @@
   (symbol (lib_id "common:TestPoint") (at 274.955 138.43 0) (mirror y) (unit 1)
     (in_bom no) (on_board yes) (dnp no)
     (uuid f734c837-72a0-40b0-8baa-7658c768946e)
-    (property "Reference" "TP2" (at 276.225 132.715 0)
+    (property "Reference" "TP12" (at 276.225 132.715 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "TestPoint" (at 285.115 137.16 0)
@@ -7942,7 +7942,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "TP2") (unit 1)
+          (reference "TP12") (unit 1)
         )
       )
     )
@@ -7951,7 +7951,7 @@
   (symbol (lib_id "common:TestPoint") (at 106.68 195.58 0) (unit 1)
     (in_bom no) (on_board yes) (dnp no)
     (uuid f77bc2bb-eb04-411d-a6d4-5529676f9b36)
-    (property "Reference" "TP9" (at 105.41 189.865 0)
+    (property "Reference" "TP5" (at 105.41 189.865 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "TestPoint" (at 96.52 194.31 0)
@@ -7970,7 +7970,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "TP9") (unit 1)
+          (reference "TP5") (unit 1)
         )
       )
     )
@@ -7979,7 +7979,7 @@
   (symbol (lib_id "heater:GNDF") (at 211.455 51.435 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid f7e9963f-1bf6-46db-b957-81147ebb26b7)
-    (property "Reference" "#PWR061" (at 211.455 57.785 0)
+    (property "Reference" "#PWR042" (at 211.455 57.785 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GNDF" (at 211.455 55.38 0)
@@ -7995,7 +7995,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR061") (unit 1)
+          (reference "#PWR042") (unit 1)
         )
       )
     )
@@ -8004,7 +8004,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 49.53 234.315 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid f8f154ad-e007-47aa-8b96-0712264104f9)
-    (property "Reference" "R27" (at 46.355 233.045 0)
+    (property "Reference" "R5" (at 46.355 233.045 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "5K1" (at 46.355 235.585 0)
@@ -8024,7 +8024,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R27") (unit 1)
+          (reference "R5") (unit 1)
         )
       )
     )
@@ -8033,7 +8033,7 @@
   (symbol (lib_id "Device:C_Small") (at 135.255 126.365 180) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid fae3d6fd-8469-455e-ba8a-41eac7308b74)
-    (property "Reference" "C5" (at 139.065 126.365 0)
+    (property "Reference" "C6" (at 139.065 126.365 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "2u2" (at 138.43 128.27 0)
@@ -8053,7 +8053,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "C5") (unit 1)
+          (reference "C6") (unit 1)
         )
       )
     )
@@ -8062,7 +8062,7 @@
   (symbol (lib_id "Device:R_Small_US") (at 90.17 176.53 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid fd871528-b377-4084-895d-e7e2712eb04d)
-    (property "Reference" "R24" (at 93.98 173.99 90)
+    (property "Reference" "R11" (at 93.98 173.99 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "1M" (at 86.995 173.99 90)
@@ -8082,7 +8082,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "R24") (unit 1)
+          (reference "R11") (unit 1)
         )
       )
     )
@@ -8091,7 +8091,7 @@
   (symbol (lib_id "common:TestPoint") (at 222.885 193.675 0) (unit 1)
     (in_bom no) (on_board yes) (dnp no)
     (uuid fd8b6ace-8f14-470c-8e37-e9c5fce727b9)
-    (property "Reference" "TP4" (at 221.615 187.96 0)
+    (property "Reference" "TP11" (at 221.615 187.96 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "TestPoint" (at 212.725 192.405 0)
@@ -8110,7 +8110,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "TP4") (unit 1)
+          (reference "TP11") (unit 1)
         )
       )
     )
@@ -8119,7 +8119,7 @@
   (symbol (lib_id "heater:+5VF") (at 218.44 50.165 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid fe2847b9-d3cc-4f7d-89b2-1eda67711c55)
-    (property "Reference" "#PWR067" (at 218.44 53.975 0)
+    (property "Reference" "#PWR044" (at 218.44 53.975 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5VF" (at 218.44 46.22 0)
@@ -8135,7 +8135,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR067") (unit 1)
+          (reference "#PWR044") (unit 1)
         )
       )
     )
@@ -8144,7 +8144,7 @@
   (symbol (lib_id "heater:+5VF") (at 229.87 50.165 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid feb353c0-99bc-444b-a426-20e6cb03e38c)
-    (property "Reference" "#PWR036" (at 229.87 53.975 0)
+    (property "Reference" "#PWR046" (at 229.87 53.975 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5VF" (at 229.87 46.22 0)
@@ -8160,7 +8160,7 @@
     (instances
       (project "heater"
         (path "/20ea543f-efab-45c2-9faf-6629ee17c3db"
-          (reference "#PWR036") (unit 1)
+          (reference "#PWR046") (unit 1)
         )
       )
     )
