@@ -2,6 +2,6 @@
   (version 7)
   (lib (name "heater")(type "KiCad")(uri "${KIPRJMOD}/heater.kicad_sym")(options "")(descr ""))
   (lib (name "common")(type "KiCad")(uri "${KIPRJMOD}/../../common/kicad/common.kicad_sym")(options "")(descr ""))
-  (lib (name "io")(type "KiCad")(uri "C:/Users/user/projects/daq/repo/io/kicad/io.kicad_sym")(options "")(descr ""))
-  (lib (name "adc")(type "KiCad")(uri "C:/Users/user/projects/daq/repo/adc/kicad/adc.kicad_sym")(options "")(descr ""))
+  (lib (name "io")(type "KiCad")(uri "${KIPRJMOD}/../../io/kicad/io.kicad_sym")(options "")(descr "")(disabled)(hidden))
+  (lib (name "adc")(type "KiCad")(uri "${KIPRJMOD}/../../adc/kicad/adc.kicad_sym")(options "")(descr "")(disabled)(hidden))
 )
