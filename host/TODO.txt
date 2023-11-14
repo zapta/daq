@@ -1,2 +1,2 @@
 
-
+* Delete the pw v and a display series.

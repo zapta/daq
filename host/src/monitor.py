@@ -376,7 +376,7 @@ def update_display():
         pw_chan.display_series_v.delete_older_than(pw_cleanup_time)
         pw_chan.display_series_a.delete_older_than(pw_cleanup_time)
         pw_chan.display_series_w.delete_older_than(pw_cleanup_time)
-        x, y = pw_chan.display_series_v.get_display_xy(adjusted_latest_log_time)
+        x, y = pw_chan.display_series_w.get_display_xy(adjusted_latest_log_time)
         # x = pw_chan.display_series_v.relative_times(adjusted_latest_log_time)
         # y = pw_chan.display_series_v.values()
         color = pw_chan.pw_config.color()
