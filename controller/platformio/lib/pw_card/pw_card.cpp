@@ -18,8 +18,10 @@
 static constexpr uint16_t kDataPointsPerPacket = 8;
 
 // ADS115B configuration.
-// Sampling time 1/128 sec. 4.096V full scale. Single mode.
+// Sampling time 1/128 sec. 4.096V full scale.
 static constexpr uint16_t kAds1115BaseConfig = 0b0000001110000000;
+// Sampling time 1/128 sec. 1.024V full scale. Single mode.
+// static constexpr uint16_t kAds1115BaseConfig = 0b0000011110000000;
 static constexpr uint16_t kAds1115ConfigStartCh0 =
     kAds1115BaseConfig | 0b1 << 15 | 0b0100 << 12;
 static constexpr uint16_t kAds1115ConfigStartCh1 =
