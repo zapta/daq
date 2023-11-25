@@ -17,15 +17,18 @@
 // data point contains a pair of voltage and current readings.
 static constexpr uint16_t kDataPointsPerPacket = 8;
 
-// ADS115B configuration.
 // Sampling time 1/128 sec. 4.096V full scale.
-static constexpr uint16_t kAds1115BaseConfig = 0b0000001110000000;
+//static constexpr uint16_t kAds1115BaseConfig = 0b0000001110000000;
+
+// ADS115B configuration.
 // Sampling time 1/128 sec. 1.024V full scale. Single mode.
-// static constexpr uint16_t kAds1115BaseConfig = 0b0000011110000000;
+static constexpr uint16_t kAds1115BaseConfig = 0b0000011110000000;
+// CHAN0: start a new conversion, P->AIN0, N->AIN3.
 static constexpr uint16_t kAds1115ConfigStartCh0 =
-    kAds1115BaseConfig | 0b1 << 15 | 0b0100 << 12;
+    kAds1115BaseConfig | 0b1 << 15 | 0b001 << 12;
+// CHAN1: start a new conversion, P->AIN1, N->AIN3
 static constexpr uint16_t kAds1115ConfigStartCh1 =
-    kAds1115BaseConfig | 0b1 << 15 | 0b0101 << 12;
+    kAds1115BaseConfig | 0b1 << 15 | 0b010 << 12;
 
 enum AdcChan {
   // RMS voltage reading.
