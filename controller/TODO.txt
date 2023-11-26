@@ -3,6 +3,4 @@
 
 ------
 
-* Use taskEnterCritical instead of interupts off. See https://stackoverflow.com/questions/71626597/what-are-the-various-ways-to-disable-and-re-enable-interrupts-in-stm32-microcont/71626598#71626598
-
 * Use  MUST_USE_VALUE where applicable.
