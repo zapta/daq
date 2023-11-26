@@ -5,7 +5,7 @@
   (paper "User" 381 279.4)
 
   (title_block
-    (title "ADS1261B ADC BOARD")
+    (title "PWM Power Measurement Card.")
     (rev "0.2")
   )
 
