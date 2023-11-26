@@ -22,9 +22,8 @@ scale = 0.002671
 [channel.pw1]
 color = "maroon"
 # value = (adc_reading - adc_offset) * scale
-voltage = { adc_offset = -58, scale = 0.0016586 }
-current = { adc_offset = -22, scale = 0.00012 }
-
+voltage = { adc_offset = -110, scale = 0.0009722 }
+current = { adc_offset = -125, scale = 0.000092047}
 
 [channel.tm1]
 color = "blueviolet"
