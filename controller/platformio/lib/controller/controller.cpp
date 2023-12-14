@@ -124,16 +124,15 @@ void host_link_message_handler(uint8_t endpoint,
   logger.warning("Recieved a message at endpoint %02hx", endpoint);
 }
 
-// Marker name is assumed to be validated.
-void report_marker(const MarkerName& marker_name) {
+// Report string is assumed to be validated.
+void report_external_data(const ExternalReportStr& report_str) {
   MutexScope scope(mutex);
 
-  // Encode a log record that contain marker channel with
-  // a single data point.
+  // Encode a log record that contain 'ext' channel with
+  // a single external data report
   //
-  // TODO: Consider to perform buffering of multiple markers into a single
-  // packet.
-
+  // NOTE: As of Dec 2023, the rate of external report is very low so we don't
+  // mind sending each report in a packet of its own.
   {
     // Do not use buffer after it was queued.
     data_queue::DataBuffer* data_buffer = data_queue::grab_buffer();
@@ -143,10 +142,10 @@ void report_marker(const MarkerName& marker_name) {
     packet_data->write_uint8(1);                     // packet format version
     packet_data->write_uint32(session::id());        // Device session id.
     packet_data->write_uint32(time_util::millis());  // Base time.
-    packet_data->write_str("mrk");                   // Marker channel id
+    packet_data->write_str("ext");                   // External report meta channel id
     packet_data->write_uint16(0);                    // Relative time offset
     packet_data->write_uint16(1);                    // Num data points
-    packet_data->write_str(marker_name.c_str());
+    packet_data->write_str(report_str.c_str());
 
     // Verify writing was OK.
     if (packet_data->had_write_errors()) {
@@ -160,7 +159,7 @@ void report_marker(const MarkerName& marker_name) {
     packet_data = nullptr;
   }
   // TODO: Implementing logging and reporting in status.
-  logger.info("Marker: [%s]", marker_name.c_str());
+  logger.info("Report: [%s]", report_str.c_str());
 }
 
 }  // namespace controller

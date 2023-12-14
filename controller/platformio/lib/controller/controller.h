@@ -8,7 +8,7 @@
 
 namespace controller {
 
-typedef StaticString<30> MarkerName;
+typedef StaticString<30> ExternalReportStr;
 
 PacketStatus host_link_command_handler(uint8_t endpoint,
                                        const SerialPacketsData& command_data,
@@ -19,10 +19,10 @@ PacketStatus host_link_command_handler(uint8_t endpoint,
 void host_link_message_handler(uint8_t endpoint,
                                const SerialPacketsData& message_data);
 
-void report_marker(const MarkerName& marker_name);
+void report_external_data(const ExternalReportStr& report_str);
 
-inline bool is_valid_marker_char(uint8_t c) {
-  return isalnum(c) || strchr("-_.:", c);
+inline bool is_valid_external_report_char(uint8_t c) {
+  return isalnum(c) || strchr("-_.:/", c);
 }
 
 // void report_log_data(const SerialPacketsData& data);
