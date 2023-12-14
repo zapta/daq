@@ -21,7 +21,7 @@ from serial_packets.packets import PacketStatus, PacketData
 # Local imports
 sys.path.insert(0, "..")
 from lib.log_parser import LogPacketsParser, ChannelData, ParsedLogPacket, LcChannelValue, PwChannelValue, TmChannelValue, MrkChannelValue
-from lib.sys_config import SysConfig, MarkersConfig, LoadCellChannelConfig, PowerChannelConfig,  TemperatureChannelConfig
+from lib.sys_config import SysConfig, TimeMarkersConfigs, LoadCellChannelConfig, PowerChannelConfig,  TemperatureChannelConfig
 from lib.display_series import DisplaySeries
 
 
@@ -304,10 +304,10 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
             if args.calibration:
                 tm_chan.temperature_config.dump_temperature_calibration(round(avg_adc_reading))
                 
-        # Process marker channel.
+        # Process time marker channel.
         marker_data: ChannelData = parsed_log_packet.channel("mrk")
         if marker_data:
-            markers_config: MarkersConfig = sys_config.markers_config()
+            time_markers_config: TimeMarkersConfigs = sys_config.time_markers_configs()
             for mrk_value in marker_data.values():
                 assert isinstance(mrk_value, MrkChannelValue)
                 marker_time_secs = mrk_value.time_millis / 1000
@@ -316,7 +316,7 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
                     f"Marker: [{mrk_value.marker_name}] type=[{mrk_value.marker_type}] value[{mrk_value.marker_value}] time={marker_time_secs:.3f}]"
                 )
                 markers_history.append(marker_time_secs, mrk_value.marker_name,
-                                       markers_config.pen_for_marker(mrk_value.marker_name))
+                                       time_markers_config.pen_for_marker(mrk_value.marker_name))
 
         # All done. Update the display
         # update_display()

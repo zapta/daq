@@ -1,71 +1,82 @@
 # System configuration file
 #
+# This file is Calibrated for system #02.
+#
 # Plot color names are here:
 # https://matplotlib.org/stable/gallery/color/named_colors.html
-
+#
 # Semitec thermistors datasheet is here:
 # https://www.mouser.com/datasheet/2/362/P18_NT_Thermistor-1535133.pdf
 
-# Calibrated for system #02.
-
+# Specification of data link from the Duet controller.
 [data_link]
 port = "COM7"
 # port = "/dev/tty.usbserial-0001"
 
-
+# Load cell.
 # grams = (adc_reading - adc_offset) * scale
 [channel.lc1]
 color = "red"
 adc_offset = 100388  
 scale = 0.002671
 
+# PWM power meter.
 [channel.pw1]
 color = "maroon"
 # value = (adc_reading - adc_offset) * scale
-voltage = { adc_offset = -110, scale = 0.0009722 }
-current = { adc_offset = -125, scale = 0.000092047}
+voltage = { adc_offset = -86, scale = 0.0009847 }
+current = { adc_offset = -269, scale = 0.00009369}
 
+# Temperature sensor #1
 [channel.tm1]
 color = "blueviolet"
 adc = { open = 4197050, short = 550, calib = 1399665, calib_r = 1000 }
 rtd = { r0 = 1000.0, wire_r=0.0, adjustment=0.0 }
 
-
+# Temperature sensor #2
 [channel.tm2]
 color = "blue"
 adc = { open = 4198050, short = 270, calib = 1399264, calib_r = 1000 }
 thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25, wire_r=0.0, adjustment=0.0 }
 
 
+# Temperature sensor #3
 [channel.tm3]
 color = "teal"
 adc = { open = 4197135, short = 170, calib = 1398925, calib_r = 1000 }
 thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25 , wire_r = 0.0, adjustment=0.0}
 
-
-[marker.test_begin]
 # Marks the begining of a test.
 # Example:
-#   [begin:my_test_name-123]
-regex = "^begin:(.*)$"
+#   [T/begin:my_test_name-123]
+[time_marker.test_begin]
+regex = "^(?:T/)?begin:(.*)$"
 value_group = 1
 pen = {color="green", solid=true, width=2}
 
-[marker.test_end]
 # Marks the end of a test.
 # Example:
-#   [end:my_test_name-123]
-regex = "^end:(.*)$"
+#   [T/end:my_test_name-123]
+[time_marker.test_end]
+regex = "^(?:T/)?end:(.*)$"
 value_group = 1
 pen = {color="red", solid=true, width=2}
 
-[marker.poi]
 # Marks a general point of interest.
 # Examples:
-#   [poi]
-#   [poi.]
-#   [poi.layer-31]
-regex = "^poi(:(.*))?$"
+#   [T/poi]
+#   [T/poi.]
+#   [T/poi.layer-31]
+[time_marker.poi]
+regex = "^(?:T/)?poi(:(.*))?$"
 value_group = 2
 pen = {color="purple", solid=false, width=2}
+
+# Heater temp reported by Duet.
+# Example: '[D/htr:180.34]'
+[data_point.htr]
+regex = "^D/htr:(.*)$"
+column_name = "T[c]"
+pen = {color="red", solid=true, width=2}
+
 

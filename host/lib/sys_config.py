@@ -14,8 +14,8 @@ OPEN_CIRCUIT_OHMS = 999999
 # A C temp const that represents an open circuit or unknown value.
 OPEN_CIRCUIT_C = -99
     
-class MarkerConfig:
-    """Config of a single marker type."""
+class TimeMarkerConfig:
+    """Config of a single time marker type."""
 
     def __init__(self, marker_type: str, marker_regex: str, regex_value_group: int,
                  marker_pen: Any):
@@ -25,16 +25,16 @@ class MarkerConfig:
         self.marker_pen = marker_pen
 
 
-class MarkersConfig:
-    """Configs of all marker types."""
+class TimeMarkersConfigs:
+    """A collection of time marker configs."""
 
     def __init__(self):
-        self.__marker_configs: List[MarkerConfig] = []
+        self.__marker_configs: List[TimeMarkerConfig] = []
         self.__default_marker_pen = pg.mkPen(color="gray",
                                              width=1,
                                              style=QtCore.Qt.PenStyle.DashLine)
 
-    def append_marker(self, marker_config: MarkerConfig) -> None:
+    def append_marker(self, marker_config: TimeMarkerConfig) -> None:
         self.__marker_configs.append(marker_config)
 
     def pen_for_marker(self, marker_name: str) -> Any:
@@ -271,7 +271,7 @@ class SysConfig:
         self.__lc_chan_configs: Optional[Dict[str, LoadCellChannelConfig]] = None
         self.__pw_chan_configs: Optional[Dict[str, PowerChannelConfig]] = None
         self.__tm_chan_configs: Optional[Dict[str, TemperatureChannelConfig]] = None
-        self.__markers_config: Optional[MarkersConfig] = None
+        self.__time_markers_configs: Optional[TimeMarkersConfigs] = None
 
     def __populate_com_port(self, toml: Dict[str, Any]) -> None:
         """Populates self.__com_port"""
@@ -364,24 +364,24 @@ class SysConfig:
         style = QtCore.Qt.PenStyle.DashLine if is_solid else QtCore.Qt.PenStyle.SolidLine
         return pg.mkPen(color=color, width=width, style=style)
 
-    def __populate_markers(self, toml: Dict[str, Any]) -> None:
+    def __populate_time_markers(self, toml: Dict[str, Any]) -> None:
         """Populates self.__markers_config from a toml sys_config."""
-        self.__markers_config = MarkersConfig()
-        toml_markers = toml["marker"]
-        for marker_type, marker_config in toml_markers.items():
-            logger.info(f"Found marker config: {marker_type}")
-            marker_regex = marker_config["regex"]
-            regex_value_group = marker_config["value_group"]
-            marker_pen = self.__parse_toml_pen(marker_config["pen"])
-            marker_config = MarkerConfig(marker_type, marker_regex, regex_value_group, marker_pen)
-            self.__markers_config.append_marker(marker_config)
+        self.__time_markers_configs = TimeMarkersConfigs()
+        toml_markers = toml["time_marker"]
+        for time_marker_type, time_marker_config in toml_markers.items():
+            logger.info(f"Found time marker config: {time_marker_type}")
+            marker_regex = time_marker_config["regex"]
+            regex_value_group = time_marker_config["value_group"]
+            marker_pen = self.__parse_toml_pen(time_marker_config["pen"])
+            time_marker_config = TimeMarkerConfig(time_marker_type, marker_regex, regex_value_group, marker_pen)
+            self.__time_markers_configs.append_marker(time_marker_config)
 
     def load_from_file(self, file_path: str) -> None:
         with open(file_path, "rb") as f:
             toml: Dict[str, Any] = tomllib.load(f)
             self.__populate_com_port(toml)
             self.__populate_channels(toml)
-            self.__populate_markers(toml)
+            self.__populate_time_markers(toml)
 
     # Individual channel getters.
     def load_cell_config(self, chan_id: str) -> Optional[LoadCellChannelConfig]:
@@ -404,8 +404,8 @@ class SysConfig:
         return self.__tm_chan_configs
       
     # Other getters
-    def markers_config(self) -> MarkersConfig:
-        return self.__markers_config
+    def time_markers_configs(self) -> TimeMarkersConfigs:
+        return self.__time_markers_configs
 
     def data_link_port(self) -> str:
         return self.__com_port

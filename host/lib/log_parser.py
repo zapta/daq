@@ -266,7 +266,7 @@ class LogPacketsParser:
         assert not packet_data.read_error()
         item_time_millis: int = packet_start_time_millis + first_value_rel_time
         marker_name: str =  packet_data.read_str()
-        marker_type, marker_value =  self.__sys_config.markers_config().classify_marker(marker_name)
+        marker_type, marker_value =  self.__sys_config.time_markers_configs().classify_marker(marker_name)
         output.append_values(chan_id, [MrkChannelValue(item_time_millis, marker_name, marker_type, marker_value)])
         assert not packet_data.read_error()
 
