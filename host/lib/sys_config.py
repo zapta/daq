@@ -1,142 +1,22 @@
-from typing import Any, Dict, Tuple, List, Optional
 import tomllib
 import logging
 import math
 import re
 import pyqtgraph as pg
+
 from PyQt6 import QtCore
-from dataclasses import dataclass, field
+from typing import Any, Dict, Tuple, List, Optional
+
 
 
 logger = logging.getLogger("sys_config")
 
-# DEFAULT_PEN = pg.mkPen(color="gray", width=1, style=QtCore.Qt.PenStyle.DashLine)
 
 # A resistance const that represents an open circuit.
 OPEN_CIRCUIT_OHMS = 999999
 
 # A C temp const that represents an open circuit or unknown value.
 OPEN_CIRCUIT_C = -99
-
-# EXTERNAL_REPORT_REGEX = re.compile(r"^([a-z0-9]+):(.*)$")
-# EXTERNAL_REPORT_VALUE_REGEX = re.compile(r"[^,\"']$")
-
-# @dataclass(frozen=True)
-# class ParsedTimeMarker:
-#     """Result of parsing a time marker string."""
-#     marker_type: str
-#     marker_value: str
-    
-# @dataclass(frozen=True)
-# class ParsedExternalReport:
-#     """Result of parsing an external report string"""
-#     report_str: str
-#     chan_id: str
-#     values: List[str]
-
-
-        
-# class TimeMarkerConfig:
-#     """Config of a single time marker type."""
-
-#     def __init__(self, marker_type: str, marker_regex: str, regex_value_group: int,
-#                  marker_pen: Any):
-#         self.marker_type = marker_type
-#         self.marker_regex = re.compile(marker_regex, re.IGNORECASE)
-#         self.regex_value_group = regex_value_group
-#         self.marker_pen = marker_pen
-        
-# class DataMarkerConfig:
-#     """Config of a single data marker type."""
-
-#     def __init__(self, chan_id: str, marker_regex: str, regex_value_group: int, column_name: str,
-#                  marker_pen: Any):
-#         self.chan_id = chan_id
-#         self.marker_regex = re.compile(marker_regex, re.IGNORECASE)
-#         self.regex_value_group = regex_value_group
-#         self.column_name = column_name
-#         self.marker_pen = marker_pen
-
-
-# class ExternalReportsConfigs:
-#     """A collection of all external report configs."""
-
-#     def __init__(self):
-#         self.__external_report_configs: List[ExternalReportConfig] = []
-#         # self.__default_marker_pen = pg.mkPen(color="gray",
-#         #                                      width=1,
-#         #                                      style=QtCore.Qt.PenStyle.DashLine)
-
-#     def append_external_report_config(self, config: ExternalReportConfig) -> None:
-#         self.__external_report_configs.append(config)
-
-#     # def pen_for_marker(self, marker_name: str) -> Any:
-#     #     for marker_config in self.__time_marker_configs:
-#     #         if marker_config.marker_regex.match(marker_name):
-#     #             return marker_config.marker_pen
-#     #     return DEFAULT_PEN
-      
-#     def parse_external_report_str(self, report_str: str) -> Optional[ParsedExternalReport]:
-#         """Try to match to the report configs. If unknown, return None"""
-#         tokens = report_str.split(":")
-#         return ParsedExternalReport(report_str, tokens[0], tokens[1:])
-#         # match = EXTERNAL_REPORT_REGEX.match(report_str)
-#         # if not match:
-#         #   return None
-#         # groups = match.groups("")
-#         # chan_id = groups[0]
-#         # return ParsedExternalReport(chan_id, report_str, ["test_begin", "yy"])
-
-#         # chan_id = m.
-#         # n = m.groups("")
-         
-        
-#         # = external_report_str.split(":")
-#         # assert 1 < len(tokens) <= 2
-        
-#         # for external_report_config in self.__external_report_configs:
-#         #     match = marker_config.marker_regex.match(marker_str)
-#         #     if match:
-#         #         groups = match.groups("")
-#         #         n = marker_config.regex_value_group
-#         #         value = groups[n - 1] if n > 0 else ""
-#         #         return ParsedTimeMarker(marker_config.marker_type, value)
-#         # # The marker doesn't match any of the time markers in sys_config
-#         return None
-      
-  
-  
-# class DataMarkersConfigs:
-#     """A collection of data marker configs."""
-
-#     def __init__(self):
-#         self.__data_marker_configs: List[DataMarkerConfig] = []
-#         # self.__default_marker_pen = pg.mkPen(color="gray",
-#         #                                      width=1,
-#         #                                      style=QtCore.Qt.PenStyle.DashLine)
-
-#     def append_marker(self, marker_config: DataMarkerConfig) -> None:
-#         self.__data_marker_configs.append(marker_config)
-
-#     def pen_for_marker(self, marker_name: str) -> Any:
-#         for marker_config in self.__data_marker_configs:
-#             if marker_config.marker_regex.match(marker_name):
-#                 return marker_config.marker_pen
-#         return DEFAULT_PEN
-      
-#     def parse_data_marker_str(self, marker_str: str) -> Optional[ParsedDataMarker]:
-#         """Try to match the marker string to a data marker config. Returns the parsed value or None."""
-#         for marker_config in self.__data_marker_configs:
-#             match = marker_config.marker_regex.match(marker_str)
-#             if match:
-#                 groups = match.groups("")
-#                 n = marker_config.regex_value_group
-#                 assert n > 0
-#                 value = groups[n - 1]
-#                 return ParsedDataMarker(marker_config.chan_id, value)
-#         # The marker doesn't match any of the time markers in sys_config
-#         return None    
-
 
 
 class LoadCellChannelConfig:
@@ -318,7 +198,7 @@ class RtdChannelConfig(TemperatureChannelConfig):
     def __interpolate__(self, i, pt1000_r):
         e0 = PT1000_TABLE[i]
         e1 = PT1000_TABLE[i + 1]
-        assert e0[1] <= pt1000_r <= e1[1]
+        assert e0[1] <= pt1000_r <= e1[1], f"{e0[1]} <= {pt1000_r} <= {e1[1]}"
         dt = e1[0] - e0[0]
         dr = e1[1] - e0[1]
         fraction = (pt1000_r - e0[1]) / dr
@@ -472,18 +352,6 @@ class SysConfig:
         width = toml_pen["width"]
         style = QtCore.Qt.PenStyle.DashLine if is_solid else QtCore.Qt.PenStyle.SolidLine
         return pg.mkPen(color=color, width=width, style=style)
-
-    # def __populate_time_markers(self, toml: Dict[str, Any]) -> None:
-    #     """Populates self.__time_markers_configs from a toml sys_config."""
-    #     self.__time_markers_configs = TimeMarkersConfigs()
-    #     toml_markers = toml["time_marker"]
-    #     for time_marker_type, time_marker_config in toml_markers.items():
-    #         logger.info(f"Found time marker config: {time_marker_type}")
-    #         marker_regex = time_marker_config["regex"]
-    #         regex_value_group = time_marker_config["value_group"]
-    #         marker_pen = self.__parse_toml_pen(time_marker_config["pen"])
-    #         time_marker_config = TimeMarkerConfig(time_marker_type, marker_regex, regex_value_group, marker_pen)
-    #         self.__time_markers_configs.append_marker(time_marker_config)
             
     def __populate_external_reports(self, toml: Dict[str, Any]) -> None:
         """Populates self.__external_report_configs from a toml sys_config."""
@@ -494,13 +362,6 @@ class SysConfig:
             units = external_report_config["units"]
             color = external_report_config["color"]
             column = external_report_config["column"]
-
-            
-            # marker_regex = time_marker_config["regex"]
-            # regex_value_group = time_marker_config["value_group"]
-            # marker_pen = self.__parse_toml_pen(time_marker_config["pen"])
-            # time_marker_config = TimeMarkerConfig(time_marker_type, marker_regex, regex_value_group, marker_pen)
-            # external_report_config = ExternalReportConfig(chan_id, column, color)
             self.__external_reports_configs[chan_id] =ExternalReportConfig(chan_id, units, color, column)
 
     def load_from_file(self, file_path: str) -> None:

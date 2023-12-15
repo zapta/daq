@@ -1,9 +1,11 @@
-from typing import Optional, List, Tuple, Any, Dict
-from collections import OrderedDict
 import logging
 import sys
 import re
+
+from typing import Optional, List, Tuple, Any, Dict
+from collections import OrderedDict
 from dataclasses import dataclass, field
+from serial_packets.packets import PacketData
 
 # Local imports
 sys.path.insert(0, "..")
@@ -13,14 +15,6 @@ from lib.sys_config import (
     PowerChannelConfig,
     TemperatureChannelConfig,
 )
-
-
-# For using the local version of serial_packet. Comment out if
-# using serial_packets package installed by pip.
-# import sys
-# sys.path.insert(0, "../../../../serial_packets_py/repo/src")
-
-from serial_packets.packets import PacketData
 
 
 logger = logging.getLogger("main")
@@ -72,31 +66,11 @@ class TimeMarkChannelValue:
 @dataclass(frozen=True)
 class ExternalReportChannelValue:
     """A single value of an external report channel."""
+
     time_millis: int
     report_str: str
     str_value: str
     float_value: float
-
-
-# def check_time_marker_value(marker: TimeMarkChannelValue)->None:
-#       """Apply time marker specific validation."""
-#       n = len(marker.values)
-#       assert n in (1, 2)
-#       marker_type = self.values[0]
-#       assert marker_type.islower()
-#       assert marker_type.strip() == marker_type()
-#       assert marker_type != ""
-#       if marker_type in ("test_begin", "test_end"):
-#         assert n == 2
-
-# @dataclass(frozen=True)
-# class DataMarkChannelValue:
-#     """A single value of a data mark channel."""
-#     time_millis: int
-#     marker_value: float
-
-
-# def check_parsed_external_report(chan_id: str, parsed_report: ExternalReportChannelValue):
 
 
 class ChannelData:
@@ -230,7 +204,7 @@ class LogPacketsParser:
         # Read header
         first_value_rel_time: int = packet_data.read_uint16()
         num_values = packet_data.read_uint16()
-        assert num_values > 1
+        assert num_values > 1, f"num_values: {num_values}"
         step_interval_millis = packet_data.read_uint16()
         assert not packet_data.read_error()
         # Read values
@@ -265,7 +239,7 @@ class LogPacketsParser:
         # Read header
         first_value_rel_time: int = packet_data.read_uint16()
         num_values = packet_data.read_uint16()
-        assert num_values > 1
+        assert num_values > 1, f"num_values: {num_values}"
         step_interval_millis = packet_data.read_uint16()
         assert not packet_data.read_error()
         # Read values
@@ -314,7 +288,7 @@ class LogPacketsParser:
         # Read header
         first_value_rel_time: int = packet_data.read_uint16()
         num_values = packet_data.read_uint16()
-        assert num_values > 1
+        assert num_values > 1, f"num_values: {num_values}"
         step_interval_millis = packet_data.read_uint16()
         assert not packet_data.read_error()
         # Read values
@@ -346,45 +320,20 @@ class LogPacketsParser:
         first_value_rel_time: int = packet_data.read_uint16()
         num_values = packet_data.read_uint16()
         # As of dec 2023, each external report is sent independently.
-        assert num_values == 1
+        assert num_values == 1, f"num_values: {num_values}"
         assert not packet_data.read_error()
         item_time_millis: int = packet_start_time_millis + first_value_rel_time
         report_str: str = packet_data.read_str()
-        # logger.info(f"Report str: [{report_str}]")
-        
+
         tokens = report_str.split(":")
         n = len(tokens)
-        assert n >= 1
+        assert n >= 1, f"report_str: '{report_str}'"
         chan_id = tokens[0]
-        # float_value = float(tokens[1])
-#       return ParsedExternalReport(report_str, tokens[0], tokens[1:])
 
-        # config = self.__sys_config.external_reports_configs().get(chan_id, None)
-        # if not config:
-        #   raise RuntimeError("Unknown marker: [{marker_str}]")
-        
-        
-        
-        # # Try to match to the known external report channels
-        # parsed_external_report = (
-        #     self.__sys_config.external_reports_configs().parse_external_report_str(
-        #         report_str
-        #     )
-        # )
-        
-        
-        
-        # if not parsed_external_report:
-        #     raise RuntimeError("Unknown marker: [{marker_str}]")
-        # Append the value to the channel.
-        # logger.info(f"Parsed report: {parsed_external_report}")
-        # chan_id = parsed_external_report.chan_id
-        # values = parsed_external_report.values
-        # Special handling for time markers
+        # Special handling for time markers. This is a hard coded channel with special semantic.
         if chan_id == "mrk":
             marker_type = tokens[1]
             marker_value = tokens[2] if n > 2 else ""
-            # logger.info(f"{chan_id}: {marker_type} {marker_value}")
             marker_chan_value = TimeMarkChannelValue(
                 item_time_millis,
                 report_str,
@@ -393,29 +342,13 @@ class LogPacketsParser:
             )
             output.append_values(chan_id, [marker_chan_value])
             return
-          
-        # Handle a general external report.
-        assert n == 2
-        ext_chan_value = ExternalReportChannelValue(
-            item_time_millis, report_str, tokens[1],  float(tokens[1])
-        )
-        # logger.info(f"{chan_id}: {ext_chan_value}")
-        output.append_values(chan_id, [ext_chan_value])
 
-        # Markers have some hard coded semantic so we have a special validation for them.
-        # if chan_id == "mrk":
-        #   parsed_value.check_as_a_marker()
-        # output.append_values(parsed_external_report.chan_id, parsed_value)
-        # output.append_values("mrk", [TimeMarkChannelValue(item_time_millis, report_str, parsed_external_report.marker_type, parsed_external_report.marker_value)])
-        # output.append_values("mrk", [TimeMarkChannelValue(item_time_millis, report_str, parsed_external_report.marker_type, parsed_external_report.marker_value)])
-        # return
-        # parsed_data_marker = self.__sys_config.data_markers_configs().parse_data_marker_str(report_str)
-        # if parsed_data_marker:
-        #   logger.info(f"Parsed: {parsed_external_report}")
-        #   value = float(parsed_data_marker.value)
-        #   output.append_values(parsed_data_marker.chan_id, [DataMarkChannelValue(item_time_millis, value)])
-        #   return
-        # TODO: Parse as a data marker.
+        # Handle a general case of an external report.
+        assert n == 2, f"report_str: '{report_str}'"
+        ext_chan_value = ExternalReportChannelValue(
+            item_time_millis, report_str, tokens[1], float(tokens[1])
+        )
+        output.append_values(chan_id, [ext_chan_value])
 
     def parse_next_packet(self, packet_data: PacketData) -> ParsedLogPacket:
         packet_data.reset_read_location()

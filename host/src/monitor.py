@@ -10,9 +10,8 @@ import signal
 import sys
 import time
 import pyqtgraph as pg
-import statistics
-from PyQt6 import QtWidgets, QtCore
 
+from PyQt6 import QtWidgets, QtCore
 from pyqtgraph import LabelItem
 from typing import Optional, List, Dict, Any
 from dataclasses import dataclass, field
@@ -106,10 +105,6 @@ main_event_loop = asyncio.get_event_loop()
 # TODO: Move to a common place.
 CONTROL_ENDPOINT = 0x01
 
-# TEST_BEGIN_MARKER_PEN = pg.mkPen(color="green", width=2)
-# TEST_END_MARKER_PEN = pg.mkPen(color="red", width=2)
-# DEFAULT_MARKER_PEN = pg.mkPen(color="gray", width=1, style=QtCore.Qt.PenStyle.DashLine)
-
 
 # System time of last display update.
 last_display_update_time: float = None
@@ -129,10 +124,6 @@ class MarkerHistory:
     """A class that tracks the recent markers."""
 
     markers: List[MarkerEntry] = field(default_factory=list)
-
-    # def __init__(self):
-    #     # Oldest first.
-    #     self.markers: List[MarkerEntry] = []
 
     def clear(self):
         self.markers.clear()
@@ -168,13 +159,9 @@ class LoadCellChannel:
 class PowerChannel:
     chan_id: str
     pw_config: PowerChannelConfig
-    # display_series_v: DisplaySeries
-    # display_series_a: DisplaySeries
     display_series: DisplaySeries
 
     def clear(self):
-        # self.display_series_v.clear()
-        # self.display_series_a.clear()
         self.display_series.clear()
 
 
@@ -186,8 +173,8 @@ class TemperatureSensorChannel:
 
     def clear(self):
         self.display_series.clear()
-        
-        
+
+
 @dataclass(frozen=True)
 class ExternalReportChannel:
     chan_id: str
@@ -220,8 +207,6 @@ markers_history = MarkerHistory()
 pending_start_button_click = False
 pending_stop_button_click = False
 
-# Used to parse the incoming data log messages from the device.
-# log_packets_parser = LogPacketsParser()
 
 # Initial window size in pixels.
 initial_window_width = 800
@@ -264,6 +249,9 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
         parsed_log_packet: ParsedLogPacket = log_packets_parser.parse_next_packet(data)
         # logger.info(f"New packet, channels: {parsed_log_packet.channel_keys()}")
         # Ignore packet if it's a left over from a previous device session (before reboot).
+        if device_session_id is None:
+            logger.warning(f"No session id yet, ignoring packet")
+            return
         if parsed_log_packet.session_id() != device_session_id:
             logger.warning(
                 f"Session id mismatch ({parsed_log_packet.session_id():08x} vs "
@@ -288,10 +276,6 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
             # lc_value is a
             for lc_value in lc_data.values():
                 assert isinstance(lc_value, LcChannelValue)
-                # times_secs = []
-                # values_g = []
-                # adc_values_sum = 0
-                # for time_millis, adc_value in lc_data.values():
                 times_secs.append(lc_value.time_millis / 1000)
                 values_g.append(lc_value.value_grams)
                 adc_readings_sum += lc_value.adc_reading
@@ -309,26 +293,19 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
                 break
             pw_chan: PowerChannel = pw_channels[pw_chan_id]
             times_secs = []
-            values_v = []
-            values_a = []
+            # values_v = []
+            # values_a = []
             values_w = []
             adc_current_readings_sum = 0
             adc_voltage_readings_sum = 0
             for pw_value in pw_data.values():
                 assert isinstance(pw_value, PwChannelValue)
-                # adc_voltage_reading = adc_value_pair[0]
-                # adc_current_reading = adc_value_pair[1]
-                # volts = pw_chan.pw_config.adc_voltage_reading_to_volts(adc_voltage_reading)
-                # amps = pw_chan.pw_config.adc_current_reading_to_amps(adc_current_reading)
-                # watts = pw_value.value_volts * pw_value.value_amps
                 times_secs.append(pw_value.time_millis / 1000)
-                values_v.append(pw_value.value_volts)
-                values_a.append(pw_value.value_amps)
+                # values_v.append(pw_value.value_volts)
+                # values_a.append(pw_value.value_amps)
                 values_w.append(pw_value.value_volts * pw_value.value_amps)
                 adc_voltage_readings_sum += pw_value.adc_voltage_reading
                 adc_current_readings_sum += pw_value.adc_current_reading
-            # pw_chan.display_series_v.extend(times_secs, values_v)
-            # pw_chan.display_series_a.extend(times_secs, values_a)
             pw_chan.display_series.extend(times_secs, values_w)
             if args.calibration:
                 avg_adc_current_reading = round(
@@ -386,74 +363,28 @@ async def message_async_callback(endpoint: int, data: PacketData) -> None:
                     mrk_value.marker_str,
                     pen_for_marker_type(mrk_value.marker_type),
                 )
-                
+
         # Process external reports channels
-        # print(f"update: iterating ex keys()", flush=True)
         for ex_chan_id in ex_channels.keys():
-            # logger.info(f"================ ext looking up: {ex_chan_id} /  {ex_channels.keys()} / {parsed_log_packet.channels().keys()}")
-            # print(f"Display update: {ex_chan_id}", flush=True)
             ex_chan_data: ChannelData = parsed_log_packet.channel(ex_chan_id)
             if not ex_chan_data:
-                # logger.info(f"**** Ext not found: {ex_chan_id}")
                 # This packet has no data for this channel. It's normal.
                 continue
-            # logger.info(f"**********  Ext found: {ex_chan_id}")
             ex_chan: ExternalReportChannel = ex_channels[ex_chan_id]
             times_millis_sum = 0
-            # adc_readings_sum = 0
-            # temp_c_sum = 0
-            # n = 0
             # As of Dec 2023 is send one marker per packet.
-            assert  len(ex_chan_data.values()) == 1
+            assert len(ex_chan_data.values()) == 1
             data_point = ex_chan_data.values()[0]
             assert isinstance(data_point, ExternalReportChannelValue)
-            # assert len(data_point.values) == 1
-            # str_value = data_point.values[0]
-            # float_value = float(str_value)
-                # times_millis_sum += tm_value.time_millis
-                # adc_readings_sum += tm_value.adc_reading
-                # temp_c_sum += tm_value.t_celsius
-                # n += 1
-            # We compute average and add a single temp point.
-            # avg_times_secs = times_millis_sum / (n * 1000)
-            # avg_adc_reading = round(adc_readings_sum / n)
-            # avg_temp_c = temp_c_sum / n
-            time_secs = data_point.time_millis / 1000
-            ex_chan.display_series.extend([data_point.time_millis / 1000.0], [data_point.float_value])
+            # time_secs = data_point.time_millis / 1000
+            ex_chan.display_series.extend(
+                [data_point.time_millis / 1000.0], [data_point.float_value]
+            )
             print
             if args.calibration:
-              ex_chan.ex_report_config.dump_external_report_calibration(data_point.str_value, data_point.float_value)
-              # logger.info(f"   {ex_chan_id}:   parsed   -> {data_point.value}")
-              
-              
-            #     print
-            #     tm_chan.temperature_config.dump_temperature_calibration(
-            #         round(avg_adc_reading)
-            #     )
-
-        # Process external reports
-        # for ext_chan_id in ext_channels.keys():
-        #     # Process temperature channel. We compute the average of the readings
-        #     # in this packet.
-        #     ext_chan_data: ChannelData = parsed_log_packet.channel(ext_chan_id)
-        #     if not ext_chan_data:
-        #         # This packet has no data for this channel.
-        #         break
-        #     if ext_chan_id == "mrk":
-        #           # time_markers_config: TimeMarkersConfigs = sys_config.time_markers_configs()
-        #           for parsed_marker in ext_chan_data.values():
-        #               assert isinstance(parsed_marker, ExternalReportChannelValue)
-        #               marker_time_secs = parsed_marker.time_millis / 1000
-        #               assert parsed_marker.len()
-        #               # marker_type, marker_value = markers_config.classify_marker(marker_name)
-        #               logger.info(
-        #                   f"Marker: [{parsed_marker.marker_str}] type=[{parsed_marker.marker_type}] value[{parsed_marker.marker_value}] time={marker_time_secs:.3f}]"
-        #               )
-        #               markers_history.append(marker_time_secs, parsed_marker.marker_str,
-        #                                     time_markers_config.pen_for_marker(parsed_marker.marker_str))
-
-        # All done. Update the display
-        # update_display()
+                ex_chan.ex_report_config.dump_external_report_calibration(
+                    data_point.str_value, data_point.float_value
+                )
 
 
 def set_display_status_line(msg: str) -> None:
@@ -462,7 +393,7 @@ def set_display_status_line(msg: str) -> None:
 
 
 def update_display():
-    global plot1, plot2, plot3 ,plot1_display_series, plot2_display_series, plot3_display_series
+    global plot1, plot2, plot3, plot1_display_series, plot2_display_series, plot3_display_series
     global lc_channels, tm_channels, ex_channels, sys_config, latest_log_time, latest_log_arrival_time
     global last_display_update_time
 
@@ -492,9 +423,12 @@ def update_display():
     for display_series in plot1_display_series:
         display_series.delete_older_than(plot1_cleanup_time)
         x, y = display_series.get_display_xy(adjusted_latest_log_time)
-        # color = display_series.color()
         plot1.plot(
-            x, y, pen=pg.mkPen(color=display_series.color(), width=2), name=display_series.label(), antialias=True
+            x,
+            y,
+            pen=pg.mkPen(color=display_series.color(), width=2),
+            name=display_series.label(),
+            antialias=True,
         )
 
     # Update plot 2 with its display series
@@ -502,35 +436,25 @@ def update_display():
     for display_series in plot2_display_series:
         display_series.delete_older_than(plot2_cleanup_time)
         x, y = display_series.get_display_xy(adjusted_latest_log_time)
-        # color = display_series.color()
         plot2.plot(
-            x, y, pen=pg.mkPen(color=display_series.color(), width=2), name=display_series.label(), antialias=True
+            x,
+            y,
+            pen=pg.mkPen(color=display_series.color(), width=2),
+            name=display_series.label(),
+            antialias=True,
         )
-        
-        
-    # # Add external channel to plot2
-    # display_series = ex_channels["xt1"].display_series
-    # cleanup_time = adjusted_latest_log_time - plot2_x_span
-    # display_series.delete_older_than(cleanup_time)
-    # x, y = display_series.get_display_xy(adjusted_latest_log_time)
-    # color = display_series.color()
-    # plot2.plot(
-    #      x, y, pen=pg.mkPen(color=color, width=2), name="xt1", antialias=True
-    # )
 
-    # Update plot 3 with power channels
+    # Update plot 3 with its display series.
     plot3_cleanup_time = adjusted_latest_log_time - plot3_x_span
     for display_series in plot3_display_series:
-        # display_series = pw_chan.display_series
-        # display_series_v.delete_older_than(pw_cleanup_time)
-        # display_series_a.delete_older_than(pw_cleanup_time)
         display_series.delete_older_than(plot3_cleanup_time)
         x, y = display_series.get_display_xy(adjusted_latest_log_time)
-        # x = pw_chan.display_series_v.relative_times(adjusted_latest_log_time)
-        # y = pw_chan.display_series_v.values()
-        # color = display_series.color()
         plot3.plot(
-            x, y, pen=pg.mkPen(color=display_series.color(), width=2), name=display_series.label(), antialias=True
+            x,
+            y,
+            pen=pg.mkPen(color=display_series.color(), width=2),
+            name=display_series.label(),
+            antialias=True,
         )
 
     # Draw the markers on plot1, plot2. plot3.
@@ -563,9 +487,7 @@ async def connection_task():
 
 async def init_serial_packets_client() -> None:
     global sys_config, serial_port, serial_packets_client, connection_task
-    # sys_config = SysConfig()
-    # assert args.sys_config is not None
-    # sys_config.load_from_file(args.sys_config)
+
     serial_port = sys_config.data_link_port()
     serial_packets_client = SerialPacketsClient(
         serial_port,
@@ -606,30 +528,28 @@ def init_display():
     lc_channels = {}
     for chan_id, lc_config in sys_config.load_cells_configs().items():
         display_series = DisplaySeries(chan_id, lc_config.color())
-        lc_channels[chan_id] = LoadCellChannel(chan_id, lc_config, display_series )
+        lc_channels[chan_id] = LoadCellChannel(chan_id, lc_config, display_series)
         plot1_display_series.append(display_series)
 
- 
     tm_channels = {}
     for chan_id, tm_config in sys_config.temperature_configs().items():
         display_series = DisplaySeries(chan_id, tm_config.color())
-        tm_channels[chan_id] = TemperatureSensorChannel(chan_id, tm_config, display_series)
+        tm_channels[chan_id] = TemperatureSensorChannel(
+            chan_id, tm_config, display_series
+        )
         plot2_display_series.append(display_series)
-        
+
     ex_channels = {}
     for chan_id, ex_config in sys_config.external_reports_configs().items():
-        display_series =  DisplaySeries(chan_id, ex_config.color())
+        display_series = DisplaySeries(chan_id, ex_config.color())
         ex_channels[chan_id] = ExternalReportChannel(chan_id, ex_config, display_series)
         plot2_display_series.append(display_series)
-        
-        
+
     pw_channels = {}
     for chan_id, pw_config in sys_config.power_configs().items():
         display_series = DisplaySeries(chan_id, pw_config.color())
         pw_channels[chan_id] = PowerChannel(chan_id, pw_config, display_series)
         plot3_display_series.append(display_series)
-    
-
 
     pg.setConfigOption("background", "w")
     pg.setConfigOption("foreground", "k")
@@ -709,26 +629,21 @@ last_command_status_time = time.time() - 10
 # When the device starts it picks a random uint32 as a session
 # id. We use it to detect device restarts. 0 is an
 # invalid session id.
-device_session_id = 0
+device_session_id = None
 
 
 # Resets the session. E.g. when the devices were detected
 # to go through reset.
 def reset_display():
-    global latest_log_time
+    global latest_log_time, latest_log_arrival_time
     latest_log_time = None
     latest_log_arrival_time = None
     for chan in lc_channels.values():
         chan.clear()
-        # chan.display_series.clear()
     for chan in pw_channels.values():
         chan.clear()
-        # chan.display_series_v.clear()
-        # chan.display_series_a.clear()
-        # chan.display_series_w.clear()
     for chan in tm_channels.values():
         chan.clear()
-        # chan.display_series.clear()
     markers_history.clear()
     set_display_status_line("")
     # Force a display update
@@ -835,9 +750,6 @@ def timer_handler():
         (time.time() - last_display_update_time) * args.refresh_rate >= 1
     ):
         update_display()
-    # if (timer_handler_counter % 10 == 0):
-    #   update_display()
-    # timer_handler_counter += 1
 
 
 def main():
