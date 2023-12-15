@@ -7,7 +7,12 @@ from dataclasses import dataclass, field
 
 # Local imports
 sys.path.insert(0, "..")
-from lib.sys_config import SysConfig, LoadCellChannelConfig, PowerChannelConfig, TemperatureChannelConfig
+from lib.sys_config import (
+    SysConfig,
+    LoadCellChannelConfig,
+    PowerChannelConfig,
+    TemperatureChannelConfig,
+)
 
 
 # For using the local version of serial_packet. Comment out if
@@ -23,40 +28,78 @@ logger = logging.getLogger("main")
 
 # NOTE: All channel item value are assumed to have a time_millis:int field.
 
+
 @dataclass(frozen=True)
 class LcChannelValue:
     """A single value of a load cell channel."""
+
     time_millis: int
     adc_reading: int
     value_grams: float
-    
+
+
 @dataclass(frozen=True)
 class PwChannelValue:
     """A single value of a power (volt/amp) channel."""
+
     time_millis: int
     adc_voltage_reading: int
     adc_current_reading: int
     value_volts: float
     value_amps: float
-    
+
+
 @dataclass(frozen=True)
 class TmChannelValue:
     """A single value of a temperature channel."""
+
     time_millis: int
     adc_reading: int
     r_ohms: float
     t_celsius: float
-    
+
+
 @dataclass(frozen=True)
-class MrkChannelValue:
-    """A single value of the markers channel."""
+class TimeMarkChannelValue:
+    """A single value of the time markers channel."""
+
     time_millis: int
-    marker_name: str
+    marker_str: str
     marker_type: str
     marker_value: str
-    
-class ChannelData:
 
+
+@dataclass(frozen=True)
+class ExternalReportChannelValue:
+    """A single value of an external report channel."""
+    time_millis: int
+    report_str: str
+    str_value: str
+    float_value: float
+
+
+# def check_time_marker_value(marker: TimeMarkChannelValue)->None:
+#       """Apply time marker specific validation."""
+#       n = len(marker.values)
+#       assert n in (1, 2)
+#       marker_type = self.values[0]
+#       assert marker_type.islower()
+#       assert marker_type.strip() == marker_type()
+#       assert marker_type != ""
+#       if marker_type in ("test_begin", "test_end"):
+#         assert n == 2
+
+# @dataclass(frozen=True)
+# class DataMarkChannelValue:
+#     """A single value of a data mark channel."""
+#     time_millis: int
+#     marker_value: float
+
+
+# def check_parsed_external_report(chan_id: str, parsed_report: ExternalReportChannelValue):
+
+
+class ChannelData:
     def __init__(self, chan_id: str):
         self.__chan_id = chan_id
         # List of (time_millis, value)
@@ -95,7 +138,6 @@ class ChannelData:
 
 
 class ParsedLogPacket:
-
     def __init__(self, session_id: int, packet_base_time_millis: int):
         """Constructor."""
         self.__session_id: int = session_id
@@ -119,7 +161,7 @@ class ParsedLogPacket:
 
     def channel_keys(self) -> List[str]:
         return list(self.__channels.keys())
-      
+
     def num_channels(self):
         return len(self.__channels)
 
@@ -146,7 +188,11 @@ class ParsedLogPacket:
     def is_empty(self):
         return not self.__channels
 
-    def append_values(self, chan_id: str, values: List[LcChannelValue]|List[PwChannelValue]|List[TmChannelValue]) -> None:
+    def append_values(
+        self,
+        chan_id: str,
+        values: List[LcChannelValue] | List[PwChannelValue] | List[TmChannelValue],
+    ) -> None:
         # logger.info(f"{chan_name}: {len(values)} new values")
         if not chan_id in self.__channels:
             self.__channels[chan_id] = ChannelData(chan_id)
@@ -154,35 +200,41 @@ class ParsedLogPacket:
 
 
 class LogPacketsParser:
-
     def __init__(self, sys_config: SysConfig):
         """Constructor."""
         self.__sys_config = sys_config
         # Counts the number of values each each ignored channel.
         self.__ignored_channels: Dict[str, int] = {}
-        
+
     def __report_ignored_channel(self, chan_id: str, num_values: int) -> None:
-        old_value = self.__ignored_channels.get(chan_id, 0);
+        old_value = self.__ignored_channels.get(chan_id, 0)
         self.__ignored_channels[chan_id] = old_value + num_values
         # logger.info(f"Channel [{chan_id} not in config, skipping {num_values} values (total {self.__skipped_channels[chan_id]})")
 
     def ignored_channels(self) -> Dict[str, int]:
         """Returns a list of ignored channel ids and their respective row counts."""
-        return self.__ignored_channels;
-      
-    def _parse_lc_ch_values(self, chan_id: str, packet_start_time_millis: int,
-                           packet_data: PacketData, output: ParsedLogPacket) -> None:
+        return self.__ignored_channels
+
+    def _parse_lc_ch_values(
+        self,
+        chan_id: str,
+        packet_start_time_millis: int,
+        packet_data: PacketData,
+        output: ParsedLogPacket,
+    ) -> None:
         """Parse an append a list of lc channel values. If chan is not in sys_config, parse and ignore values."""
         # Get channel config. If not in config, we read but ignore this channel.
-        lc_ch_config: Optional[LoadCellChannelConfig] = self.__sys_config.load_cell_config(chan_id)
-        # Read header 
+        lc_ch_config: Optional[
+            LoadCellChannelConfig
+        ] = self.__sys_config.load_cell_config(chan_id)
+        # Read header
         first_value_rel_time: int = packet_data.read_uint16()
         num_values = packet_data.read_uint16()
         assert num_values > 1
         step_interval_millis = packet_data.read_uint16()
         assert not packet_data.read_error()
         # Read values
-        values = [] 
+        values = []
         item_time_millis: int = packet_start_time_millis + first_value_rel_time
         for i in range(num_values):
             adc_reading: int = packet_data.read_int24()
@@ -193,82 +245,177 @@ class LogPacketsParser:
         assert not packet_data.read_error()
         # If channel is not ignored, add its values.
         if values:
-          # logger.info(f"Adding {len(values)} values of chan {chan_name}")
-          output.append_values(chan_id, values)
+            # logger.info(f"Adding {len(values)} values of chan {chan_name}")
+            output.append_values(chan_id, values)
         else:
-          self.__report_ignored_channel(chan_id, num_values)
-          
-          
-    def _parse_pw_ch_values(self, chan_id: str, packet_start_time_millis: int,
-                           packet_data: PacketData, output: ParsedLogPacket) -> None:
+            self.__report_ignored_channel(chan_id, num_values)
+
+    def _parse_pw_ch_values(
+        self,
+        chan_id: str,
+        packet_start_time_millis: int,
+        packet_data: PacketData,
+        output: ParsedLogPacket,
+    ) -> None:
         """Parse an append a list of power channel values. If chan is not in sys_config, parse and ignore values."""
-         # Get channel config. If not in config, we read but ignore this channel.
-        pw_ch_config: Optional[PowerChannelConfig] = self.__sys_config.power_config(chan_id)
-        # Read header 
+        # Get channel config. If not in config, we read but ignore this channel.
+        pw_ch_config: Optional[PowerChannelConfig] = self.__sys_config.power_config(
+            chan_id
+        )
+        # Read header
         first_value_rel_time: int = packet_data.read_uint16()
         num_values = packet_data.read_uint16()
         assert num_values > 1
         step_interval_millis = packet_data.read_uint16()
         assert not packet_data.read_error()
         # Read values
-        values = [] 
+        values = []
         item_time_millis: int = packet_start_time_millis + first_value_rel_time
         for i in range(num_values):
             adc_voltage_reading: int = packet_data.read_int16()
             adc_current_reading: int = packet_data.read_int16()
             if pw_ch_config:
-                value_volts =  pw_ch_config.adc_voltage_reading_to_volts(adc_voltage_reading)
-                value_amps =  pw_ch_config.adc_current_reading_to_amps(adc_current_reading)
-                values.append(PwChannelValue(item_time_millis, adc_voltage_reading, adc_current_reading, value_volts, value_amps))
+                value_volts = pw_ch_config.adc_voltage_reading_to_volts(
+                    adc_voltage_reading
+                )
+                value_amps = pw_ch_config.adc_current_reading_to_amps(
+                    adc_current_reading
+                )
+                values.append(
+                    PwChannelValue(
+                        item_time_millis,
+                        adc_voltage_reading,
+                        adc_current_reading,
+                        value_volts,
+                        value_amps,
+                    )
+                )
             item_time_millis += step_interval_millis
         assert not packet_data.read_error()
         # If channel is not ignored, add its values.
         if values:
-          # logger.info(f"Adding {len(values)} values of chan {chan_name}")
-          output.append_values(chan_id, values)
+            # logger.info(f"Adding {len(values)} values of chan {chan_name}")
+            output.append_values(chan_id, values)
         else:
-          self.__report_ignored_channel(chan_id, num_values)
-        
-    def _parse_tm_ch_values(self, chan_id: str, packet_start_time_millis: int,
-                           packet_data: PacketData, output: ParsedLogPacket) -> None:
+            self.__report_ignored_channel(chan_id, num_values)
+
+    def _parse_tm_ch_values(
+        self,
+        chan_id: str,
+        packet_start_time_millis: int,
+        packet_data: PacketData,
+        output: ParsedLogPacket,
+    ) -> None:
         """Parse an append a list of temperature channel values. If chan is not in sys_config, parse and ignore values."""
         # Get channel config. If not in config, we read but ignore this channel.
-        tm_ch_config: Optional[TemperatureChannelConfig] = self.__sys_config.temperature_config(chan_id)
-        # Read header 
+        tm_ch_config: Optional[
+            TemperatureChannelConfig
+        ] = self.__sys_config.temperature_config(chan_id)
+        # Read header
         first_value_rel_time: int = packet_data.read_uint16()
         num_values = packet_data.read_uint16()
         assert num_values > 1
         step_interval_millis = packet_data.read_uint16()
         assert not packet_data.read_error()
         # Read values
-        values = [] 
+        values = []
         item_time_millis: int = packet_start_time_millis + first_value_rel_time
         for i in range(num_values):
             adc_reading: int = packet_data.read_int24()
             if tm_ch_config:
                 r_ohms = tm_ch_config.adc_reading_to_ohms(adc_reading)
                 t_celsius = tm_ch_config.resistance_to_c(r_ohms)
-                values.append(TmChannelValue(item_time_millis, adc_reading, r_ohms, t_celsius))
+                values.append(
+                    TmChannelValue(item_time_millis, adc_reading, r_ohms, t_celsius)
+                )
             item_time_millis += step_interval_millis
         assert not packet_data.read_error()
         # If channel is not ignored, add its values.
         if tm_ch_config:
-          output.append_values(chan_id, values)
+            output.append_values(chan_id, values)
         else:
-          self.__report_ignored_channel(chan_id, num_values)
-      
-    def _parse_mrk_ch_values(self, chan_id: str, packet_start_time_millis: int,
-                           packet_data: PacketData, output: ParsedLogPacket) -> None:
-        """Parse an append a list of marker values."""
+            self.__report_ignored_channel(chan_id, num_values)
+
+    def _parse_external_reports_values(
+        self,
+        packet_start_time_millis: int,
+        packet_data: PacketData,
+        output: ParsedLogPacket,
+    ) -> None:
+        """Parse external reports."""
         first_value_rel_time: int = packet_data.read_uint16()
         num_values = packet_data.read_uint16()
+        # As of dec 2023, each external report is sent independently.
         assert num_values == 1
         assert not packet_data.read_error()
         item_time_millis: int = packet_start_time_millis + first_value_rel_time
-        marker_name: str =  packet_data.read_str()
-        marker_type, marker_value =  self.__sys_config.time_markers_configs().classify_marker(marker_name)
-        output.append_values(chan_id, [MrkChannelValue(item_time_millis, marker_name, marker_type, marker_value)])
-        assert not packet_data.read_error()
+        report_str: str = packet_data.read_str()
+        # logger.info(f"Report str: [{report_str}]")
+        
+        tokens = report_str.split(":")
+        n = len(tokens)
+        assert n >= 1
+        chan_id = tokens[0]
+        # float_value = float(tokens[1])
+#       return ParsedExternalReport(report_str, tokens[0], tokens[1:])
+
+        # config = self.__sys_config.external_reports_configs().get(chan_id, None)
+        # if not config:
+        #   raise RuntimeError("Unknown marker: [{marker_str}]")
+        
+        
+        
+        # # Try to match to the known external report channels
+        # parsed_external_report = (
+        #     self.__sys_config.external_reports_configs().parse_external_report_str(
+        #         report_str
+        #     )
+        # )
+        
+        
+        
+        # if not parsed_external_report:
+        #     raise RuntimeError("Unknown marker: [{marker_str}]")
+        # Append the value to the channel.
+        # logger.info(f"Parsed report: {parsed_external_report}")
+        # chan_id = parsed_external_report.chan_id
+        # values = parsed_external_report.values
+        # Special handling for time markers
+        if chan_id == "mrk":
+            marker_type = tokens[1]
+            marker_value = tokens[2] if n > 2 else ""
+            # logger.info(f"{chan_id}: {marker_type} {marker_value}")
+            marker_chan_value = TimeMarkChannelValue(
+                item_time_millis,
+                report_str,
+                marker_type,
+                marker_value,
+            )
+            output.append_values(chan_id, [marker_chan_value])
+            return
+          
+        # Handle a general external report.
+        assert n == 2
+        ext_chan_value = ExternalReportChannelValue(
+            item_time_millis, report_str, tokens[1],  float(tokens[1])
+        )
+        # logger.info(f"{chan_id}: {ext_chan_value}")
+        output.append_values(chan_id, [ext_chan_value])
+
+        # Markers have some hard coded semantic so we have a special validation for them.
+        # if chan_id == "mrk":
+        #   parsed_value.check_as_a_marker()
+        # output.append_values(parsed_external_report.chan_id, parsed_value)
+        # output.append_values("mrk", [TimeMarkChannelValue(item_time_millis, report_str, parsed_external_report.marker_type, parsed_external_report.marker_value)])
+        # output.append_values("mrk", [TimeMarkChannelValue(item_time_millis, report_str, parsed_external_report.marker_type, parsed_external_report.marker_value)])
+        # return
+        # parsed_data_marker = self.__sys_config.data_markers_configs().parse_data_marker_str(report_str)
+        # if parsed_data_marker:
+        #   logger.info(f"Parsed: {parsed_external_report}")
+        #   value = float(parsed_data_marker.value)
+        #   output.append_values(parsed_data_marker.chan_id, [DataMarkChannelValue(item_time_millis, value)])
+        #   return
+        # TODO: Parse as a data marker.
 
     def parse_next_packet(self, packet_data: PacketData) -> ParsedLogPacket:
         packet_data.reset_read_location()
@@ -277,7 +424,7 @@ class LogPacketsParser:
         session_id = packet_data.read_uint32()
         packet_start_time_millis = packet_data.read_uint32()
         result: ParsedLogPacket = ParsedLogPacket(session_id, packet_start_time_millis)
-        chan_id_regex = re.compile("[a-z][a-z][1-9]|mrk")
+        chan_id_regex = re.compile("[a-z0-9]{3}")
         while not packet_data.read_error() and not packet_data.all_read():
             # Get channel id
             chan_id = packet_data.read_str()
@@ -286,24 +433,32 @@ class LogPacketsParser:
 
             # Parse a load cell channel.
             if chan_id.startswith("lc"):
-                self._parse_lc_ch_values(chan_id, packet_start_time_millis, packet_data, result)
+                self._parse_lc_ch_values(
+                    chan_id, packet_start_time_millis, packet_data, result
+                )
                 continue
-              
+
             # Parse a power channel
             if chan_id.startswith("pw"):
-                self._parse_pw_ch_values(chan_id, packet_start_time_millis, packet_data, result)
+                self._parse_pw_ch_values(
+                    chan_id, packet_start_time_millis, packet_data, result
+                )
                 continue
-              
+
             # Temperature channels.
             if chan_id.startswith("tm"):
-                self._parse_tm_ch_values(chan_id, packet_start_time_millis, packet_data, result)
+                self._parse_tm_ch_values(
+                    chan_id, packet_start_time_millis, packet_data, result
+                )
                 continue
-              
+
             # Markers.
-            if chan_id == "mrk":
-                self._parse_mrk_ch_values(chan_id, packet_start_time_millis, packet_data, result)
+            if chan_id == "ext":
+                self._parse_external_reports_values(
+                    packet_start_time_millis, packet_data, result
+                )
                 continue
-              
+
             # Unknown channel id
             raise ValueError(f"Unexpected log chan id: [{chan_id}]")
         assert packet_data.all_read_ok()

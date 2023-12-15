@@ -18,7 +18,7 @@ from serial_packets.packet_decoder import PacketDecoder, DecodedLogPacket
 
 # Local imports.
 sys.path.insert(0, "..")
-from lib.log_parser import LogPacketsParser, ParsedLogPacket, ChannelData,  LcChannelValue, PwChannelValue, TmChannelValue, MrkChannelValue
+from lib.log_parser import LogPacketsParser, ParsedLogPacket, ChannelData,  LcChannelValue, PwChannelValue, TmChannelValue, TimeMarkChannelValue
 from lib.sys_config import SysConfig
 
 
@@ -138,8 +138,8 @@ def process_mrk_channel_data(ch_data: ChannelData) -> None:
     chan = output_csv_files_dict["markers"]
     f = chan.file_handle
     for mrk_value in ch_data.values():
-      assert isinstance(mrk_value, MrkChannelValue)
-      marker_name = mrk_value.marker_name
+      assert isinstance(mrk_value, TimeMarkChannelValue)
+      marker_name = mrk_value.marker_str
       marker_type = mrk_value.marker_type
       marker_value = mrk_value.marker_value
       millis_in_session = mrk_value.time_millis - earliest_packet_start_time

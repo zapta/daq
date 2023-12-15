@@ -7,13 +7,21 @@ logger = logging.getLogger("display_series")
 
 class DisplaySeries:
     """A class that tracks <time, value> in last T seconds"""
-    def __init__(self):
+    def __init__(self, label:str, color:str):
         # Times are device timestamps time in secs.
+        self.__label: str = label
         self.__times: List[float] = []
         self.__values: List[float] = []
+        self.__color = color
 
     def size(self) -> int:
         return len(self.__times)
+      
+    def color(self) -> str:
+        return self.__color
+      
+    def label(self) -> str:
+        return self.__label
       
     def clear(self) -> None:
       self.__times.clear()

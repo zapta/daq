@@ -5,55 +5,138 @@ import math
 import re
 import pyqtgraph as pg
 from PyQt6 import QtCore
+from dataclasses import dataclass, field
+
 
 logger = logging.getLogger("sys_config")
+
+# DEFAULT_PEN = pg.mkPen(color="gray", width=1, style=QtCore.Qt.PenStyle.DashLine)
 
 # A resistance const that represents an open circuit.
 OPEN_CIRCUIT_OHMS = 999999
 
 # A C temp const that represents an open circuit or unknown value.
 OPEN_CIRCUIT_C = -99
+
+# EXTERNAL_REPORT_REGEX = re.compile(r"^([a-z0-9]+):(.*)$")
+# EXTERNAL_REPORT_VALUE_REGEX = re.compile(r"[^,\"']$")
+
+# @dataclass(frozen=True)
+# class ParsedTimeMarker:
+#     """Result of parsing a time marker string."""
+#     marker_type: str
+#     marker_value: str
     
-class TimeMarkerConfig:
-    """Config of a single time marker type."""
-
-    def __init__(self, marker_type: str, marker_regex: str, regex_value_group: int,
-                 marker_pen: Any):
-        self.marker_type = marker_type
-        self.marker_regex = re.compile(marker_regex, re.IGNORECASE)
-        self.regex_value_group = regex_value_group
-        self.marker_pen = marker_pen
+# @dataclass(frozen=True)
+# class ParsedExternalReport:
+#     """Result of parsing an external report string"""
+#     report_str: str
+#     chan_id: str
+#     values: List[str]
 
 
-class TimeMarkersConfigs:
-    """A collection of time marker configs."""
+        
+# class TimeMarkerConfig:
+#     """Config of a single time marker type."""
 
-    def __init__(self):
-        self.__marker_configs: List[TimeMarkerConfig] = []
-        self.__default_marker_pen = pg.mkPen(color="gray",
-                                             width=1,
-                                             style=QtCore.Qt.PenStyle.DashLine)
+#     def __init__(self, marker_type: str, marker_regex: str, regex_value_group: int,
+#                  marker_pen: Any):
+#         self.marker_type = marker_type
+#         self.marker_regex = re.compile(marker_regex, re.IGNORECASE)
+#         self.regex_value_group = regex_value_group
+#         self.marker_pen = marker_pen
+        
+# class DataMarkerConfig:
+#     """Config of a single data marker type."""
 
-    def append_marker(self, marker_config: TimeMarkerConfig) -> None:
-        self.__marker_configs.append(marker_config)
+#     def __init__(self, chan_id: str, marker_regex: str, regex_value_group: int, column_name: str,
+#                  marker_pen: Any):
+#         self.chan_id = chan_id
+#         self.marker_regex = re.compile(marker_regex, re.IGNORECASE)
+#         self.regex_value_group = regex_value_group
+#         self.column_name = column_name
+#         self.marker_pen = marker_pen
 
-    def pen_for_marker(self, marker_name: str) -> Any:
-        for marker_config in self.__marker_configs:
-            if marker_config.marker_regex.match(marker_name):
-                return marker_config.marker_pen
-        return self.__default_marker_pen
 
-    def classify_marker(self, marker_name: str) -> Tuple[str, str]:
-        """Returns marker type value, both may be empty strings."""
-        for marker_config in self.__marker_configs:
-            match = marker_config.marker_regex.match(marker_name)
-            if match:
-                groups = match.groups("")
-                n = marker_config.regex_value_group
-                value = groups[n - 1] if n > 0 else ""
-                return (marker_config.marker_type, value)
-        # The marker doesn't match any of the markers in sys_config
-        return ("", "")
+# class ExternalReportsConfigs:
+#     """A collection of all external report configs."""
+
+#     def __init__(self):
+#         self.__external_report_configs: List[ExternalReportConfig] = []
+#         # self.__default_marker_pen = pg.mkPen(color="gray",
+#         #                                      width=1,
+#         #                                      style=QtCore.Qt.PenStyle.DashLine)
+
+#     def append_external_report_config(self, config: ExternalReportConfig) -> None:
+#         self.__external_report_configs.append(config)
+
+#     # def pen_for_marker(self, marker_name: str) -> Any:
+#     #     for marker_config in self.__time_marker_configs:
+#     #         if marker_config.marker_regex.match(marker_name):
+#     #             return marker_config.marker_pen
+#     #     return DEFAULT_PEN
+      
+#     def parse_external_report_str(self, report_str: str) -> Optional[ParsedExternalReport]:
+#         """Try to match to the report configs. If unknown, return None"""
+#         tokens = report_str.split(":")
+#         return ParsedExternalReport(report_str, tokens[0], tokens[1:])
+#         # match = EXTERNAL_REPORT_REGEX.match(report_str)
+#         # if not match:
+#         #   return None
+#         # groups = match.groups("")
+#         # chan_id = groups[0]
+#         # return ParsedExternalReport(chan_id, report_str, ["test_begin", "yy"])
+
+#         # chan_id = m.
+#         # n = m.groups("")
+         
+        
+#         # = external_report_str.split(":")
+#         # assert 1 < len(tokens) <= 2
+        
+#         # for external_report_config in self.__external_report_configs:
+#         #     match = marker_config.marker_regex.match(marker_str)
+#         #     if match:
+#         #         groups = match.groups("")
+#         #         n = marker_config.regex_value_group
+#         #         value = groups[n - 1] if n > 0 else ""
+#         #         return ParsedTimeMarker(marker_config.marker_type, value)
+#         # # The marker doesn't match any of the time markers in sys_config
+#         return None
+      
+  
+  
+# class DataMarkersConfigs:
+#     """A collection of data marker configs."""
+
+#     def __init__(self):
+#         self.__data_marker_configs: List[DataMarkerConfig] = []
+#         # self.__default_marker_pen = pg.mkPen(color="gray",
+#         #                                      width=1,
+#         #                                      style=QtCore.Qt.PenStyle.DashLine)
+
+#     def append_marker(self, marker_config: DataMarkerConfig) -> None:
+#         self.__data_marker_configs.append(marker_config)
+
+#     def pen_for_marker(self, marker_name: str) -> Any:
+#         for marker_config in self.__data_marker_configs:
+#             if marker_config.marker_regex.match(marker_name):
+#                 return marker_config.marker_pen
+#         return DEFAULT_PEN
+      
+#     def parse_data_marker_str(self, marker_str: str) -> Optional[ParsedDataMarker]:
+#         """Try to match the marker string to a data marker config. Returns the parsed value or None."""
+#         for marker_config in self.__data_marker_configs:
+#             match = marker_config.marker_regex.match(marker_str)
+#             if match:
+#                 groups = match.groups("")
+#                 n = marker_config.regex_value_group
+#                 assert n > 0
+#                 value = groups[n - 1]
+#                 return ParsedDataMarker(marker_config.chan_id, value)
+#         # The marker doesn't match any of the time markers in sys_config
+#         return None    
+
 
 
 class LoadCellChannelConfig:
@@ -262,6 +345,32 @@ class RtdChannelConfig(TemperatureChannelConfig):
         raise RuntimeError(f"Can't find temperature for r={r} ({pt1000_r})")
 
 
+class ExternalReportConfig:
+    """Config of a single external report type."""
+    def __init__(self, chan_id: str, units:str, color: str, column: str):
+      self.__chan_id = chan_id
+      self.__units = units
+      self.__column = column
+      self.__color = color
+      
+    def chan_id(self)->str:
+      return self.__chan_id
+    
+    def units(self)->str:
+      return self.__units
+    
+    def color(self)->str:
+      return self.__color
+    
+    def column(self)->str:
+      return self.__column
+    
+    def dump_external_report_calibration(self, str_value: str, float_value: float) -> None:
+        logger.info(f"{self.__chan_id:7s} {str_value:11s} -> {float_value:7.3f} {self.__units}")
+      
+   
+
+
 class SysConfig:
     """System configuration from a TOML config file."""
 
@@ -271,7 +380,7 @@ class SysConfig:
         self.__lc_chan_configs: Optional[Dict[str, LoadCellChannelConfig]] = None
         self.__pw_chan_configs: Optional[Dict[str, PowerChannelConfig]] = None
         self.__tm_chan_configs: Optional[Dict[str, TemperatureChannelConfig]] = None
-        self.__time_markers_configs: Optional[TimeMarkersConfigs] = None
+        self.__external_reports_configs: Optional[Dict[str, ExternalReportConfig]] = None
 
     def __populate_com_port(self, toml: Dict[str, Any]) -> None:
         """Populates self.__com_port"""
@@ -364,24 +473,42 @@ class SysConfig:
         style = QtCore.Qt.PenStyle.DashLine if is_solid else QtCore.Qt.PenStyle.SolidLine
         return pg.mkPen(color=color, width=width, style=style)
 
-    def __populate_time_markers(self, toml: Dict[str, Any]) -> None:
-        """Populates self.__markers_config from a toml sys_config."""
-        self.__time_markers_configs = TimeMarkersConfigs()
-        toml_markers = toml["time_marker"]
-        for time_marker_type, time_marker_config in toml_markers.items():
-            logger.info(f"Found time marker config: {time_marker_type}")
-            marker_regex = time_marker_config["regex"]
-            regex_value_group = time_marker_config["value_group"]
-            marker_pen = self.__parse_toml_pen(time_marker_config["pen"])
-            time_marker_config = TimeMarkerConfig(time_marker_type, marker_regex, regex_value_group, marker_pen)
-            self.__time_markers_configs.append_marker(time_marker_config)
+    # def __populate_time_markers(self, toml: Dict[str, Any]) -> None:
+    #     """Populates self.__time_markers_configs from a toml sys_config."""
+    #     self.__time_markers_configs = TimeMarkersConfigs()
+    #     toml_markers = toml["time_marker"]
+    #     for time_marker_type, time_marker_config in toml_markers.items():
+    #         logger.info(f"Found time marker config: {time_marker_type}")
+    #         marker_regex = time_marker_config["regex"]
+    #         regex_value_group = time_marker_config["value_group"]
+    #         marker_pen = self.__parse_toml_pen(time_marker_config["pen"])
+    #         time_marker_config = TimeMarkerConfig(time_marker_type, marker_regex, regex_value_group, marker_pen)
+    #         self.__time_markers_configs.append_marker(time_marker_config)
+            
+    def __populate_external_reports(self, toml: Dict[str, Any]) -> None:
+        """Populates self.__external_report_configs from a toml sys_config."""
+        self.__external_reports_configs = {}
+        toml_external_report = toml["external"]
+        for chan_id, external_report_config in toml_external_report.items():
+            logger.info(f"Found external report config: {chan_id}")
+            units = external_report_config["units"]
+            color = external_report_config["color"]
+            column = external_report_config["column"]
+
+            
+            # marker_regex = time_marker_config["regex"]
+            # regex_value_group = time_marker_config["value_group"]
+            # marker_pen = self.__parse_toml_pen(time_marker_config["pen"])
+            # time_marker_config = TimeMarkerConfig(time_marker_type, marker_regex, regex_value_group, marker_pen)
+            # external_report_config = ExternalReportConfig(chan_id, column, color)
+            self.__external_reports_configs[chan_id] =ExternalReportConfig(chan_id, units, color, column)
 
     def load_from_file(self, file_path: str) -> None:
         with open(file_path, "rb") as f:
             toml: Dict[str, Any] = tomllib.load(f)
             self.__populate_com_port(toml)
             self.__populate_channels(toml)
-            self.__populate_time_markers(toml)
+            self.__populate_external_reports(toml)
 
     # Individual channel getters.
     def load_cell_config(self, chan_id: str) -> Optional[LoadCellChannelConfig]:
@@ -404,8 +531,8 @@ class SysConfig:
         return self.__tm_chan_configs
       
     # Other getters
-    def time_markers_configs(self) -> TimeMarkersConfigs:
-        return self.__time_markers_configs
+    def external_reports_configs(self) -> Dict[str, ExternalReportConfig]:
+        return self.__external_reports_configs
 
     def data_link_port(self) -> str:
         return self.__com_port

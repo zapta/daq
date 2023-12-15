@@ -17,7 +17,7 @@ port = "COM7"
 # grams = (adc_reading - adc_offset) * scale
 [channel.lc1]
 color = "red"
-adc_offset = 100388  
+adc_offset = 100388
 scale = 0.002671
 
 # PWM power meter.
@@ -25,58 +25,104 @@ scale = 0.002671
 color = "maroon"
 # value = (adc_reading - adc_offset) * scale
 voltage = { adc_offset = -86, scale = 0.0009847 }
-current = { adc_offset = -269, scale = 0.00009369}
+current = { adc_offset = -269, scale = 0.00009369 }
 
 # Temperature sensor #1
 [channel.tm1]
 color = "blueviolet"
 adc = { open = 4197050, short = 550, calib = 1399665, calib_r = 1000 }
-rtd = { r0 = 1000.0, wire_r=0.0, adjustment=0.0 }
+rtd = { r0 = 1000.0, wire_r = 0.0, adjustment = 0.0 }
 
 # Temperature sensor #2
 [channel.tm2]
 color = "blue"
 adc = { open = 4198050, short = 270, calib = 1399264, calib_r = 1000 }
-thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25, wire_r=0.0, adjustment=0.0 }
+thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25, wire_r = 0.0, adjustment = 0.0 }
 
 
 # Temperature sensor #3
 [channel.tm3]
 color = "teal"
 adc = { open = 4197135, short = 170, calib = 1398925, calib_r = 1000 }
-thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25 , wire_r = 0.0, adjustment=0.0}
+thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25, wire_r = 0.0, adjustment = 0.0 }
 
-# Marks the begining of a test.
-# Example:
-#   [T/begin:my_test_name-123]
-[time_marker.test_begin]
-regex = "^(?:T/)?begin:(.*)$"
-value_group = 1
-pen = {color="green", solid=true, width=2}
+# Time markers from the duet controller. 
+# Fields:
+#  1. Marker type. The special types "test_begin" and "test_end" indicate
+#     the begining and the end of a test, respectivly.
+#  2. Marker value. Additional marker info. For test_begin and test_end this 
+#     must be the test name.
+# Examples:      
+#  * "[mrk:test_begin,my_test]"
+#  * "[mrk:test_end,my_test]"
+#  * "[mrk:step,7]"
+#  * "[mrk:step]"
+# [external.mrk]
+# columns = ["Str", "Type", "Value"]
 
-# Marks the end of a test.
-# Example:
-#   [T/end:my_test_name-123]
-[time_marker.test_end]
-regex = "^(?:T/)?end:(.*)$"
-value_group = 1
-pen = {color="red", solid=true, width=2}
-
-# Marks a general point of interest.
-# Examples:
-#   [T/poi]
-#   [T/poi.]
-#   [T/poi.layer-31]
-[time_marker.poi]
-regex = "^(?:T/)?poi(:(.*))?$"
-value_group = 2
-pen = {color="purple", solid=false, width=2}
-
-# Heater temp reported by Duet.
-# Example: '[D/htr:180.34]'
-[data_point.htr]
-regex = "^D/htr:(.*)$"
-column_name = "T[c]"
-pen = {color="red", solid=true, width=2}
+# Device under test reports from the duet controller.
+# Fields:
+#   1. Nozzle temp in Clesius.
+# Examples: 
+#   * "[xtz:145.32]"
+#   * "[xt1:145]"
 
 
+# Bed temperature as reported by the Duet.
+[external.xt1]
+color = "blue"
+units = "C"
+column = "Tn[C]"
+
+
+# Nozzle temperature as reported by the Duet
+[external.xt2]
+color = "red"
+units = "C"
+column = "Tn[C]"
+
+
+# # Marks the begining of a test.
+# # Example:
+# #   [T/begin:my_test_name-123]
+# [time_marker.test_begin]
+# regex = "^(?:T/)?begin:(.*)$"
+# value_group = 1
+# pen = {color="green", solid=true, width=2}
+
+# # Marks the end of a test.
+# # Example:
+# #   [T/end:my_test_name-123]
+# [time_marker.test_end]
+# regex = "^(?:T/)?end:(.*)$"
+# value_group = 1
+# pen = {color="red", solid=true, width=2}
+
+# # Marks a general point of interest.
+# # Examples:
+# #   [T/poi]
+# #   [T/poi.]
+# #   [T/poi.layer-31]
+# [time_marker.poi]
+# regex = "^(?:T/)?poi(:(.*))?$"
+# value_group = 2
+# pen = {color="purple", solid=false, width=2}
+
+# # Heater temp reported by Duet.
+# # Example: '[D/htr:180.34]'
+# [data_point.htr]
+# regex = "^D/htr:(.*)$"
+# columns = [ "T[c]" ]
+# pen = {color="red", solid=true, width=2}
+
+
+###################################################
+
+# [time_mark.mrk]
+# regex = "^mrk/([^:]+):(.*)$"
+# columns = ["test_name", "event"]
+
+# [data_mark.gt1]
+# regex = "^gt1/(.*)$"
+# columns = ["T[C]"]
+# pen = {}
