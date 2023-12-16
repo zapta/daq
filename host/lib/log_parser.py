@@ -4,7 +4,7 @@ import re
 
 from typing import Optional, List, Tuple, Any, Dict
 from collections import OrderedDict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from serial_packets.packets import PacketData
 
 # Local imports

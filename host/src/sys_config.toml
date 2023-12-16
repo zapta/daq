@@ -16,43 +16,50 @@ port = "COM7"
 # Load cell.
 # grams = (adc_reading - adc_offset) * scale
 [channel.lc1]
+label = "Load cell"
 color = "red"
 adc_offset = 100388
 scale = 0.002671
 
 # PWM power meter.
 [channel.pw1]
+label = "Hotend"
 color = "maroon"
 # value = (adc_reading - adc_offset) * scale
 voltage = { adc_offset = -86, scale = 0.0009847 }
 current = { adc_offset = -269, scale = 0.00009369 }
 
 # Temperature sensor #1
-[channel.tm1]
-color = "blueviolet"
-adc = { open = 4197050, short = 550, calib = 1399665, calib_r = 1000 }
-rtd = { r0 = 1000.0, wire_r = 0.0, adjustment = 0.0 }
+# [channel.tm1]
+# label = "Temp 1"
+# color = "blueviolet"
+# adc = { open = 4197050, short = 550, calib = 1399665, calib_r = 1000 }
+# rtd = { r0 = 1000.0, wire_r = 0.0, adjustment = 0.0 }
 
 # Temperature sensor #2
-[channel.tm2]
-color = "blue"
-adc = { open = 4198050, short = 270, calib = 1399264, calib_r = 1000 }
-thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25, wire_r = 0.0, adjustment = 0.0 }
+# [channel.tm2]
+# label = "Temp 2"
+# color = "blue"
+# adc = { open = 4198050, short = 270, calib = 1399264, calib_r = 1000 }
+# thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25, wire_r = 0.0, adjustment = 0.0 }
 
 # Temperature sensor #3
-[channel.tm3]
-color = "teal"
-adc = { open = 4197135, short = 170, calib = 1398925, calib_r = 1000 }
-thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25, wire_r = 0.0, adjustment = 0.0 }
+# [channel.tm3]
+# label = "Temp 3"
+# color = "teal"
+# adc = { open = 4197135, short = 170, calib = 1398925, calib_r = 1000 }
+# thermistor = { beta = 4725, c = 7.06e-8, ref_r = 100000, ref_c = 25, wire_r = 0.0, adjustment = 0.0 }
 
 # Bed temperature as reported by the Duet.
 [external.xt1]
+label = "Bed"
 color = "blue"
 units = "C"
 column = "Tn[C]"
 
 # Nozzle temperature as reported by the Duet
 [external.xt2]
+label = "Nozzle"
 color = "red"
 units = "C"
 column = "Tn[C]"

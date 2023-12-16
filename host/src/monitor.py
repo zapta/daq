@@ -527,13 +527,13 @@ def init_display():
 
     lc_channels = {}
     for chan_id, lc_config in sys_config.load_cells_configs().items():
-        display_series = DisplaySeries(chan_id, lc_config.color())
+        display_series = DisplaySeries(lc_config.label(), lc_config.color())
         lc_channels[chan_id] = LoadCellChannel(chan_id, lc_config, display_series)
         plot1_display_series.append(display_series)
 
     tm_channels = {}
     for chan_id, tm_config in sys_config.temperature_configs().items():
-        display_series = DisplaySeries(chan_id, tm_config.color())
+        display_series = DisplaySeries(tm_config.label(), tm_config.color())
         tm_channels[chan_id] = TemperatureSensorChannel(
             chan_id, tm_config, display_series
         )
@@ -541,13 +541,14 @@ def init_display():
 
     ex_channels = {}
     for chan_id, ex_config in sys_config.external_reports_configs().items():
-        display_series = DisplaySeries(chan_id, ex_config.color())
+        assert isinstance(ex_config , ExternalReportConfig)
+        display_series = DisplaySeries(ex_config.label, ex_config.color)
         ex_channels[chan_id] = ExternalReportChannel(chan_id, ex_config, display_series)
         plot2_display_series.append(display_series)
 
     pw_channels = {}
     for chan_id, pw_config in sys_config.power_configs().items():
-        display_series = DisplaySeries(chan_id, pw_config.color())
+        display_series = DisplaySeries(pw_config.label(), pw_config.color())
         pw_channels[chan_id] = PowerChannel(chan_id, pw_config, display_series)
         plot3_display_series.append(display_series)
 
