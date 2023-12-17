@@ -1,3 +1,4 @@
+* Add EEPROM board for test id allocation.
 
 * Verify with logic analyzer that the data link is not saturated.
 
