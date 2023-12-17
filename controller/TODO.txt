@@ -1,6 +1,8 @@
 
 * Verify with logic analyzer that the data link is not saturated.
 
+* Support commands such as start/stop recording from the duet controller link.
+
 ------
 
 * Use  MUST_USE_VALUE where applicable.

@@ -47,25 +47,17 @@ void Serial::rx_data_arrived_isr(const uint8_t *buffer, uint16_t len,
 }
 
 void Serial::uart_error_isr() {
+  //  TODO: Send hard errors to Panic()
+
   // TODO: Count errors by type. Some of the errors
   // are soft.
 
-  // Do nothing if RX still active.
-  if (_huart->RxState == HAL_UART_STATE_BUSY_RX) {
-    return;
-  }
+  // If an hard error stopped the DMA transfer, then restart it.
+  // Otherwise, do nothing.
+  start_rx_dma();
 
-  // If idle, try to restart.
-  if (_huart->RxState == HAL_UART_STATE_READY) {
-    for (int i = 0; i < 10; i++) {
-      if (start_rx_dma()) {
-        return;
-      }
-    }
-  }
+ 
 
-  // TODO: Anything we should do to recover? E.g. abort and then restart?
-  error_handler::Panic(68);
 }
 
 void Serial::write(uint8_t *bfr, uint16_t len) {
@@ -144,21 +136,37 @@ void Serial::init() {
     error_handler::Panic(64);
   }
 
-  // Start the continious RX DMA.
-  if (!start_rx_dma()) {
+ 
+  // Start the DMA transfer.
+  start_rx_dma();
+
+}
+
+// This may be called from a task or from ISR.
+void Serial::start_rx_dma() {
+  // Do nothing if already running.
+  if (_huart->RxState == HAL_UART_STATE_BUSY_RX) {
+    return;
+  }
+
+ 
+  // Clear UART pending errors to avoid an error interrupt while
+  // during HAL_UARTEx_ReceiveToIdle_DMA() which will cause it
+  // to fail.
+  auto status = HAL_UART_Init(_huart);
+  if (status != HAL_OK) {
     error_handler::Panic(65);
+  }
+  _rx_last_pos = 0;
+  status = HAL_UARTEx_ReceiveToIdle_DMA(_huart, _rx_dma_buffer,
+                                        sizeof(_rx_dma_buffer));
+
+  if (status != HAL_OK) {
+    error_handler::Panic(68);
   }
 }
 
-bool Serial::start_rx_dma() {
-  // Start the continious circual RX DMA. We pass in the two halves.
-  // The UART RX is already specified as cirtucal in the cube_ide settings.
-  _rx_last_pos = 0;
-  const auto status = HAL_UARTEx_ReceiveToIdle_DMA(_huart, _rx_dma_buffer,
-                                                   sizeof(_rx_dma_buffer));
-  return status == HAL_OK;
-  // error_handler::Panic(66);
-}
+
 
 void Serial::uart_TxCpltCallback(UART_HandleTypeDef *huart) {
   Serial *serial = serial::get_serial_by_huart(huart);
