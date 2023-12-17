@@ -12,7 +12,7 @@
 
 namespace data_queue {
 
-static constexpr int kNumBuffers = 4;
+static constexpr int kNumBuffers = 10;
 static DataBuffer data_buffers[kNumBuffers];
 static StaticQueue<uint8_t, kNumBuffers> free_buffers_indexes_queue;
 static StaticQueue<uint8_t, kNumBuffers> pending_buffers_indexes_queue;
