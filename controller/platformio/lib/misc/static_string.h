@@ -57,8 +57,28 @@ class StaticString : public AbstractStaticString {
 
   bool is_full() const { return _len >= kMaxLen; }
 
+  bool starts_with(const char* str) const {
+    const size_t n = strlen(str);
+    return (n <= _len) && memcmp(_buffer, str, n) == 0;
+  }
+
+  bool equals(const char* str) const { return strcmp(_buffer, str) == 0; }
+
+  // Returns first char index or -1 if not found.
+  int find_char(char c, size_t start = 0) const {
+    if (start >= _len) {
+      return -1;
+    }
+    // p points to first char or null.
+    const char* p = strchr(_buffer + start, c);
+    if (p == nullptr) {
+      return -1;
+    }
+    return p - _buffer;
+  }
+
  private:
- // _buffer[_len] always has the null terminator.
+  // _buffer[_len] always has the null terminator.
   char _buffer[kMaxLen + 1] = {0};
   size_t _len = 0;
 };

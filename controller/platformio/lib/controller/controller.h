@@ -8,7 +8,7 @@
 
 namespace controller {
 
-typedef StaticString<30> ExternalReportStr;
+typedef StaticString<40> ExternalReportStr;
 
 PacketStatus host_link_command_handler(uint8_t endpoint,
                                        const SerialPacketsData& command_data,

@@ -1,9 +1,10 @@
 #include "printer_link_card.h"
 
 #include "controller.h"
+#include "data_recorder.h"
 #include "logger.h"
-#include "time_util.h"
 #include "static_task.h"
+#include "time_util.h"
 
 namespace printer_link_card {
 
@@ -27,6 +28,14 @@ static uint32_t collect_start_millis;
 // external report characters collected so far.
 static controller::ExternalReportStr external_report_buffer;
 
+static data_recorder::RecordingName new_recording_name_buffer;
+
+static constexpr char kStartRecordingCommandPrefix[] = "cmd:start_recording:";
+static constexpr size_t kStartRecordingCommandPrefixLen =
+    sizeof(kStartRecordingCommandPrefix) - 1;
+
+static constexpr char kStopRecordingCommand[] = "cmd:stop_recording";
+
 // Perfomrs a state transitions. OK to reenter existing state.
 static void set_state(State new_state) {
   state = new_state;
@@ -47,6 +56,50 @@ void setup(Serial* serial) {
   printer_link_serial = serial;
 }
 
+// report_str doesn't include the bounding '[', ']'.
+static void handle_incoming_report(
+    const controller::ExternalReportStr& report_str) {
+  // If not a command, pass on to the logging.
+  if (!report_str.starts_with("cmd:")) {
+    controller::report_external_data(external_report_buffer);
+    return;
+  }
+
+  // Handle the start test command.
+  if (report_str.starts_with(kStartRecordingCommandPrefix)) {
+    // Extract recording name.
+    new_recording_name_buffer.set_c_str(report_str.c_str() +
+                                        kStartRecordingCommandPrefixLen);
+
+    // Validate recording name. Should not be empty or contain a ':' seperator.
+    if (new_recording_name_buffer.is_empty() ||
+        new_recording_name_buffer.find_char(
+            ':', kStartRecordingCommandPrefixLen) != -1) {
+      logger.error("Invalid start_recording cmd: [%s], ignoring.",
+                   report_str.c_str());
+      return;
+    }
+
+    const bool started_ok =
+        data_recorder::start_recording(new_recording_name_buffer);
+    if (!started_ok) {
+      logger.error("%s failed to start recording for test [%s]",
+                   kStartRecordingCommandPrefix,
+                   new_recording_name_buffer.c_str());
+    }
+    return;
+  }
+
+  // Handle the stop test command.
+  if (report_str.equals(kStopRecordingCommand)) {
+    data_recorder::stop_recording();
+    return;
+  }
+
+  // Here it's an orphan command.
+  logger.error("Invalid command: [%s], ignoring.", report_str.c_str());
+}
+
 static void process_next_rx_char(uint8_t c) {
   // In IDLE state we wait for next start char.
   if (state == IDLE) {
@@ -65,7 +118,8 @@ static void process_next_rx_char(uint8_t c) {
     if (external_report_buffer.is_empty()) {
       logger.error("Dropping an empty external report");
     } else {
-      controller::report_external_data(external_report_buffer);
+      handle_incoming_report(external_report_buffer);
+      // controller::report_external_data(external_report_buffer);
     }
     set_state(IDLE);
     return;
@@ -81,7 +135,8 @@ static void process_next_rx_char(uint8_t c) {
   // Append the char to the report string. Check for overflow.
   const bool ok = external_report_buffer.append(c);
   if (!ok) {
-    logger.error("External report is too long %s...", external_report_buffer.c_str());
+    logger.error("External report is too long %s...",
+                 external_report_buffer.c_str());
     set_state(IDLE);
     return;
   }

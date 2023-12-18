@@ -49,9 +49,9 @@ PacketStatus handle_control_command(const SerialPacketsData& command_data,
         return PacketStatus::INVALID_ARGUMENT;
       }
       const bool had_old_recording = data_recorder::is_recording_active();
-      const bool opened_ok =
+      const bool started_ok =
           data_recorder::start_recording(new_recording_name_buffer);
-      if (!opened_ok) {
+      if (!started_ok) {
         logger.error("START command: failed to create recording file for [%s]",
                      new_recording_name_buffer.c_str());
         return PacketStatus::GENERAL_ERROR;
