@@ -95,8 +95,9 @@ void app_main() {
 
   for (uint32_t i = 0;; i++) {
     const bool is_logging = data_recorder::is_recording_active();
-    const bool blink = is_logging ? i & 0x01 : i & 0x04;
-    gpio_pins::LED.set(blink);
+    const bool blink = is_logging ? i & 0x01 : i & 0x08;
+    // Starting blinking with on.
+    gpio_pins::LED.set(!blink);
 
     if (report_timer.elapsed_millis() >= 5000) {
       report_timer.reset();
