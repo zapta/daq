@@ -112,6 +112,6 @@ void app_main() {
       adc_card::verify_static_registers_values();
     }
 
-    time_util::delay_millis(100);
+    time_util::delay_millis(75);
   }
 }
