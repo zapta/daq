@@ -55,11 +55,11 @@ current = { adc_offset = -269, scale = 0.00009369 }
 label = "Bed"
 color = "blue"
 units = "C"
-column = "Tn[C]"
+column = "Tbed[C]"
 
 # Nozzle temperature as reported by the Duet
 [external.xt2]
 label = "Nozzle"
 color = "red"
 units = "C"
-column = "Tn[C]"
+column = "Thotend[C]"

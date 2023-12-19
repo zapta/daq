@@ -18,7 +18,7 @@ from serial_packets.packet_decoder import PacketDecoder, DecodedLogPacket
 
 # Local imports.
 sys.path.insert(0, "..")
-from lib.log_parser import LogPacketsParser, ParsedLogPacket, ChannelData,  LcChannelValue, PwChannelValue, TmChannelValue, TimeMarkChannelValue
+from lib.log_parser import LogPacketsParser, ParsedLogPacket, ChannelData,  LcChannelValue, PwChannelValue, TmChannelValue, ExternalReportChannelValue, TimeMarkChannelValue
 from lib.sys_config import SysConfig
 
 
@@ -99,39 +99,50 @@ class PendingTestStartMarker:
 # from the start marker.
 pending_test_start_marker: Optional[PendingTestStartMarker] = None       
         
-def process_lc_channel_data(ch_name: str, ch_data: ChannelData) -> None:
+def process_lc_channel_data(chan_id: str, chan_data: ChannelData) -> None:
     global sys_config, output_csv_files_dict, earliest_packet_start_time
-    chan = output_csv_files_dict[ch_name]
+    chan = output_csv_files_dict[chan_id]
     f = chan.file_handle
-    for lc_value in ch_data.values():
+    for lc_value in chan_data.values():
       assert isinstance(lc_value, LcChannelValue)
       millis_in_session = lc_value.time_millis - earliest_packet_start_time
       f.write(f"{millis_in_session},{lc_value.adc_reading},{lc_value.value_grams:.3f}\n")
     # point_count += ch_data.size()
-    chan.row_count += ch_data.size()
+    chan.row_count += chan_data.size()
     
-def process_pw_channel_data(ch_name: str, ch_data: ChannelData) -> None:
+def process_pw_channel_data(chan_id: str, chan_data: ChannelData) -> None:
     global sys_config, output_csv_files_dict, earliest_packet_start_time
-    chan = output_csv_files_dict[ch_name]
+    chan = output_csv_files_dict[chan_id]
     f = chan.file_handle
-    for pw_value in ch_data.values():
+    for pw_value in chan_data.values():
       assert isinstance(pw_value, PwChannelValue)
       millis_in_session = pw_value.time_millis - earliest_packet_start_time
       watts = pw_value.value_volts * pw_value.value_amps
       f.write(f"{millis_in_session},{pw_value.adc_voltage_reading},{pw_value.adc_current_reading},{pw_value.value_volts:.3f},{pw_value.value_amps:.3f},{watts:.3f}\n")
     # point_count += ch_data.size()
-    chan.row_count += ch_data.size()
+    chan.row_count += chan_data.size()
 
-def process_tm_channel_data(ch_name: str, ch_data: ChannelData) -> None:
+def process_tm_channel_data(chan_id: str, chan_data: ChannelData) -> None:
     global sys_config, output_csv_files_dict, earliest_packet_start_time
-    chan = output_csv_files_dict[ch_name]
+    chan = output_csv_files_dict[chan_id]
     f = chan.file_handle
-    for tm_value in ch_data.values():
+    for tm_value in chan_data.values():
       assert isinstance(tm_value, TmChannelValue)
       millis_in_session = tm_value.time_millis - earliest_packet_start_time
       f.write(f"{millis_in_session},{tm_value.adc_reading},{tm_value.r_ohms:.2f},{tm_value.t_celsius:.3f}\n")
     # point_count += ch_data.size()
-    chan.row_count += ch_data.size()
+    chan.row_count += chan_data.size()
+
+def process_ex_channel_data(chan_id: str, chan_data: ChannelData) -> None:
+    global sys_config, output_csv_files_dict, earliest_packet_start_time
+    chan = output_csv_files_dict[chan_id]
+    f = chan.file_handle
+    for ex_value in chan_data.values():
+      assert isinstance(ex_value, ExternalReportChannelValue)
+      millis_in_session = ex_value.time_millis - earliest_packet_start_time
+      f.write(f"{millis_in_session},{ex_value.report_str},{ex_value.str_value}\n")
+    # point_count += ch_data.size()
+    chan.row_count += chan_data.size()
         
 def process_mrk_channel_data(ch_data: ChannelData) -> None:
     global sys_config, output_csv_files_dict, earliest_packet_start_time, pending_test_start_marker
@@ -184,23 +195,29 @@ def process_packet(packet: DecodedLogPacket):
         latest_packet_end_time_millis = packet_end_time_millis
 
 
-    for ch_name, ch_data in parsed_log_packet.channels().items():
-      assert ch_name == ch_data.chan_id()
-      if ch_name.startswith("lc"):
-         process_lc_channel_data(ch_name, ch_data)
+    for chan_id, ch_data in parsed_log_packet.channels().items():
+      assert chan_id == ch_data.chan_id()
+      if chan_id in sys_config.load_cells_configs().keys():
+         process_lc_channel_data(chan_id, ch_data)
          continue
        
-      if ch_name.startswith("pw"):
-         process_pw_channel_data(ch_name, ch_data)
+      if chan_id in sys_config.power_configs().keys():
+         process_pw_channel_data(chan_id, ch_data)
          continue
        
-      if ch_name.startswith("tm"):
-         process_tm_channel_data(ch_name, ch_data)
+      if chan_id in sys_config.temperature_configs().keys():
+         process_tm_channel_data(chan_id, ch_data)
+         continue
+      
+      if chan_id in sys_config.external_reports_configs().keys():
+         process_ex_channel_data(chan_id, ch_data)
          continue
        
-      if ch_name == ("mrk"):
+      if chan_id == ("mrk"):
          process_mrk_channel_data(ch_data)
          continue
+      
+      raise RuntimeError(f"Unknown channel {chan_id}")
     
 
 def report_status():
@@ -271,6 +288,10 @@ def main():
     # Temperature sensors files.
     for chan_id in sys_config.temperature_configs():
         init_output_csv_file(chan_id, f"T[ms],ADC,Ohms,Celsius",
+                             f"_channel_{chan_id}")
+    # External report channel files.
+    for chan_id, chan_config in sys_config.external_reports_configs().items():
+        init_output_csv_file(chan_id, f"T[ms],Report,{chan_config.column}",
                              f"_channel_{chan_id}")
     # Markers file
     init_output_csv_file("markers", f"T[ms],Name,Type,Value", "_markers")
