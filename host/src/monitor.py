@@ -2,6 +2,8 @@
 
 # A python program to monitor and control the data acquisition.
 
+# NOTE: Color names list here https://matplotlib.org/stable/gallery/color/named_colors.html
+
 
 import argparse
 import asyncio
@@ -17,6 +19,8 @@ from typing import Optional, List, Dict, Any
 from dataclasses import dataclass, field
 from serial_packets.client import SerialPacketsClient
 from serial_packets.packets import PacketStatus, PacketData
+from enum import Enum
+
 
 # Local imports
 sys.path.insert(0, "..")
@@ -105,9 +109,41 @@ main_event_loop = asyncio.get_event_loop()
 # TODO: Move to a common place.
 CONTROL_ENDPOINT = 0x01
 
-
 # System time of last display update.
 last_display_update_time: float = None
+
+
+class RecordingState(Enum):
+    """Recording info state"""
+
+    # No recording info we want to display.
+    NO_RECORDING = 1
+    # During a recording.
+    IN_RECORDING = 2
+    # After a recording, before stale or a new one.
+    AFTER_RECORDING = 3
+
+
+@dataclass(frozen=True)
+class RecordingInfo:
+    """Tracks the last recording for range plotting purposes."""
+
+    state: RecordingState = RecordingState.NO_RECORDING
+    # Recording start time in device secs.
+    # Non None IFF state is IN_RECORDING or AFTER_RECORDING.
+    start_time: Optional[float] = None
+    # Recording start time in device secs.
+    # Non None IFF state is AFTER_RECORDING.
+    end_time: Optional[float] = None
+
+    def is_stale(self, min_time: float) -> bool:
+        """Is it older than min_time?"""
+        return self.state == RecordingState.AFTER_RECORDING and self.end_time < min_time
+
+
+# Track recent or current recording time range we want to
+# indicate on the graph.
+recording_info: RecordingInfo = RecordingInfo()
 
 
 @dataclass(frozen=True)
@@ -395,7 +431,7 @@ def set_display_status_line(msg: str) -> None:
 def update_display():
     global plot1, plot2, plot3, plot1_display_series, plot2_display_series, plot3_display_series
     global lc_channels, tm_channels, ex_channels, sys_config, latest_log_time, latest_log_arrival_time
-    global last_display_update_time
+    global last_display_update_time, recording_info
 
     # logger.info(f"Update display(), latest_log_time = {latest_log_time}")
     plot1.clear()
@@ -410,16 +446,40 @@ def update_display():
     last_display_update_time = time.time()
 
     # For smoother display scroll. We keep advancing the time since the last
-    # log packet.
+    # log packet. adjusted_latest_log_time represents the 0 time of the
+    # graph in device secs units.
     adjusted_latest_log_time = (
         latest_log_time + (time.time() - latest_log_arrival_time) - args.buffering_time
     )
 
-    # Remove markers that are beyond all plots.
-    markers_history.prune_older_than(adjusted_latest_log_time - max_plot_x_span)
+    # Prune data of markers that are too old.
+    markers_cleanup_time = adjusted_latest_log_time - max_plot_x_span
+    markers_history.prune_older_than(markers_cleanup_time)
+
+    # Prune old recording info if it's beyond the display.
+    recording_info_cleanup_time = adjusted_latest_log_time - max_plot_x_span
+    if recording_info.is_stale(recording_info_cleanup_time):
+        recording_info = RecordingInfo()
+
+    # Compute recording time range to highlight, if any. The range is plots'
+    # x range units (negative seconds)
+    if recording_info.state == RecordingState.IN_RECORDING:
+        recording_range = [recording_info.start_time - adjusted_latest_log_time, 0]
+    elif recording_info.state == RecordingState.AFTER_RECORDING:
+        recording_range = [
+            recording_info.start_time - adjusted_latest_log_time,
+            recording_info.end_time - adjusted_latest_log_time,
+        ]
+    else:
+        recording_range = None
+    # logger.info(f"Recording range: {recording_range}")
 
     # Update plot 1 with its display series
     plot1_cleanup_time = adjusted_latest_log_time - plot1_x_span
+    if recording_range:
+        lr1 = pg.LinearRegionItem(brush="whitesmoke")
+        plot1.addItem(lr1)
+        lr1.setRegion(recording_range)
     for display_series in plot1_display_series:
         display_series.delete_older_than(plot1_cleanup_time)
         x, y = display_series.get_display_xy(adjusted_latest_log_time)
@@ -433,6 +493,10 @@ def update_display():
 
     # Update plot 2 with its display series
     plot2_cleanup_time = adjusted_latest_log_time - plot2_x_span
+    if recording_range:
+        lr2 = pg.LinearRegionItem(brush="whitesmoke")
+        plot2.addItem(lr2)
+        lr2.setRegion(recording_range)
     for display_series in plot2_display_series:
         display_series.delete_older_than(plot2_cleanup_time)
         x, y = display_series.get_display_xy(adjusted_latest_log_time)
@@ -446,6 +510,10 @@ def update_display():
 
     # Update plot 3 with its display series.
     plot3_cleanup_time = adjusted_latest_log_time - plot3_x_span
+    if recording_range:
+        lr3 = pg.LinearRegionItem(brush="whitesmoke")
+        plot3.addItem(lr3)
+        lr3.setRegion(recording_range)
     for display_series in plot3_display_series:
         display_series.delete_older_than(plot3_cleanup_time)
         x, y = display_series.get_display_xy(adjusted_latest_log_time)
@@ -541,7 +609,7 @@ def init_display():
 
     ex_channels = {}
     for chan_id, ex_config in sys_config.external_reports_configs().items():
-        assert isinstance(ex_config , ExternalReportConfig)
+        assert isinstance(ex_config, ExternalReportConfig)
         display_series = DisplaySeries(ex_config.label, ex_config.color)
         ex_channels[chan_id] = ExternalReportChannel(chan_id, ex_config, display_series)
         plot2_display_series.append(display_series)
@@ -586,6 +654,12 @@ def init_display():
     plot2.setXRange(-(plot2_x_span * 0.95), 0)
     plot2.setYRange(0, 260)
     plot2.addLegend(offset=(5, 5), verSpacing=-7, brush="#eee", labelTextSize="7pt")
+
+    # lr2 = pg.LinearRegionItem()
+    # plot2.addItem(lr2)
+    # lr2.setRegion([-30, -20])
+
+    # lr2.setZValue(-10)
 
     layout.nextRow()
     plot3 = layout.addPlot(title="Power", colspan=5)
@@ -636,7 +710,7 @@ device_session_id = None
 # Resets the session. E.g. when the devices were detected
 # to go through reset.
 def reset_display():
-    global latest_log_time, latest_log_arrival_time
+    global latest_log_time, latest_log_arrival_time, last_display_update_time
     latest_log_time = None
     latest_log_arrival_time = None
     for chan in lc_channels.values():
@@ -658,6 +732,7 @@ def timer_handler():
     global pending_stop_button_click, command_stop_future
     global last_command_status_time, command_status_future
     global device_session_id, last_display_update_time
+    global recording_info
 
     # Process any pending events of the serial packets client.
     # This calls indirectly display_update when new packets arrive.
@@ -722,29 +797,41 @@ def timer_handler():
         else:
             # noinspection PyUnusedLocal
             version = response_data.read_uint8()
+            # Handle changes in session id, e.g. if the device was reset.
             session_id = response_data.read_uint32()
-            # noinspection PyUnusedLocal
-            device_time_millis = response_data.read_uint32()
-            sd_card_inserted = response_data.read_uint8()
-            recording_active = response_data.read_uint8()
-            if recording_active:
-                recording_millis = response_data.read_uint32()
-                name = response_data.read_str()
-                writes_ok = response_data.read_uint32()
-                write_failures = response_data.read_uint32()
-                errors_note = f" ERRORS: {write_failures}" if write_failures else ""
-                msg = f"  Recording [{name}] [{recording_millis / 1000:.0f} secs] [{writes_ok} records]{errors_note}"
-            else:
-                msg = "  Recording is off" if sd_card_inserted else "  No SD card"
-            # logger.info(f"*** Available: {response_data.bytes_left_to_read()}")
-            # assert not response_data.read_error()
-            assert response_data.all_read_ok()
             if session_id != device_session_id:
                 logger.info("Device reset detected, clearing display.")
                 device_session_id = session_id
                 logger.info(f"New session id: {device_session_id:08x}")
+                recording_info = RecordingInfo()
                 reset_display()
                 msg = "Device reset"
+            # Handle the rest of the info.
+            device_time_millis = response_data.read_uint32()
+            sd_card_inserted = response_data.read_uint8()
+            recording_active = response_data.read_uint8()
+            if recording_active:
+                recording_start_millis = response_data.read_uint32()
+                recording_time_millis = device_time_millis - recording_start_millis
+                recording_info = RecordingInfo(
+                    RecordingState.IN_RECORDING, recording_start_millis / 1000.0
+                )
+                name = response_data.read_str()
+                writes_ok = response_data.read_uint32()
+                write_failures = response_data.read_uint32()
+                errors_note = f" ERRORS: {write_failures}" if write_failures else ""
+                msg = f"  Recording [{name}] [{recording_time_millis / 1000:.0f} secs] [{writes_ok} records]{errors_note}"
+            else:
+                msg = "  Recording is off" if sd_card_inserted else "  No SD card"
+                if recording_info.state == RecordingState.IN_RECORDING:
+                    # We use the current device time as an approximation of recording end time.
+                    recording_info = RecordingInfo(
+                        RecordingState.AFTER_RECORDING,
+                        recording_info.start_time,
+                        device_time_millis / 1000,
+                    )
+            assert response_data.all_read_ok()
+
         set_display_status_line(msg)
 
     if (last_display_update_time is None) or (
