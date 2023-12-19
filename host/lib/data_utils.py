@@ -50,7 +50,7 @@ class ChannelInfo:
 
     channel_name: str
     channel_type: str
-    field_name: str
+    column_name: str
     num_values: int
     file_name: str
 
@@ -76,11 +76,11 @@ def load_channels_infos(
             )
             continue
         channel_type = row["Type"]
-        value_field = row["Field"]
-        num_values = row["Values"]
+        value_column= row["Column"]
+        num_values = row["Count"]
         file_name = row["File"]
         result.append(
-            ChannelInfo(channel_name, channel_type, value_field, num_values, file_name)
+            ChannelInfo(channel_name, channel_type, value_column, num_values, file_name)
         )
     return result
 

@@ -74,7 +74,7 @@ def main():
         # Load the channel data
         channel_df = pd.read_csv(os.path.join(args.input_dir, channel_info.file_name), delimiter=',')
         # Select the timestamp and main value columns
-        channel_df = channel_df[['T[ms]', channel_info.field_name]]
+        channel_df = channel_df[['T[ms]', channel_info.column_name]]
 
         # Add rows for missing ms timestamps. Missing values becomes None
         logger.info("Up sampling.")
@@ -105,7 +105,7 @@ def main():
             # Normalize time to test start time.
             df['T[ms]'] -= test_info.start_ms
             # Rename the value column
-            df.rename(columns={channel_info.field_name: new_column_name}, inplace=True)
+            df.rename(columns={channel_info.column_name: new_column_name}, inplace=True)
             tests_data.append(df)
 
     # Join the tests data to a single data frame with common time column.

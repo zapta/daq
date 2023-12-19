@@ -19,7 +19,7 @@ from serial_packets.packet_decoder import PacketDecoder, DecodedLogPacket
 # Local imports.
 sys.path.insert(0, "..")
 from lib.log_parser import LogPacketsParser, ParsedLogPacket, ChannelData,  LcChannelValue, PwChannelValue, TmChannelValue, ExternalReportChannelValue, TimeMarkChannelValue
-from lib.sys_config import SysConfig
+from lib.sys_config import SysConfig, ExternalReportConfig
 
 
 # Initialized by main().
@@ -240,20 +240,26 @@ def init_output_csv_file(file_id: str, csv_header: str, file_base_name) -> None:
 def write_channels_file() -> None:
     """Write to the channels output file the information of the sensor channels."""
     channels_file = output_csv_files_dict["channels"]
-    for chan_id in sys_config.load_cells_configs():
+    for chan_id in sys_config.load_cells_configs().keys():
         chan_file = output_csv_files_dict[chan_id]
         channels_file.row_count += 1
         channels_file.file_handle.write(f"{chan_id},load_cell,Grams,{chan_file.row_count},"
                                         f"{os.path.basename(chan_file.file_path)}\n")
-    for chan_id in sys_config.power_configs():
+    for chan_id in sys_config.power_configs().keys():
         chan_file = output_csv_files_dict[chan_id]
         channels_file.row_count += 1
         channels_file.file_handle.write(f"{chan_id},power,Watts,{chan_file.row_count},"
                                         f"{os.path.basename(chan_file.file_path)}\n")
-    for chan_id in sys_config.temperature_configs():
+    for chan_id in sys_config.temperature_configs().keys():
         chan_file = output_csv_files_dict[chan_id]
         channels_file.row_count += 1
         channels_file.file_handle.write(f"{chan_id},temperature,Celsius,{chan_file.row_count},"
+                                        f"{os.path.basename(chan_file.file_path)}\n")
+    for chan_id, chan_config in sys_config.external_reports_configs().items():
+        assert isinstance(chan_config, ExternalReportConfig)
+        chan_file = output_csv_files_dict[chan_id]
+        channels_file.row_count += 1
+        channels_file.file_handle.write(f"{chan_id},external,{chan_config.column},{chan_file.row_count},"
                                         f"{os.path.basename(chan_file.file_path)}\n")
 
 
@@ -298,7 +304,7 @@ def main():
     # Tests list file
     init_output_csv_file("tests", f"Test,Start[ms],End[ms]", "_tests")
     # Channels list file.
-    init_output_csv_file("channels", f"Name,Type,Field,Values,File", "_channels")
+    init_output_csv_file("channels", f"Name,Type,Column,Count,File", "_channels")
 
     packet_decoder = PacketDecoder()
     while bfr := in_f.read(1000):
