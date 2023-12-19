@@ -27,12 +27,11 @@
 
 // Tasks with static stack allocations.
 static StaticTask host_link_task(host_link::host_link_task_body, "Host", 6);
-static StaticTask printer_link_task(
-    printer_link_card::printer_link_task_body, "Printer Link", 3);
+static StaticTask printer_link_task(printer_link_card::printer_link_task_body,
+                                    "Printer Link", 3);
 static StaticTask adc_card_task(adc_card::adc_card_task_body, "ADC", 5);
 static StaticTask pw_card_task(pw_card::i2c1_pw1_device_task_body, "PW1", 7);
-static StaticTask data_queue_task(data_queue::data_queue_task_body, "DQUE",
-                                  4);
+static StaticTask data_queue_task(data_queue::data_queue_task_body, "DQUE", 4);
 
 // I2c schedule
 static I2cSchedule i2c1_schedule = {
@@ -42,7 +41,7 @@ static I2cSchedule i2c1_schedule = {
     .slots = {
         // For power device, two slots form a data points.
         // With a divider of 2, the data point interval is 40ms (25 Hz)
-        [0] = {.device = &pw_card::i2c1_pw1_device, .rate_divider=2},
+        [0] = {.device = &pw_card::i2c1_pw1_device, .rate_divider = 2},
     }};
 
 // Called from from the main FreeRTOS task.
@@ -95,18 +94,18 @@ void app_main() {
 
   for (uint32_t i = 0;; i++) {
     const bool is_logging = data_recorder::is_recording_active();
-    const bool blink = is_logging ? i & 0x01 : i & 0x08;
-    // Starting blinking with on.
-    gpio_pins::LED.set(!blink);
+    // We invert the bits of i to start blinking with on state.
+    const bool led_state = is_logging ? ~i & 0x01 : ~i & 0x08;
+    gpio_pins::LED.set(led_state);
 
     if (report_timer.elapsed_millis() >= 5000) {
       report_timer.reset();
       static data_recorder::RecordingInfo recording_info;
       data_recorder::get_recoding_info(&recording_info);
       if (recording_info.recording_active) {
-        logger.info("Recording [%s], %lu ms.",
-                    recording_info.recording_name.c_str(),
-                    recording_info.recording_time_millis);
+        logger.info(
+            "Recording [%s], %lu ms.", recording_info.recording_name.c_str(),
+            time_util::millis() - recording_info.recording_start_time_millis);
       }
       logger.info("Session id: [%08lx]", session::id());
       data_queue::dump_state();

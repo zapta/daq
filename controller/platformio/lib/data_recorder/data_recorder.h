@@ -9,8 +9,9 @@ typedef StaticString<30> RecordingName;
 
 struct RecordingInfo {
   bool recording_active = false;
+  // The following fields are valids IFF recording_active = true.
   RecordingName recording_name;
-  uint32_t recording_time_millis = 0;
+  uint32_t recording_start_time_millis = 0;
   uint32_t writes_ok = 0;
   uint32_t write_failures = 0;
 };

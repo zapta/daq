@@ -90,7 +90,7 @@ PacketStatus handle_control_command(const SerialPacketsData& command_data,
       data_recorder::get_recoding_info(&recording_info_buffer);
       response_data.write_uint8(recording_info_buffer.recording_active ? 1 : 0);
       if (recording_info_buffer.recording_active) {
-        response_data.write_uint32(recording_info_buffer.recording_time_millis);
+        response_data.write_uint32(recording_info_buffer.recording_start_time_millis);
         response_data.write_str(recording_info_buffer.recording_name.c_str());
         response_data.write_uint32(recording_info_buffer.writes_ok);
         response_data.write_uint32(recording_info_buffer.write_failures);

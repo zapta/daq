@@ -326,14 +326,13 @@ void get_recoding_info(RecordingInfo* info) {
   if (state != STATE_IDLE) {
     info->recording_active = true;
     info->recording_name.set_c_str(current_recording_name.c_str());
-    info->recording_time_millis =
-        time_util::millis() - recording_start_time_millis;
+    info->recording_start_time_millis = recording_start_time_millis;
     info->writes_ok = writes_ok;
     info->write_failures = write_failures;
   } else {
     info->recording_active = false;
     info->recording_name.clear();
-    info->recording_time_millis = 0;
+    info->recording_start_time_millis = 0;
     info->writes_ok = 0;
     info->write_failures = 0;
   }
